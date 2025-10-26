@@ -61,7 +61,7 @@ export default function GlobalChat({ user, userProfile }) {
       <div style={{ 
         width: "95%", 
         maxWidth: "800px",
-        minHeight: "140vh",
+        minHeight: "80vh",
         display: "flex", 
         flexDirection: "column",
         background: "#000000",
