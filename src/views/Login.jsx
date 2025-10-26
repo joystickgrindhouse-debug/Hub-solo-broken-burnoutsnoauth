@@ -6,11 +6,11 @@ import { generateAvatarForUser } from "../avatarService.js";
 const styles = {
   rivalisTitle: {
     fontFamily: "'Press Start 2P', cursive",
-    fontSize: "2.5rem",
+    fontSize: "clamp(1.5rem, 6vw, 2.5rem)",
     fontWeight: "normal",
     color: "#ff3050",
     textTransform: "uppercase",
-    letterSpacing: "4px",
+    letterSpacing: "2px",
     margin: "0 0 1.5rem 0",
     textShadow: `
       0 0 10px rgba(255, 48, 80, 0.8),
@@ -20,7 +20,11 @@ const styles = {
     `,
     animation: "slamIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards, pulse 2s ease-in-out 0.8s infinite",
     transformOrigin: "center center",
-    lineHeight: "1.5"
+    lineHeight: "1.5",
+    wordBreak: "keep-all",
+    whiteSpace: "nowrap",
+    overflow: "visible",
+    textAlign: "center"
   },
   tagline: {
     fontSize: "0.75rem",
