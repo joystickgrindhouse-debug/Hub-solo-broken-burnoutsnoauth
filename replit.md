@@ -79,15 +79,23 @@ rivalis-hub/
 - **Direct Messages**: Search for users by nickname, send private messages
 - Both systems persist last 50 messages to Firestore for history
 
-### Solo Mode & Leaderboard
-- Camera-based Solo mode with MediaPipe pose detection
-- Automatic rep counting for 5 exercises: Push-ups, Squats, Crunches, Jumping Jacks, High Knees
-- Card system with random exercise selection from 4 categories
+### Solo Mode & Burnouts Mode
+- Camera-based workout modes with MediaPipe pose detection
+- **16 Total Exercises** across 4 categories with automatic rep counting:
+  - Arms: Push-ups, Plank Up-Downs, Tricep Dips, Shoulder Taps
+  - Legs: Squats, Lunges, Glute Bridges, Calf Raises
+  - Core: Crunches, Plank, Russian Twists, Leg Raises
+  - Cardio: Jumping Jacks, High Knees, Burpees, Mountain Climbers
+- Card system with random exercise selection (Solo) / Category-based selection (Burnouts)
 - Dice reward system: 1 dice earned per 30 reps
 - Real-time pose skeleton overlay on camera feed
 - Red/black gaming theme
-- Leaderboard aggregates scores across all game modes
+- Wake lock support to prevent screen sleep during workouts
+
+### Leaderboard
+- Aggregates scores across all game modes
 - Filter by specific game mode or view combined totals
+- Displays individual mode breakdowns for each player
 
 ### Avatar System
 - 10 DiceBear avatar styles with customization
@@ -107,10 +115,22 @@ rivalis-hub/
 
 ## Recent Changes
 
+### October 26, 2025 - Full Exercise Library Implementation
+- **Expanded Exercise Library (16 Total Exercises)**:
+  - **Solo Mode & Burnouts Mode** now support all 16 exercises with MediaPipe pose detection:
+    - **Arms** (4): Push-ups, Plank Up-Downs, Tricep Dips, Shoulder Taps
+    - **Legs** (4): Squats, Lunges, Glute Bridges, Calf Raises*
+    - **Core** (4): Crunches, Plank, Russian Twists, Leg Raises
+    - **Cardio** (4): Jumping Jacks, High Knees, Burpees, Mountain Climbers
+  - All exercises have working pose detection algorithms with rep counting
+  - *Calf Raises uses adaptive baseline calibration to accommodate different body types
+  - Plank exercise includes 3-second hold timer with form validation
+  - Both modes maintain consistent exercise detection logic
+
 ### October 26, 2025 - Burnouts Mode & UI Improvements
 - **Burnouts Mode Complete Implementation**:
   - Implemented MediaPipe Pose detection for camera-based automatic rep counting
-  - Same exercise system as Solo mode with 5 supported exercises
+  - Full exercise library with 16 exercises across 4 categories
   - Dice reward system: 1 dice per 30 reps
   - Real-time pose skeleton overlay with green connections and red joints
   - Red/black gaming theme matching app design
@@ -126,13 +146,9 @@ rivalis-hub/
 - **Solo Mode Complete Overhaul**:
   - Implemented MediaPipe Pose detection for camera-based automatic rep counting
   - Card system with random exercise draws from 4 categories (Arms, Legs, Core, Cardio)
+  - Full exercise library with 16 total exercises
   - Dice reward system: 1 dice per 30 reps
   - Real-time pose skeleton overlay with green connections and red joints
-  - Support for 5 exercises with working pose detection:
-    - Arms: Push-ups
-    - Legs: Squats
-    - Core: Crunches
-    - Cardio: Jumping Jacks, High Knees
   - Red/black gaming theme matching original Solo design
   - Wake lock support to prevent screen sleep during workouts
   - Camera permissions handling with proper error messages
