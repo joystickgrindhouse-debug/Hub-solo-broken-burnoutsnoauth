@@ -65,6 +65,22 @@ input, button {
   border: none;
 }
 
+input {
+  background-color: transparent;
+  border: 2px solid rgba(255, 48, 80, 0.5);
+  color: #ff3050;
+}
+
+input::placeholder {
+  color: rgba(255, 48, 80, 0.5);
+}
+
+input:focus {
+  outline: none;
+  border-color: #ff3050;
+  box-shadow: 0 0 15px rgba(255, 48, 80, 0.3);
+}
+
 button {
   background-color: #1a1a1a;
   color: white;
