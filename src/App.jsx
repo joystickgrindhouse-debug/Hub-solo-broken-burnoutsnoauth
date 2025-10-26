@@ -75,7 +75,8 @@ export default function App() {
 
   if (!user) return <Login />;
 
-  if (!userProfile || !userProfile.hasCompletedSetup) {
+  // Only show avatar creator for truly new users (no profile exists at all)
+  if (user && !userProfile && profileLoaded) {
     return (
       <AvatarCreator 
         user={user} 
