@@ -134,9 +134,11 @@ button:hover {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  width: 180px;
+  width: 200px;
   max-width: calc(100vw - 2rem);
-  z-index: 9999;
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+  z-index: 99999;
   border: 1px solid #ff3050;
   box-shadow: 
     0 0 15px rgba(255, 48, 80, 0.5),
