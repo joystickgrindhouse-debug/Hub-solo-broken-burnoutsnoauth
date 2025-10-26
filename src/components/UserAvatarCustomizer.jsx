@@ -139,31 +139,25 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
       if (isFirstTimeSetup) {
         console.log("Completing first-time setup...");
         
-        // Create a temporary profile to pass to the callback
-        const tempProfile = {
-          userId: user.uid,
-          nickname: nickname,
-          avatarURL: avatarURL,
-          hasCompletedSetup: true
-        };
+        // Wait for Firestore save to complete before proceeding
+        const setupResult = await UserService.completeUserSetup(user.uid, nickname, avatarURL);
+        
+        if (!setupResult.success) {
+          console.error("Failed to save profile to Firestore:", setupResult.error);
+          alert("Failed to save profile: " + (setupResult.error || "Unknown error"));
+          return;
+        }
+        
+        console.log("Profile saved to Firestore successfully:", setupResult.profile);
         
         if (onSetupComplete) {
-          console.log("Calling onSetupComplete callback with temp profile");
+          console.log("Calling onSetupComplete callback with saved profile");
           try {
-            onSetupComplete(tempProfile);
+            onSetupComplete(setupResult.profile);
           } catch (callbackError) {
             console.error("Error in onSetupComplete callback:", callbackError);
           }
         }
-        
-        // Try to save to Firestore in the background (don't wait for it)
-        UserService.completeUserSetup(user.uid, nickname, avatarURL)
-          .then(result => {
-            console.log("Background save completed:", result.success);
-          })
-          .catch(err => {
-            console.error("Background save failed:", err);
-          });
         
         console.log("Navigating to dashboard...");
         alert("Profile created! Welcome to Rivalis Hub!");
