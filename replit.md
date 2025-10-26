@@ -25,7 +25,8 @@ rivalis-hub/
 │   │   ├── Navbar.jsx (displays user avatar, nickname, Profile submenu)
 │   │   ├── LoadingScreen.jsx
 │   │   ├── UserAvatar.jsx
-│   │   └── UserAvatarCustomizer.jsx (avatar creation with nickname)
+│   │   ├── UserAvatarCustomizer.jsx (avatar creation with nickname)
+│   │   └── ProtectedRoute.jsx (authentication guard for routes)
 │   ├── services/
 │   │   ├── userService.js (user profile management)
 │   │   ├── nicknameService.js (nickname generation and validation)
@@ -36,7 +37,7 @@ rivalis-hub/
 │       ├── Dashboard.jsx (with flickering "FITNESS REIMAGINED")
 │       ├── Profile.jsx (bio editing, achievements, streaks)
 │       ├── AvatarCreator.jsx (standalone avatar customization)
-│       ├── Solo.jsx (internal rep tracker, 1 rep = 1 point)
+│       ├── Solo.jsx (MediaPipe pose detection, card system, dice rewards)
 │       ├── Achievements.jsx
 │       ├── GlobalChat.jsx (140vh container, doubled message history)
 │       ├── DMChat.jsx (140vh container, doubled message history)
@@ -79,8 +80,12 @@ rivalis-hub/
 - Both systems persist last 50 messages to Firestore for history
 
 ### Solo Mode & Leaderboard
-- Internal Solo mode tracks reps with simple counter
-- Each rep = 1 point automatically submitted to leaderboard
+- Camera-based Solo mode with MediaPipe pose detection
+- Automatic rep counting for 5 exercises: Push-ups, Squats, Crunches, Jumping Jacks, High Knees
+- Card system with random exercise selection from 4 categories
+- Dice reward system: 1 dice earned per 30 reps
+- Real-time pose skeleton overlay on camera feed
+- Red/black gaming theme
 - Leaderboard aggregates scores across all game modes
 - Filter by specific game mode or view combined totals
 
@@ -101,6 +106,30 @@ rivalis-hub/
 - Firebase authentication and Firestore pre-configured
 
 ## Recent Changes
+
+### October 26, 2025 - Solo Mode Pose Detection & Authentication Enhancement
+- **Solo Mode Complete Overhaul**:
+  - Implemented MediaPipe Pose detection for camera-based automatic rep counting
+  - Card system with random exercise draws from 4 categories (Arms, Legs, Core, Cardio)
+  - Dice reward system: 1 dice per 30 reps
+  - Real-time pose skeleton overlay with green connections and red joints
+  - Support for 5 exercises with working pose detection:
+    - Arms: Push-ups
+    - Legs: Squats
+    - Core: Crunches
+    - Cardio: Jumping Jacks, High Knees
+  - Red/black gaming theme matching original Solo design
+  - Wake lock support to prevent screen sleep during workouts
+  - Camera permissions handling with proper error messages
+- **Authentication Protection**:
+  - Created ProtectedRoute component for route-level auth checks
+  - All routes now wrapped with ProtectedRoute
+  - Automatic redirect to login if authentication expires
+  - Ensures user and profile exist before accessing any protected page
+- **Dependencies Added**:
+  - @mediapipe/pose - Pose detection library
+  - @mediapipe/camera_utils - Camera utilities
+  - @mediapipe/drawing_utils - Drawing utilities for skeleton overlay
 
 ### October 26, 2025 - Profile Restructure and Chat Enhancement
 - **Profile System Restructure**:
