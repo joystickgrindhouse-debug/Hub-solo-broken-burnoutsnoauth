@@ -126,34 +126,6 @@ export default function Navbar({ user, userProfile }) {
                     >
                       View Profile
                     </Link>
-                    <Link 
-                      to="/avatar-creator" 
-                      onClick={closeDropdown}
-                      style={{
-                        color: "#fff",
-                        textDecoration: "none",
-                        padding: "0.5rem",
-                        display: "block",
-                        transition: "all 0.3s ease",
-                        textShadow: "0 0 8px rgba(255, 48, 80, 0.3)"
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 50, 80, 0.1)";
-                        e.currentTarget.style.borderRadius = "4px";
-                        e.currentTarget.style.borderLeft = "3px solid #ff3050";
-                        e.currentTarget.style.paddingLeft = "0.7rem";
-                        e.currentTarget.style.boxShadow = "0 0 10px rgba(255, 48, 80, 0.4), inset 0 0 10px rgba(255, 48, 80, 0.1)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "transparent";
-                        e.currentTarget.style.borderRadius = "0";
-                        e.currentTarget.style.borderLeft = "none";
-                        e.currentTarget.style.paddingLeft = "0.5rem";
-                        e.currentTarget.style.boxShadow = "none";
-                      }}
-                    >
-                      Avatar Creator
-                    </Link>
                   </div>
                 )}
               </div>
