@@ -4,6 +4,7 @@ import { auth } from "./firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
 import { UserService } from "./services/userService.js";
 import LoadingScreen from "./components/LoadingScreen.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Login from "./views/Login.jsx";
 import Dashboard from "./views/Dashboard.jsx";
 import Profile from "./views/Profile.jsx";
@@ -92,18 +93,102 @@ export default function App() {
       <Navbar user={user} userProfile={userProfile} />
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" />} />
-        <Route path="/dashboard" element={<Dashboard user={user} />} />
-        <Route path="/profile" element={<Profile user={user} userProfile={userProfile} />} />
-        <Route path="/avatar-creator" element={<AvatarCreator user={user} userProfile={userProfile} />} />
-        <Route path="/solo" element={<Solo user={user} userProfile={userProfile} />} />
-        <Route path="/burnouts" element={<Burnouts />} />
-        <Route path="/live" element={<Live />} />
-        <Route path="/run" element={<Run />} />
-        <Route path="/gameboard" element={<Gameboard />} />
-        <Route path="/achievements" element={<Achievements />} />
-        <Route path="/chat" element={<GlobalChat user={user} userProfile={userProfile} />} />
-        <Route path="/dm" element={<DMChat user={user} userProfile={userProfile} />} />
-        <Route path="/leaderboard" element={<Leaderboard user={user} />} />
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute user={user} userProfile={userProfile}>
+              <Dashboard user={user} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute user={user} userProfile={userProfile}>
+              <Profile user={user} userProfile={userProfile} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/avatar-creator" 
+          element={
+            <ProtectedRoute user={user} userProfile={userProfile}>
+              <AvatarCreator user={user} userProfile={userProfile} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/solo" 
+          element={
+            <ProtectedRoute user={user} userProfile={userProfile}>
+              <Solo user={user} userProfile={userProfile} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/burnouts" 
+          element={
+            <ProtectedRoute user={user} userProfile={userProfile}>
+              <Burnouts user={user} userProfile={userProfile} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/live" 
+          element={
+            <ProtectedRoute user={user} userProfile={userProfile}>
+              <Live user={user} userProfile={userProfile} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/run" 
+          element={
+            <ProtectedRoute user={user} userProfile={userProfile}>
+              <Run user={user} userProfile={userProfile} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/gameboard" 
+          element={
+            <ProtectedRoute user={user} userProfile={userProfile}>
+              <Gameboard user={user} userProfile={userProfile} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/achievements" 
+          element={
+            <ProtectedRoute user={user} userProfile={userProfile}>
+              <Achievements user={user} userProfile={userProfile} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/chat" 
+          element={
+            <ProtectedRoute user={user} userProfile={userProfile}>
+              <GlobalChat user={user} userProfile={userProfile} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dm" 
+          element={
+            <ProtectedRoute user={user} userProfile={userProfile}>
+              <DMChat user={user} userProfile={userProfile} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/leaderboard" 
+          element={
+            <ProtectedRoute user={user} userProfile={userProfile}>
+              <Leaderboard user={user} />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
     </div>
   );

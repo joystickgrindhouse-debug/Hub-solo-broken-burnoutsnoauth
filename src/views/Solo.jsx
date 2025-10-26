@@ -1,220 +1,504 @@
-import React, { useState, useEffect } from "react";
-import { LeaderboardService } from "../services/leaderboardService.js";
+import React, { useState, useEffect, useRef } from "react";
+import { Pose } from "@mediapipe/pose";
+import { Camera } from "@mediapipe/camera_utils";
 
 export default function Solo({ user, userProfile }) {
-  const [reps, setReps] = useState(0);
-  const [isActive, setIsActive] = useState(false);
-  const [timer, setTimer] = useState(0);
-  const [sessionReps, setSessionReps] = useState(0);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [totalReps, setTotalReps] = useState(0);
+  const [repGoal, setRepGoal] = useState(0);
+  const [currentReps, setCurrentReps] = useState(0);
+  const [dice, setDice] = useState(0);
+  const [currentExercise, setCurrentExercise] = useState('');
+  const [currentSuit, setCurrentSuit] = useState('');
+  const [currentGroup, setCurrentGroup] = useState('');
+  const [isWorkoutActive, setIsWorkoutActive] = useState(false);
+  const [toast, setToast] = useState('');
+  const [showDrawButton, setShowDrawButton] = useState(false);
+  
+  const repInProgressRef = useRef(false);
+  const poseRef = useRef(null);
+  const cameraRef = useRef(null);
+  const wakeLockRef = useRef(null);
+  const canvasCtxRef = useRef(null);
 
-  useEffect(() => {
-    let interval = null;
-    if (isActive) {
-      interval = setInterval(() => {
-        setTimer((time) => time + 1);
-      }, 1000);
-    } else if (!isActive && timer !== 0) {
-      clearInterval(interval);
-    }
-    return () => clearInterval(interval);
-  }, [isActive, timer]);
-
-  const incrementReps = () => {
-    setReps(reps + 1);
-    setSessionReps(sessionReps + 1);
+  const exercises = {
+    Arms: ["Push-ups"],
+    Legs: ["Squats"],
+    Core: ["Crunches"],
+    Cardio: ["Jumping Jacks", "High Knees"]
   };
 
-  const startWorkout = () => {
-    setIsActive(true);
-    setSessionReps(0);
-    setTimer(0);
+  const descriptions = {
+    "Push-ups": "Maintain a straight line from shoulders to heels.",
+    "Plank Up-Downs": "Move from elbow to push-up position repeatedly.",
+    "Tricep Dips": "Lower body until elbows reach 90° using a surface.",
+    "Shoulder Taps": "Tap alternate shoulders keeping core tight.",
+    "Squats": "Keep chest up and push hips back.",
+    "Lunges": "Step forward and lower knee near floor.",
+    "Glute Bridges": "Lift hips high, squeeze glutes.",
+    "Calf Raises": "Lift heels and squeeze calves.",
+    "Crunches": "Lift shoulders toward ceiling.",
+    "Plank": "Hold still; engage abs.",
+    "Russian Twists": "Twist torso side to side.",
+    "Leg Raises": "Lift legs slowly, keep core tight.",
+    "Jumping Jacks": "Full arm extension and rhythm.",
+    "High Knees": "Bring knees to waist level quickly.",
+    "Burpees": "Drop, push-up, and jump explosively.",
+    "Mountain Climbers": "Alternate knees toward chest quickly."
   };
 
-  const endWorkout = async () => {
-    setIsActive(false);
+  const POSE_CONNECTIONS = [
+    [11, 12], [11, 13], [13, 15], [12, 14], [14, 16],
+    [11, 23], [12, 24], [23, 24], [23, 25], [24, 26],
+    [25, 27], [26, 28], [27, 29], [28, 30], [29, 31], [30, 32]
+  ];
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2000);
+  };
+
+  const drawCard = () => {
+    const suits = ['♥', '♦', '♣', '♠'];
+    const groups = ['Arms', 'Legs', 'Core', 'Cardio'];
+    const randGroup = groups[Math.floor(Math.random() * groups.length)];
+    const groupExercises = exercises[randGroup];
+    const exercise = groupExercises[Math.floor(Math.random() * groupExercises.length)];
+    const goal = Math.floor(Math.random() * 13) + 2;
     
-    if (sessionReps > 0) {
-      await LeaderboardService.submitScore({
-        userId: user.uid,
-        userName: userProfile?.nickname || user.displayName || user.email,
-        gameMode: 'solo',
-        score: sessionReps,
-        metadata: {
-          duration: timer,
-          totalReps: reps
-        }
+    setCurrentSuit(suits[Math.floor(Math.random() * 4)]);
+    setCurrentGroup(randGroup);
+    setCurrentExercise(exercise);
+    setRepGoal(goal);
+    setCurrentReps(0);
+    repInProgressRef.current = false;
+    setShowDrawButton(false);
+    
+    showToast(`New card: ${exercise}!`);
+  };
+
+  const incrementRep = () => {
+    const newCurrentReps = currentReps + 1;
+    const newTotalReps = totalReps + 1;
+    
+    setCurrentReps(newCurrentReps);
+    setTotalReps(newTotalReps);
+    
+    if (newCurrentReps >= repGoal) {
+      showToast('Card complete! Draw a new card.');
+      setShowDrawButton(true);
+    }
+    
+    if (newTotalReps % 30 === 0) {
+      const newDice = dice + 1;
+      setDice(newDice);
+      showToast(`🎲 Dice earned! Total: ${newDice}`);
+    }
+  };
+
+  const drawSkeleton = (landmarks) => {
+    const canvas = canvasRef.current;
+    const ctx = canvasCtxRef.current;
+    if (!canvas || !ctx) return;
+
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    ctx.strokeStyle = '#00ff00';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    
+    POSE_CONNECTIONS.forEach(([i, j]) => {
+      const start = landmarks[i];
+      const end = landmarks[j];
+      if (start && end) {
+        ctx.beginPath();
+        ctx.moveTo(start.x * width, start.y * height);
+        ctx.lineTo(end.x * width, end.y * height);
+        ctx.stroke();
+      }
+    });
+    
+    ctx.fillStyle = '#ff2e2e';
+    landmarks.forEach(landmark => {
+      if (landmark) {
+        ctx.beginPath();
+        ctx.arc(landmark.x * width, landmark.y * height, 5, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+    });
+  };
+
+  const detectRep = (landmarks) => {
+    if (!landmarks || landmarks.length === 0) return;
+
+    const leftShoulder = landmarks[11];
+    const rightShoulder = landmarks[12];
+    const leftHip = landmarks[23];
+    const rightHip = landmarks[24];
+    const leftKnee = landmarks[25];
+    const rightKnee = landmarks[26];
+    const leftElbow = landmarks[13];
+    const rightElbow = landmarks[14];
+    const leftWrist = landmarks[15];
+    const rightWrist = landmarks[16];
+
+    if (currentExercise === 'Squats') {
+      const avgKneeY = (leftKnee.y + rightKnee.y) / 2;
+      const avgHipY = (leftHip.y + rightHip.y) / 2;
+      const kneeFlexion = avgKneeY - avgHipY;
+      
+      if (kneeFlexion > 0.15 && !repInProgressRef.current) {
+        repInProgressRef.current = true;
+      } else if (kneeFlexion < 0.05 && repInProgressRef.current) {
+        repInProgressRef.current = false;
+        incrementRep();
+      }
+    } else if (currentExercise === 'Push-ups') {
+      const avgElbowY = (leftElbow.y + rightElbow.y) / 2;
+      const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+      const elbowFlexion = avgElbowY - avgShoulderY;
+      
+      if (elbowFlexion > 0.12 && !repInProgressRef.current) {
+        repInProgressRef.current = true;
+      } else if (elbowFlexion < 0.03 && repInProgressRef.current) {
+        repInProgressRef.current = false;
+        incrementRep();
+      }
+    } else if (currentExercise === 'Jumping Jacks') {
+      const avgWristY = (leftWrist.y + rightWrist.y) / 2;
+      const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+      
+      if (avgWristY < avgShoulderY - 0.05 && !repInProgressRef.current) {
+        repInProgressRef.current = true;
+      } else if (avgWristY > avgShoulderY + 0.15 && repInProgressRef.current) {
+        repInProgressRef.current = false;
+        incrementRep();
+      }
+    } else if (currentExercise === 'High Knees') {
+      const maxKneeY = Math.max(leftKnee.y, rightKnee.y);
+      const avgHipY = (leftHip.y + rightHip.y) / 2;
+      const kneeRaise = avgHipY - maxKneeY;
+      
+      if (kneeRaise > 0.15 && !repInProgressRef.current) {
+        repInProgressRef.current = true;
+      } else if (kneeRaise < 0.05 && repInProgressRef.current) {
+        repInProgressRef.current = false;
+        incrementRep();
+      }
+    } else if (currentExercise === 'Crunches') {
+      const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+      const avgHipY = (leftHip.y + rightHip.y) / 2;
+      const crunchDistance = avgHipY - avgShoulderY;
+      
+      if (crunchDistance < 0.25 && !repInProgressRef.current) {
+        repInProgressRef.current = true;
+      } else if (crunchDistance > 0.35 && repInProgressRef.current) {
+        repInProgressRef.current = false;
+        incrementRep();
+      }
+    }
+  };
+
+  const onResults = (results) => {
+    const canvas = canvasRef.current;
+    const ctx = canvasCtxRef.current;
+    if (!canvas || !ctx) return;
+
+    ctx.save();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+    
+    if (results.poseLandmarks) {
+      drawSkeleton(results.poseLandmarks);
+      detectRep(results.poseLandmarks);
+    }
+    
+    ctx.restore();
+  };
+
+  const startWorkout = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: "user",
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        } 
       });
       
-      alert(`Workout complete! ${sessionReps} reps submitted to leaderboard.`);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+
+      if ('wakeLock' in navigator) {
+        try {
+          wakeLockRef.current = await navigator.wakeLock.request('screen');
+        } catch (err) {
+          console.log('Wake Lock not available:', err);
+        }
+      }
+
+      // Initialize MediaPipe Pose
+      const pose = new Pose({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+      });
+      
+      pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
+      
+      pose.onResults(onResults);
+      poseRef.current = pose;
+
+      // Start camera
+      if (videoRef.current) {
+        const camera = new Camera(videoRef.current, {
+          onFrame: async () => {
+            if (poseRef.current && videoRef.current) {
+              await poseRef.current.send({ image: videoRef.current });
+            }
+          },
+          width: 640,
+          height: 480
+        });
+        camera.start();
+        cameraRef.current = camera;
+      }
+
+      setIsWorkoutActive(true);
+      drawCard();
+      showToast('Workout started!');
+    } catch (err) {
+      console.error('Camera error:', err);
+      alert('Camera permission denied. Please allow camera access to use Solo mode.');
     }
   };
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const endSession = () => {
+    if (cameraRef.current) {
+      cameraRef.current.stop();
+    }
+    
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+
+    if (wakeLockRef.current) {
+      wakeLockRef.current.release().then(() => {
+        wakeLockRef.current = null;
+      });
+    }
+
+    setIsWorkoutActive(false);
+    alert(`Session complete!\nTotal Reps: ${totalReps}\nDice Earned: ${dice}`);
   };
 
+  useEffect(() => {
+    if (canvasRef.current) {
+      canvasCtxRef.current = canvasRef.current.getContext('2d');
+    }
+
+    return () => {
+      if (cameraRef.current) {
+        cameraRef.current.stop();
+      }
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release();
+      }
+    };
+  }, []);
+
   return (
-    <div className="hero-background">
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>SOLO MODE</h1>
-          <p style={styles.subtitle}>Track your reps. Every rep = 1 point on the leaderboard.</p>
-        </div>
+    <div style={styles.root}>
+      <header style={styles.header}>
+        <h1 style={styles.title}>RIVALIS — SOLO MODE</h1>
+        <div style={styles.diceCounter}>🎲 Dice: {dice}</div>
+      </header>
 
-        <div style={styles.statsContainer}>
-          <div style={styles.statCard}>
-            <div style={styles.statLabel}>Session Reps</div>
-            <div style={styles.statValue}>{sessionReps}</div>
-          </div>
-          <div style={styles.statCard}>
-            <div style={styles.statLabel}>Total Reps</div>
-            <div style={styles.statValue}>{reps}</div>
-          </div>
-          <div style={styles.statCard}>
-            <div style={styles.statLabel}>Time</div>
-            <div style={styles.statValue}>{formatTime(timer)}</div>
-          </div>
+      <section style={styles.cardArea}>
+        <div style={styles.card}>
+          <div style={styles.cardSuit}>{currentSuit} {currentGroup}</div>
+          <div style={styles.cardExercise}>{currentExercise || 'Ready to start'}</div>
+          <div style={styles.cardReps}>Reps: {repGoal}</div>
+          <div style={styles.cardProgress}>Progress: {currentReps} / {repGoal}</div>
+          <div style={styles.cardDesc}>{currentExercise ? descriptions[currentExercise] : 'Click Start Workout to begin'}</div>
         </div>
-
-        <div style={styles.controlsContainer}>
-          {!isActive ? (
-            <button onClick={startWorkout} style={{...styles.button, ...styles.startButton}}>
-              START WORKOUT
-            </button>
-          ) : (
-            <>
-              <button 
-                onClick={incrementReps} 
-                style={{...styles.button, ...styles.repButton}}
-              >
-                + REP
-              </button>
-              <button onClick={endWorkout} style={{...styles.button, ...styles.endButton}}>
-                END WORKOUT
-              </button>
-            </>
+        <div style={styles.controls}>
+          {!isWorkoutActive && (
+            <button onClick={startWorkout} style={styles.button}>Start Workout</button>
+          )}
+          {isWorkoutActive && showDrawButton && (
+            <button onClick={drawCard} style={styles.button}>Draw Card</button>
+          )}
+          {isWorkoutActive && (
+            <button onClick={endSession} style={styles.button}>🔚 End Session</button>
           )}
         </div>
+      </section>
 
-        <div style={styles.infoBox}>
-          <h3 style={styles.infoTitle}>How it works:</h3>
-          <ul style={styles.infoList}>
-            <li>Click START WORKOUT to begin tracking</li>
-            <li>Click + REP for each rep you complete</li>
-            <li>Click END WORKOUT when you're done</li>
-            <li>Your reps are automatically submitted to the leaderboard (1 rep = 1 point)</li>
-          </ul>
-        </div>
-      </div>
+      <section style={styles.cameraArea}>
+        <video 
+          ref={videoRef} 
+          autoPlay 
+          playsInline 
+          muted 
+          style={styles.video}
+        />
+        <canvas 
+          ref={canvasRef} 
+          width="640" 
+          height="480"
+          style={styles.canvas}
+        />
+      </section>
+
+      {toast && <div style={styles.toast}>{toast}</div>}
+
+      <footer style={styles.footer}>Contenders become Rivals. Rivals become Legends.</footer>
     </div>
   );
 }
 
 const styles = {
-  container: {
-    maxWidth: "800px",
-    margin: "0 auto",
-    padding: "40px 20px",
+  root: {
+    margin: 0,
+    padding: '8px',
+    fontFamily: "'Courier New', monospace",
+    color: '#ff2e2e',
+    backgroundColor: '#000',
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+    textAlign: 'center',
+    boxSizing: 'border-box',
   },
   header: {
-    textAlign: "center",
-    marginBottom: "40px",
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: '640px',
+    flexShrink: 0,
   },
   title: {
-    fontSize: "56px",
-    fontWeight: "900",
-    background: "linear-gradient(135deg, #667eea 0%, #ff4081 100%)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    marginBottom: "10px",
-    letterSpacing: "4px",
+    fontSize: 'clamp(1rem, 4vw, 1.5rem)',
+    margin: 0,
   },
-  subtitle: {
-    fontSize: "18px",
-    color: "rgba(255, 255, 255, 0.8)",
-    fontWeight: "400",
+  diceCounter: {
+    fontSize: 'clamp(0.9rem, 3vw, 1.2rem)',
   },
-  statsContainer: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-    gap: "20px",
-    marginBottom: "40px",
+  cardArea: {
+    width: '100%',
+    maxWidth: '640px',
+    flexShrink: 0,
   },
-  statCard: {
-    background: "rgba(255, 255, 255, 0.05)",
-    borderRadius: "16px",
-    padding: "30px 20px",
-    textAlign: "center",
-    border: "2px solid rgba(255, 255, 255, 0.1)",
-    backdropFilter: "blur(10px)",
+  card: {
+    background: 'rgba(255, 255, 255, 0.9)',
+    color: '#000',
+    border: '2px solid #ff2e2e',
+    borderRadius: '12px',
+    boxShadow: '0 0 20px rgba(255, 46, 46, 0.5)',
+    padding: '12px',
+    marginBottom: '10px',
   },
-  statLabel: {
-    fontSize: "14px",
-    color: "rgba(255, 255, 255, 0.6)",
-    textTransform: "uppercase",
-    letterSpacing: "2px",
-    marginBottom: "10px",
-    fontWeight: "600",
+  cardSuit: {
+    color: '#ff2e2e',
+    fontWeight: 'bold',
+    fontSize: 'clamp(0.9rem, 3vw, 1.1rem)',
+    margin: '2px 0',
   },
-  statValue: {
-    fontSize: "48px",
-    fontWeight: "800",
-    color: "#ff4081",
-    textShadow: "0 0 20px rgba(255, 64, 129, 0.5)",
+  cardExercise: {
+    fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
+    fontWeight: 'bold',
+    margin: '4px 0',
   },
-  controlsContainer: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "20px",
-    marginBottom: "40px",
+  cardReps: {
+    fontSize: 'clamp(0.85rem, 2.5vw, 1rem)',
+    margin: '2px 0',
+    color: '#333',
+  },
+  cardProgress: {
+    fontSize: 'clamp(0.85rem, 2.5vw, 1rem)',
+    margin: '2px 0',
+    color: '#333',
+  },
+  cardDesc: {
+    fontSize: 'clamp(0.75rem, 2vw, 0.9rem)',
+    margin: '4px 0',
+    color: '#555',
+    fontStyle: 'italic',
+  },
+  controls: {
+    display: 'flex',
+    gap: '8px',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   button: {
-    padding: "20px 40px",
-    fontSize: "24px",
-    fontWeight: "700",
-    border: "none",
-    borderRadius: "12px",
-    cursor: "pointer",
-    transition: "all 0.3s ease",
-    textTransform: "uppercase",
-    letterSpacing: "2px",
+    background: 'transparent',
+    border: '2px solid #ff2e2e',
+    color: '#ff2e2e',
+    padding: '8px 14px',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    transition: '0.3s',
+    fontFamily: 'inherit',
+    fontSize: 'clamp(0.8rem, 2.5vw, 1rem)',
   },
-  startButton: {
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    color: "#fff",
-    boxShadow: "0 8px 30px rgba(102, 126, 234, 0.4)",
+  cameraArea: {
+    position: 'relative',
+    width: '100%',
+    maxWidth: '640px',
+    maxHeight: '50vh',
+    aspectRatio: '4/3',
+    border: '2px solid #ff2e2e',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    background: '#000',
+    flexShrink: 1,
   },
-  repButton: {
-    background: "linear-gradient(135deg, #ff4081 0%, #ff6e40 100%)",
-    color: "#fff",
-    boxShadow: "0 8px 30px rgba(255, 64, 129, 0.4)",
-    fontSize: "36px",
-    padding: "40px",
+  video: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    display: 'none',
   },
-  endButton: {
-    background: "rgba(255, 255, 255, 0.1)",
-    color: "#fff",
-    border: "2px solid rgba(255, 255, 255, 0.3)",
+  canvas: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain',
   },
-  infoBox: {
-    background: "rgba(102, 126, 234, 0.1)",
-    borderRadius: "12px",
-    padding: "20px 30px",
-    border: "1px solid rgba(102, 126, 234, 0.3)",
+  toast: {
+    position: 'fixed',
+    top: '20px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    background: '#ff2e2e',
+    color: '#000',
+    padding: '10px 20px',
+    borderRadius: '8px',
+    fontWeight: 'bold',
+    zIndex: 1000,
   },
-  infoTitle: {
-    fontSize: "18px",
-    fontWeight: "700",
-    color: "#fff",
-    marginBottom: "10px",
-  },
-  infoList: {
-    margin: 0,
-    paddingLeft: "20px",
-    color: "rgba(255, 255, 255, 0.8)",
-    fontSize: "14px",
-    lineHeight: "1.8",
+  footer: {
+    fontSize: 'clamp(0.7rem, 2vw, 0.9rem)',
+    color: '#ff2e2e',
+    marginTop: '10px',
   },
 };
