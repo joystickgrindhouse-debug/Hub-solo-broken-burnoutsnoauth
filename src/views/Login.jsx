@@ -33,7 +33,9 @@ const styles = {
     opacity: 0,
     animation: "fadeIn 0.5s ease-in 0.6s forwards",
     fontFamily: "'Press Start 2P', cursive",
-    lineHeight: "1.5"
+    lineHeight: "1.8",
+    whiteSpace: "pre-line",
+    textAlign: "center"
   }
 };
 
@@ -61,7 +63,7 @@ export default function Login() {
     <div className="hero-background">
       <div className="overlay-card">
         <h1 style={styles.rivalisTitle}>RIVALIS</h1>
-        <p style={styles.tagline}>GET HOOKED. OUT-TRAIN. OUT-RIVAL.</p>
+        <p style={styles.tagline}>GET HOOKED.{'\n'}OUT-TRAIN.{'\n'}OUT-RIVAL.</p>
         <form onSubmit={handleSubmit}>
           <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
           <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
