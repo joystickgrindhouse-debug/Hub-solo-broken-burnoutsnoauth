@@ -42,7 +42,7 @@ rivalis-hub/
 │       ├── GlobalChat.jsx (140vh container, doubled message history)
 │       ├── DMChat.jsx (140vh container, doubled message history)
 │       ├── Leaderboard.jsx (aggregates all game modes)
-│       ├── Burnouts.jsx
+│       ├── Burnouts.jsx (MediaPipe pose detection, rep counting, dice rewards)
 │       ├── Live.jsx
 │       ├── Run.jsx
 │       └── Gameboard.jsx
@@ -106,6 +106,21 @@ rivalis-hub/
 - Firebase authentication and Firestore pre-configured
 
 ## Recent Changes
+
+### October 26, 2025 - Burnouts Mode & UI Improvements
+- **Burnouts Mode Complete Implementation**:
+  - Implemented MediaPipe Pose detection for camera-based automatic rep counting
+  - Same exercise system as Solo mode with 5 supported exercises
+  - Dice reward system: 1 dice per 30 reps
+  - Real-time pose skeleton overlay with green connections and red joints
+  - Red/black gaming theme matching app design
+  - Wake lock support to prevent screen sleep during workouts
+  - Camera permissions handling with proper error messages
+- **Navbar Dropdown Menu Fix**:
+  - Increased z-index to 99999 for full visibility
+  - Added max-height and overflow scrolling to prevent clipping
+  - Wider dropdown (200px) for better readability
+  - Works correctly on all screen sizes including mobile
 
 ### October 26, 2025 - Solo Mode Pose Detection & Authentication Enhancement
 - **Solo Mode Complete Overhaul**:
