@@ -21,12 +21,15 @@ export default function Solo({ user, userProfile }) {
   const cameraRef = useRef(null);
   const wakeLockRef = useRef(null);
   const canvasCtxRef = useRef(null);
+  const calfBaselineRef = useRef(null);
+  const calfFramesAccumRef = useRef([]);
+  const calfStartTimeRef = useRef(null);
 
   const exercises = {
-    Arms: ["Push-ups"],
-    Legs: ["Squats"],
-    Core: ["Crunches"],
-    Cardio: ["Jumping Jacks", "High Knees"]
+    Arms: ["Push-ups", "Plank Up-Downs", "Tricep Dips", "Shoulder Taps"],
+    Legs: ["Squats", "Lunges", "Glute Bridges", "Calf Raises"],
+    Core: ["Crunches", "Plank", "Russian Twists", "Leg Raises"],
+    Cardio: ["Jumping Jacks", "High Knees", "Burpees", "Mountain Climbers"]
   };
 
   const descriptions = {
@@ -73,6 +76,9 @@ export default function Solo({ user, userProfile }) {
     setRepGoal(goal);
     setCurrentReps(0);
     repInProgressRef.current = false;
+    calfBaselineRef.current = null;
+    calfFramesAccumRef.current = [];
+    calfStartTimeRef.current = null;
     setShowDrawButton(false);
     
     showToast(`New card: ${exercise}!`);
@@ -195,6 +201,169 @@ export default function Solo({ user, userProfile }) {
       if (crunchDistance < 0.25 && !repInProgressRef.current) {
         repInProgressRef.current = true;
       } else if (crunchDistance > 0.35 && repInProgressRef.current) {
+        repInProgressRef.current = false;
+        incrementRep();
+      }
+    } else if (currentExercise === 'Plank Up-Downs') {
+      const avgElbowY = (leftElbow.y + rightElbow.y) / 2;
+      const avgWristY = (leftWrist.y + rightWrist.y) / 2;
+      const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+      const elbowDown = avgElbowY > avgShoulderY - 0.05;
+      
+      if (elbowDown && !repInProgressRef.current) {
+        repInProgressRef.current = true;
+      } else if (!elbowDown && repInProgressRef.current) {
+        repInProgressRef.current = false;
+        incrementRep();
+      }
+    } else if (currentExercise === 'Tricep Dips') {
+      const avgElbowY = (leftElbow.y + rightElbow.y) / 2;
+      const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+      const dipDepth = avgElbowY - avgShoulderY;
+      
+      if (dipDepth > 0.08 && !repInProgressRef.current) {
+        repInProgressRef.current = true;
+      } else if (dipDepth < 0.02 && repInProgressRef.current) {
+        repInProgressRef.current = false;
+        incrementRep();
+      }
+    } else if (currentExercise === 'Shoulder Taps') {
+      const leftWristX = leftWrist.x;
+      const rightWristX = rightWrist.x;
+      const leftShoulderX = leftShoulder.x;
+      const rightShoulderX = rightShoulder.x;
+      const tapDetected = Math.abs(leftWristX - rightShoulderX) < 0.15 || Math.abs(rightWristX - leftShoulderX) < 0.15;
+      
+      if (tapDetected && !repInProgressRef.current) {
+        repInProgressRef.current = true;
+        incrementRep();
+      } else if (!tapDetected) {
+        repInProgressRef.current = false;
+      }
+    } else if (currentExercise === 'Lunges') {
+      const kneeYDiff = Math.abs(leftKnee.y - rightKnee.y);
+      const avgHipY = (leftHip.y + rightHip.y) / 2;
+      const lowerKneeY = Math.max(leftKnee.y, rightKnee.y);
+      const lungeDepth = lowerKneeY - avgHipY;
+      
+      if (lungeDepth > 0.2 && kneeYDiff > 0.15 && !repInProgressRef.current) {
+        repInProgressRef.current = true;
+      } else if (lungeDepth < 0.1 && repInProgressRef.current) {
+        repInProgressRef.current = false;
+        incrementRep();
+      }
+    } else if (currentExercise === 'Glute Bridges') {
+      const avgHipY = (leftHip.y + rightHip.y) / 2;
+      const avgKneeY = (leftKnee.y + rightKnee.y) / 2;
+      const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+      const hipRaise = avgKneeY - avgHipY;
+      
+      if (hipRaise > 0.1 && !repInProgressRef.current) {
+        repInProgressRef.current = true;
+      } else if (hipRaise < -0.05 && repInProgressRef.current) {
+        repInProgressRef.current = false;
+        incrementRep();
+      }
+    } else if (currentExercise === 'Calf Raises') {
+      const leftAnkle = landmarks[27];
+      const rightAnkle = landmarks[28];
+      const avgAnkleY = (leftAnkle.y + rightAnkle.y) / 2;
+      const avgHipY = (leftHip.y + rightHip.y) / 2;
+      const ankleToHipDistance = avgAnkleY - avgHipY;
+      
+      if (calfBaselineRef.current === null) {
+        if (calfStartTimeRef.current === null) {
+          calfStartTimeRef.current = Date.now();
+        }
+        const elapsed = Date.now() - calfStartTimeRef.current;
+        const minThreshold = elapsed > 3000 ? 0.30 : 0.38;
+        const maxThreshold = elapsed > 3000 ? 0.60 : 0.52;
+        
+        if (!repInProgressRef.current && ankleToHipDistance > minThreshold && ankleToHipDistance < maxThreshold) {
+          calfFramesAccumRef.current.push(ankleToHipDistance);
+          if (calfFramesAccumRef.current.length > 20) {
+            calfFramesAccumRef.current.shift();
+          }
+          if (calfFramesAccumRef.current.length >= 10) {
+            const sorted = [...calfFramesAccumRef.current].sort((a, b) => a - b);
+            calfBaselineRef.current = sorted[Math.floor(sorted.length / 2)];
+          }
+        }
+      } else {
+        const raised = ankleToHipDistance <= calfBaselineRef.current - 0.045;
+        const lowered = ankleToHipDistance >= calfBaselineRef.current - 0.015;
+        
+        if (raised && !repInProgressRef.current) {
+          repInProgressRef.current = true;
+        } else if (lowered && repInProgressRef.current) {
+          repInProgressRef.current = false;
+          incrementRep();
+        }
+      }
+    } else if (currentExercise === 'Plank') {
+      const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+      const avgHipY = (leftHip.y + rightHip.y) / 2;
+      const plankAlignment = Math.abs(avgShoulderY - avgHipY);
+      
+      if (plankAlignment < 0.15 && !repInProgressRef.current) {
+        repInProgressRef.current = true;
+        setTimeout(() => {
+          if (repInProgressRef.current) {
+            incrementRep();
+            repInProgressRef.current = false;
+          }
+        }, 3000);
+      } else if (plankAlignment >= 0.2 && repInProgressRef.current) {
+        repInProgressRef.current = false;
+      }
+    } else if (currentExercise === 'Russian Twists') {
+      const leftWristX = leftWrist.x;
+      const rightWristX = rightWrist.x;
+      const avgShoulderX = (leftShoulder.x + rightShoulder.x) / 2;
+      const avgWristX = (leftWristX + rightWristX) / 2;
+      const twistDistance = Math.abs(avgWristX - avgShoulderX);
+      
+      if (twistDistance > 0.2 && !repInProgressRef.current) {
+        repInProgressRef.current = true;
+      } else if (twistDistance < 0.1 && repInProgressRef.current) {
+        repInProgressRef.current = false;
+        incrementRep();
+      }
+    } else if (currentExercise === 'Leg Raises') {
+      const leftAnkle = landmarks[27];
+      const rightAnkle = landmarks[28];
+      const avgAnkleY = (leftAnkle.y + rightAnkle.y) / 2;
+      const avgHipY = (leftHip.y + rightHip.y) / 2;
+      const legRaise = avgHipY - avgAnkleY;
+      
+      if (legRaise < 0.3 && !repInProgressRef.current) {
+        repInProgressRef.current = true;
+      } else if (legRaise > 0.5 && repInProgressRef.current) {
+        repInProgressRef.current = false;
+        incrementRep();
+      }
+    } else if (currentExercise === 'Burpees') {
+      const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+      const avgHipY = (leftHip.y + rightHip.y) / 2;
+      const avgKneeY = (leftKnee.y + rightKnee.y) / 2;
+      const isDown = avgShoulderY > 0.6;
+      
+      if (isDown && !repInProgressRef.current) {
+        repInProgressRef.current = true;
+      } else if (!isDown && avgShoulderY < 0.4 && repInProgressRef.current) {
+        repInProgressRef.current = false;
+        incrementRep();
+      }
+    } else if (currentExercise === 'Mountain Climbers') {
+      const leftKneeY = leftKnee.y;
+      const rightKneeY = rightKnee.y;
+      const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+      const minKneeY = Math.min(leftKneeY, rightKneeY);
+      const kneeToShoulder = avgShoulderY - minKneeY;
+      
+      if (kneeToShoulder < -0.1 && !repInProgressRef.current) {
+        repInProgressRef.current = true;
+      } else if (kneeToShoulder > 0.05 && repInProgressRef.current) {
         repInProgressRef.current = false;
         incrementRep();
       }
