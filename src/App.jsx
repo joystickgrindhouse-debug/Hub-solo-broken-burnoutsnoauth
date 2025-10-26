@@ -111,14 +111,6 @@ export default function App() {
           } 
         />
         <Route 
-          path="/avatar-creator" 
-          element={
-            <ProtectedRoute user={user} userProfile={userProfile}>
-              <AvatarCreator user={user} userProfile={userProfile} />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
           path="/solo" 
           element={
             <ProtectedRoute user={user} userProfile={userProfile}>
