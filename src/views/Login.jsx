@@ -5,12 +5,13 @@ import { generateAvatarForUser } from "../avatarService.js";
 
 const styles = {
   rivalisTitle: {
-    fontSize: "4rem",
-    fontWeight: "900",
+    fontFamily: "'Press Start 2P', cursive",
+    fontSize: "2.5rem",
+    fontWeight: "normal",
     color: "#ff3050",
     textTransform: "uppercase",
-    letterSpacing: "8px",
-    margin: "0 0 1rem 0",
+    letterSpacing: "4px",
+    margin: "0 0 1.5rem 0",
     textShadow: `
       0 0 10px rgba(255, 48, 80, 0.8),
       0 0 20px rgba(255, 48, 80, 0.6),
@@ -18,14 +19,17 @@ const styles = {
       0 0 40px rgba(255, 48, 80, 0.2)
     `,
     animation: "slamIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards, pulse 2s ease-in-out 0.8s infinite",
-    transformOrigin: "center center"
+    transformOrigin: "center center",
+    lineHeight: "1.5"
   },
   tagline: {
-    fontSize: "1rem",
+    fontSize: "0.75rem",
     color: "#fff",
     margin: "0 0 1.5rem 0",
     opacity: 0,
-    animation: "fadeIn 0.5s ease-in 0.6s forwards"
+    animation: "fadeIn 0.5s ease-in 0.6s forwards",
+    fontFamily: "'Press Start 2P', cursive",
+    lineHeight: "1.5"
   }
 };
 

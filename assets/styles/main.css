@@ -4,6 +4,8 @@
   padding: 0;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 body, html {
   height: 100%;
   font-family: 'Roboto', sans-serif;
@@ -23,6 +25,7 @@ body, html {
   align-items: center;
   flex-direction: column;
   padding: 1rem;
+  filter: brightness(1.4);
 }
 
 .dashboard-background {
@@ -50,6 +53,7 @@ body, html {
   max-width: 400px;
   text-align: center;
   color: #fff;
+  filter: brightness(1);
 }
 
 input, button {
@@ -62,14 +66,16 @@ input, button {
 }
 
 button {
-  background-color: #ff4081;
+  background-color: #1a1a1a;
   color: white;
   font-weight: bold;
   cursor: pointer;
+  border: 2px solid #333;
 }
 
 button:hover {
-  background-color: #e6396f;
+  background-color: #2a2a2a;
+  border-color: #444;
 }
 
 @keyframes flicker {
