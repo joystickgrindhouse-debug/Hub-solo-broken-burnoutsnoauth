@@ -24,7 +24,7 @@ const styles = {
   },
   tagline: {
     fontSize: "0.75rem",
-    color: "#fff",
+    color: "#ff3050",
     margin: "0 0 1.5rem 0",
     opacity: 0,
     animation: "fadeIn 0.5s ease-in 0.6s forwards",
@@ -63,9 +63,9 @@ export default function Login() {
           <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
           <button type="submit">{isSignup ? "Sign Up" : "Login"}</button>
         </form>
-        {error && <p style={{color:"red"}}>{error}</p>}
-        <p style={{marginTop:"1rem"}}>
-          <button onClick={() => setIsSignup(!isSignup)}>
+        {error && <p style={{color:"#ff3050", fontWeight: "bold"}}>{error}</p>}
+        <p style={{marginTop:"1rem", color: "#ff3050"}}>
+          <button onClick={() => setIsSignup(!isSignup)} style={{color: "#ff3050"}}>
             {isSignup ? "Already have an account? Login" : "Don't have an account? Sign Up"}
           </button>
         </p>
