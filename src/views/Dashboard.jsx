@@ -39,8 +39,8 @@ const gameModes = [
     id: "gameboard",
     name: "Gameboard",
     image: gameboardImage,
-    link: "https://gameboard.rivalis.netlify.app",
-    external: true,
+    link: "/gameboard",
+    external: false,
   },
 ];
 
