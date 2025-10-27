@@ -115,6 +115,25 @@ rivalis-hub/
 
 ## Recent Changes
 
+### October 27, 2025 - Authentication Flow Fix & Replit Import
+- **Fixed Sign Up Freezing Issue**:
+  - Updated Login.jsx to create Firestore profile document when new users sign up
+  - Profile created with temporary nickname and avatar URL
+  - `hasCompletedSetup` flag set to false for new users
+- **Improved Loading Screen**:
+  - Reduced loading timeout from 15 seconds to 3 seconds for faster app responsiveness
+  - Loading screen now shows while checking user profile existence
+- **Fixed User Flow Routing**:
+  - ProtectedRoute now redirects new users to /avatar-creator instead of causing infinite loop
+  - /avatar-creator route made accessible to authenticated users without setup completion
+  - Proper redirect flow: New user → Sign up → Loading (3s) → Avatar Creator → Dashboard
+  - Proper redirect flow: Existing user → Sign in → Loading (3s) → Dashboard
+- **Replit Environment Setup**:
+  - Successfully migrated project to Replit environment
+  - Installed all npm dependencies using Replit package manager
+  - Workflow configured and running on port 5000
+  - All progress tracker items marked as complete
+
 ### October 26, 2025 - Full Exercise Library Implementation
 - **Expanded Exercise Library (16 Total Exercises)**:
   - **Solo Mode & Burnouts Mode** now support all 16 exercises with MediaPipe pose detection:
