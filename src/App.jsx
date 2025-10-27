@@ -26,14 +26,16 @@ export default function App() {
   const [userProfile, setUserProfile] = useState(null);
   const [checkingSetup, setCheckingSetup] = useState(true);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [loadingStartTime] = useState(Date.now());
 
   useEffect(() => {
+    const MINIMUM_LOADING_TIME = 7000;
     const timeout = setTimeout(() => {
       console.log("Loading timeout - forcing end of loading state");
       setLoading(false);
       setCheckingSetup(false);
       setProfileLoaded(true);
-    }, 5000);
+    }, MINIMUM_LOADING_TIME);
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       console.log("Auth state changed:", currentUser ? "User logged in" : "No user");
@@ -55,21 +57,29 @@ export default function App() {
           setUserProfile(null);
         }
         setProfileLoaded(true);
+        
+        const elapsedTime = Date.now() - loadingStartTime;
+        const remainingTime = Math.max(0, MINIMUM_LOADING_TIME - elapsedTime);
+        
+        setTimeout(() => {
+          clearTimeout(timeout);
+          setLoading(false);
+          setCheckingSetup(false);
+        }, remainingTime);
       } else {
         setUserProfile(null);
         setProfileLoaded(true);
+        clearTimeout(timeout);
+        setLoading(false);
+        setCheckingSetup(false);
       }
-      
-      clearTimeout(timeout);
-      setLoading(false);
-      setCheckingSetup(false);
     });
 
     return () => {
       unsubscribe();
       clearTimeout(timeout);
     };
-  }, []);
+  }, [loadingStartTime]);
 
   if (loading || checkingSetup || !profileLoaded) return <LoadingScreen />;
 
