@@ -115,6 +115,35 @@ rivalis-hub/
 
 ## Recent Changes
 
+### October 27, 2025 - Loading Screens, Onboarding System & Burnouts Public Access
+- **New Initial Loading Screen**:
+  - Replaced feature-heavy loading screen with clean "RIVALIS FITNESS REIMAGINED" display
+  - Uses Press Start 2P gaming font with neon glow effect
+  - Added crossing screen animation effect for retro gaming aesthetic
+  - Reduced loading time to 3 seconds for faster app responsiveness
+- **3-Slide Onboarding System**:
+  - Created OnboardingSlides component showing 3 feature highlights (4 seconds each)
+  - Slide 1: AI-Powered Workouts - Camera-based rep counting
+  - Slide 2: Gamified Training - Multiple game modes
+  - Slide 3: Compete & Connect - Leaderboards and social features
+  - Shows after login for existing users (directs to dashboard after)
+  - Shows after signup for new users (directs to avatar creator after)
+- **Avatar Creator Navigation Fix**:
+  - Fixed infinite redirect loop preventing users from leaving avatar creator
+  - Added automatic profile refresh after avatar save
+  - Implemented automatic navigation to dashboard after successful setup
+  - Users can now properly access dropdown menus and navigate after avatar creation
+- **Burnouts Mode Public Access**:
+  - Removed authentication requirement - now accessible to all users without login
+  - Maintains Solo-style scoring system with dice rewards (1 dice per 30 reps)
+  - Stats automatically saved to Firebase for authenticated users
+  - Unauthenticated users can use Burnouts without account creation
+- **Routing Architecture Update**:
+  - Restructured App.jsx to support both public and protected routes
+  - Created dedicated /login route for unauthenticated users
+  - Navbar only displays for authenticated users
+  - Maintained protection for dashboard, chat, achievements, and other private features
+
 ### October 27, 2025 - Authentication Flow Fix & Theme Update
 - **Fixed Sign Up Freezing Issue**:
   - Updated Login.jsx to create Firestore profile document when new users sign up
