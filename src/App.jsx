@@ -29,7 +29,7 @@ export default function App() {
   const [loadingStartTime] = useState(Date.now());
 
   useEffect(() => {
-    const MINIMUM_LOADING_TIME = 7000;
+    const MINIMUM_LOADING_TIME = 15000;
     const timeout = setTimeout(() => {
       console.log("Loading timeout - forcing end of loading state");
       setLoading(false);
