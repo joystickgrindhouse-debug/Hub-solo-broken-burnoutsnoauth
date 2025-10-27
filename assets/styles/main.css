@@ -125,8 +125,9 @@ button:hover {
 }
 
 .logo {
-  font-size: 1.8rem;
-  font-weight: bold;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 1.2rem;
+  font-weight: normal;
   color: #ff3050;
   text-shadow: 
     0 0 10px rgba(255, 48, 80, 0.8),

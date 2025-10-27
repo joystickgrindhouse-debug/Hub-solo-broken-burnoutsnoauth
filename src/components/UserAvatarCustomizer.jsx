@@ -230,7 +230,7 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
                 setNicknameError("");
               }}
               placeholder="Enter your nickname"
-              style={{...styles.input, marginBottom: 0, borderColor: nicknameError ? '#ff4081' : 'rgba(255, 255, 255, 0.1)'}}
+              style={{...styles.input, marginBottom: 0, borderColor: nicknameError ? '#ff3050' : 'rgba(255, 255, 255, 0.1)'}}
             />
             <button onClick={generateRandomNickname} style={styles.generateButton}>
               🎲 Generate
@@ -329,11 +329,12 @@ const styles = {
     fontWeight: "600",
     border: "none",
     borderRadius: "8px",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    background: "linear-gradient(135deg, #ff3050 0%, #cc0033 100%)",
     color: "#fff",
     cursor: "pointer",
     whiteSpace: "nowrap",
     transition: "transform 0.2s, box-shadow 0.2s",
+    boxShadow: "0 4px 15px rgba(255, 48, 80, 0.4)",
   },
   hint: {
     color: "rgba(255, 255, 255, 0.5)",
@@ -342,14 +343,14 @@ const styles = {
     fontStyle: "italic",
   },
   error: {
-    color: "#ff4081",
+    color: "#ff3050",
     fontSize: "14px",
     marginTop: "8px",
     fontWeight: "600",
     padding: "8px",
-    background: "rgba(255, 64, 129, 0.1)",
+    background: "rgba(255, 48, 80, 0.1)",
     borderRadius: "6px",
-    border: "1px solid #ff4081",
+    border: "1px solid #ff3050",
   },
   heading: {
     fontSize: "20px",
@@ -364,9 +365,9 @@ const styles = {
     margin: "0 auto 15px",
     borderRadius: "50%",
     overflow: "hidden",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    background: "linear-gradient(135deg, #ff3050 0%, #cc0033 100%)",
     padding: "5px",
-    boxShadow: "0 10px 40px rgba(102, 126, 234, 0.4)",
+    boxShadow: "0 10px 40px rgba(255, 48, 80, 0.6), 0 0 20px rgba(255, 48, 80, 0.4)",
   },
   avatar: {
     width: "100%",
@@ -380,11 +381,11 @@ const styles = {
     fontWeight: "600",
     border: "none",
     borderRadius: "8px",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    background: "linear-gradient(135deg, #ff3050 0%, #cc0033 100%)",
     color: "#fff",
     cursor: "pointer",
     transition: "transform 0.2s, box-shadow 0.2s",
-    boxShadow: "0 4px 15px rgba(102, 126, 234, 0.3)",
+    boxShadow: "0 4px 15px rgba(255, 48, 80, 0.4)",
   },
   stylesGrid: {
     display: "grid",
@@ -403,10 +404,10 @@ const styles = {
     backdropFilter: "blur(10px)",
   },
   styleCardActive: {
-    border: "2px solid #ff4081",
-    background: "rgba(255, 64, 129, 0.1)",
+    border: "2px solid #ff3050",
+    background: "rgba(255, 48, 80, 0.1)",
     transform: "scale(1.05)",
-    boxShadow: "0 8px 25px rgba(255, 64, 129, 0.3)",
+    boxShadow: "0 8px 25px rgba(255, 48, 80, 0.5), 0 0 15px rgba(255, 48, 80, 0.3)",
   },
   stylePreview: {
     width: "60px",
@@ -458,11 +459,11 @@ const styles = {
     fontWeight: "700",
     border: "none",
     borderRadius: "12px",
-    background: "linear-gradient(135deg, #ff4081 0%, #ff6e40 100%)",
+    background: "linear-gradient(135deg, #ff3050 0%, #cc0033 100%)",
     color: "#fff",
     cursor: "pointer",
     transition: "all 0.3s ease",
-    boxShadow: "0 6px 20px rgba(255, 64, 129, 0.4)",
+    boxShadow: "0 6px 20px rgba(255, 48, 80, 0.6), 0 0 30px rgba(255, 48, 80, 0.4)",
   },
   saveButtonDisabled: {
     opacity: 0.6,

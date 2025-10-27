@@ -27,7 +27,7 @@ export default function AvatarCreator({ user, isFirstTimeSetup = false, onSetupC
 const styles = {
   container: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #1e1e2e 0%, #2d1b3d 100%)",
+    background: "linear-gradient(135deg, #000000 0%, #1a0000 50%, #000000 100%)",
     padding: "20px 10px",
     boxSizing: "border-box",
   },
@@ -39,9 +39,12 @@ const styles = {
   title: {
     fontSize: "32px",
     fontWeight: "800",
-    background: "linear-gradient(135deg, #667eea 0%, #ff4081 100%)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+    color: "#ff3050",
+    textShadow: `
+      0 0 10px rgba(255, 48, 80, 0.8),
+      0 0 20px rgba(255, 48, 80, 0.6),
+      0 0 30px rgba(255, 48, 80, 0.4)
+    `,
     marginBottom: "10px",
   },
   subtitle: {

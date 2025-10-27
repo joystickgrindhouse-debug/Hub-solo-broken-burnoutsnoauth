@@ -115,7 +115,7 @@ rivalis-hub/
 
 ## Recent Changes
 
-### October 27, 2025 - Authentication Flow Fix & Replit Import
+### October 27, 2025 - Authentication Flow Fix & Theme Update
 - **Fixed Sign Up Freezing Issue**:
   - Updated Login.jsx to create Firestore profile document when new users sign up
   - Profile created with temporary nickname and avatar URL
@@ -128,6 +128,15 @@ rivalis-hub/
   - /avatar-creator route made accessible to authenticated users without setup completion
   - Proper redirect flow: New user → Sign up → Loading (3s) → Avatar Creator → Dashboard
   - Proper redirect flow: Existing user → Sign in → Loading (3s) → Dashboard
+- **Avatar Creator Theme Update**:
+  - Changed from pastel purple theme to red/black neon matching app aesthetic
+  - All buttons now use red gradient (#ff3050 to #cc0033) with neon glow
+  - Avatar wrapper, active states, and errors all use consistent red theme
+  - Background changed to black/dark red gradient
+- **Navbar Enhancement**:
+  - Added Press Start 2P font to "Rivalis Hub" logo
+  - Logo maintains neon pulsating effect with red glow
+  - Avatar/nickname now hidden during profile creation, only shown after setup completion
 - **Replit Environment Setup**:
   - Successfully migrated project to Replit environment
   - Installed all npm dependencies using Replit package manager
