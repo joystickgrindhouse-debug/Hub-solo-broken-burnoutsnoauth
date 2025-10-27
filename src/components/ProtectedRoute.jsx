@@ -7,7 +7,7 @@ export default function ProtectedRoute({ user, userProfile, children }) {
   }
 
   if (!userProfile || !userProfile.hasCompletedSetup) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/avatar-creator" replace />;
   }
 
   return children;

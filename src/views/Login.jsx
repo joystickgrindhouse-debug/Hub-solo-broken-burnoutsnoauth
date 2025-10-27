@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { auth } from "../firebase.js";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { generateAvatarForUser } from "../avatarService.js";
+import { UserService } from "../services/userService.js";
 
 const styles = {
   rivalisTitle: {
@@ -47,10 +48,17 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
     try {
       if (isSignup) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await generateAvatarForUser(userCredential.user);
+        const avatarURL = await generateAvatarForUser(userCredential.user);
+        
+        const tempNickname = `User${userCredential.user.uid.slice(0, 6)}`;
+        await UserService.createUserProfile(userCredential.user.uid, {
+          nickname: tempNickname,
+          avatarURL: avatarURL
+        });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }

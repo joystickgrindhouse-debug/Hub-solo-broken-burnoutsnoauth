@@ -29,7 +29,7 @@ export default function App() {
   const [loadingStartTime] = useState(Date.now());
 
   useEffect(() => {
-    const MINIMUM_LOADING_TIME = 15000;
+    const MINIMUM_LOADING_TIME = 3000;
     const timeout = setTimeout(() => {
       console.log("Loading timeout - forcing end of loading state");
       setLoading(false);
@@ -108,11 +108,7 @@ export default function App() {
         />
         <Route 
           path="/avatar-creator" 
-          element={
-            <ProtectedRoute user={user} userProfile={userProfile}>
-              <AvatarCreator user={user} userProfile={userProfile} />
-            </ProtectedRoute>
-          } 
+          element={user ? <AvatarCreator user={user} userProfile={userProfile} /> : <Navigate to="/" />} 
         />
         <Route 
           path="/solo" 
