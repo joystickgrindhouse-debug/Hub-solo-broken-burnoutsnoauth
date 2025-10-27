@@ -481,11 +481,12 @@ export default function Burnouts({ user, userProfile }) {
   }, []);
 
   return (
-    <div style={styles.root}>
-      <header style={styles.header}>
-        <h1 style={styles.title}>BURNOUTS MODE</h1>
-        <div style={styles.diceCounter}>🎲 Dice: {dice}</div>
-      </header>
+    <div className="hero-background">
+      <div style={styles.root}>
+        <header style={styles.header}>
+          <h1 style={styles.title}>BURNOUTS MODE</h1>
+          <div style={styles.diceCounter}>🎲 Dice: {dice}</div>
+        </header>
 
       <section style={styles.cardArea}>
         <div style={styles.card}>
@@ -524,9 +525,10 @@ export default function Burnouts({ user, userProfile }) {
         />
       </section>
 
-      {toast && <div style={styles.toast}>{toast}</div>}
+        {toast && <div style={styles.toast}>{toast}</div>}
 
-      <footer style={styles.footer}>Push yourself to the limit. Break through barriers.</footer>
+        <footer style={styles.footer}>Push yourself to the limit. Break through barriers.</footer>
+      </div>
     </div>
   );
 }
@@ -537,8 +539,8 @@ const styles = {
     padding: '8px',
     fontFamily: "'Courier New', monospace",
     color: '#ff2e2e',
-    backgroundColor: '#000',
-    minHeight: '100vh',
+    backgroundColor: 'transparent',
+    minHeight: 'calc(100vh - 80px)',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
