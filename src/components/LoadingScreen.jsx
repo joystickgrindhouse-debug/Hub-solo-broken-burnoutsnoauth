@@ -2,126 +2,108 @@ import React from "react";
 
 export default function LoadingScreen() {
   return (
-    <div className="hero-background">
+    <div className="hero-background" style={{
+      position: "relative",
+      overflow: "hidden"
+    }}>
+      {/* Crossing screen effect */}
       <div style={{
-        maxWidth: "600px",
-        width: "90%",
-        background: "rgba(0, 0, 0, 0.85)",
-        border: "2px solid #ff3050",
-        borderRadius: "12px",
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: `
+          linear-gradient(
+            to bottom,
+            transparent 0%,
+            transparent 48%,
+            rgba(255, 48, 80, 0.1) 49%,
+            rgba(255, 48, 80, 0.1) 51%,
+            transparent 52%,
+            transparent 100%
+          )
+        `,
+        animation: "crossingScreen 2s linear infinite",
+        pointerEvents: "none",
+        zIndex: 10
+      }} />
+
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
         padding: "2rem",
-        boxShadow: "0 0 30px rgba(255, 48, 80, 0.5), inset 0 0 20px rgba(255, 48, 80, 0.05)"
+        position: "relative",
+        zIndex: 1
       }}>
         <h1 style={{ 
+          fontFamily: "'Press Start 2P', cursive",
           color: "#ff3050",
-          fontSize: "clamp(2rem, 8vw, 3rem)",
-          fontWeight: "bold",
+          fontSize: "clamp(1.5rem, 5vw, 3rem)",
+          fontWeight: "normal",
           textTransform: "uppercase",
           letterSpacing: "4px",
+          textAlign: "center",
+          lineHeight: "1.8",
           textShadow: `
             0 0 10px rgba(255, 48, 80, 0.8),
             0 0 20px rgba(255, 48, 80, 0.6),
             0 0 30px rgba(255, 48, 80, 0.4),
-            0 0 40px rgba(255, 48, 80, 0.2)
+            0 0 40px rgba(255, 48, 80, 0.2),
+            2px 2px 0 rgba(0, 0, 0, 0.8)
           `,
-          animation: "flicker 3s infinite",
-          margin: "0 0 1rem 0",
-          textAlign: "center"
+          animation: "neonFlicker 3s infinite, fadeIn 1s ease-in",
+          margin: "0",
+          padding: "1rem",
+          maxWidth: "90%"
         }}>
           RIVALIS
+          <br />
+          <span style={{
+            fontSize: "clamp(0.8rem, 2.5vw, 1.5rem)",
+            display: "block",
+            marginTop: "1rem"
+          }}>
+            FITNESS REIMAGINED
+          </span>
         </h1>
-        
-        <p style={{
-          color: "#ff3050",
-          fontSize: "0.9rem",
-          textAlign: "center",
-          marginBottom: "2rem",
-          fontWeight: "bold",
-          textShadow: "0 0 8px rgba(255, 48, 80, 0.5)"
-        }}>
-          Fitness meets gaming
-        </p>
 
-        <div style={{
-          color: "#fff",
-          fontSize: "0.95rem",
-          lineHeight: "1.8",
-          marginBottom: "2rem"
-        }}>
-          <div style={{ marginBottom: "1rem" }}>
-            <span style={{ color: "#ff3050", fontWeight: "bold" }}>💪 AI-Powered Workouts</span>
-            <br />
-            <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>
-              Use your camera for automatic rep counting with pose detection
-            </span>
-          </div>
-
-          <div style={{ marginBottom: "1rem" }}>
-            <span style={{ color: "#ff3050", fontWeight: "bold" }}>🎮 Gamified Training</span>
-            <br />
-            <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>
-              Solo mode, Burnouts, Live challenges & more game modes
-            </span>
-          </div>
-
-          <div style={{ marginBottom: "1rem" }}>
-            <span style={{ color: "#ff3050", fontWeight: "bold" }}>🏆 Compete & Connect</span>
-            <br />
-            <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>
-              Global leaderboards, achievements, and real-time chat
-            </span>
-          </div>
-
-          <div>
-            <span style={{ color: "#ff3050", fontWeight: "bold" }}>🎲 Earn Rewards</span>
-            <br />
-            <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>
-              Get dice for completing workouts across 16 exercises
-            </span>
-          </div>
-        </div>
-
+        {/* Loading dots */}
         <div style={{
           display: "flex",
           justifyContent: "center",
-          gap: "0.5rem",
-          alignItems: "center"
+          gap: "0.8rem",
+          alignItems: "center",
+          marginTop: "3rem"
         }}>
           <div style={{
-            width: "12px",
-            height: "12px",
+            width: "16px",
+            height: "16px",
             borderRadius: "50%",
             backgroundColor: "#ff3050",
-            boxShadow: "0 0 10px rgba(255, 48, 80, 0.8)",
+            boxShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
             animation: "pulse 1.5s ease-in-out infinite"
           }} />
           <div style={{
-            width: "12px",
-            height: "12px",
+            width: "16px",
+            height: "16px",
             borderRadius: "50%",
             backgroundColor: "#ff3050",
-            boxShadow: "0 0 10px rgba(255, 48, 80, 0.8)",
+            boxShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
             animation: "pulse 1.5s ease-in-out 0.2s infinite"
           }} />
           <div style={{
-            width: "12px",
-            height: "12px",
+            width: "16px",
+            height: "16px",
             borderRadius: "50%",
             backgroundColor: "#ff3050",
-            boxShadow: "0 0 10px rgba(255, 48, 80, 0.8)",
+            boxShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
             animation: "pulse 1.5s ease-in-out 0.4s infinite"
           }} />
         </div>
-
-        <p style={{
-          color: "#ff3050",
-          fontSize: "0.8rem",
-          textAlign: "center",
-          marginTop: "1.5rem",
-          opacity: 0.8
-        }}>
-          Loading your profile...
-        </p>
       </div>
       
       <style>{`
@@ -135,18 +117,38 @@ export default function LoadingScreen() {
             transform: scale(1.2);
           }
         }
-        @keyframes flicker {
+        @keyframes neonFlicker {
           0%, 18%, 22%, 25%, 53%, 57%, 100% {
             text-shadow: 
               0 0 10px rgba(255, 48, 80, 0.8),
               0 0 20px rgba(255, 48, 80, 0.6),
               0 0 30px rgba(255, 48, 80, 0.4),
-              0 0 40px rgba(255, 48, 80, 0.2);
+              0 0 40px rgba(255, 48, 80, 0.2),
+              2px 2px 0 rgba(0, 0, 0, 0.8);
           }
           20%, 24%, 55% {
             text-shadow: 
               0 0 5px rgba(255, 48, 80, 0.4),
-              0 0 10px rgba(255, 48, 80, 0.3);
+              0 0 10px rgba(255, 48, 80, 0.3),
+              2px 2px 0 rgba(0, 0, 0, 0.8);
+          }
+        }
+        @keyframes crossingScreen {
+          0% {
+            transform: translateY(-100%);
+          }
+          100% {
+            transform: translateY(100vh);
+          }
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
           }
         }
       `}</style>

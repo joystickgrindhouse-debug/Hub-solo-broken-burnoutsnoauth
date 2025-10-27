@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { auth } from "./firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
 import { UserService } from "./services/userService.js";
 import LoadingScreen from "./components/LoadingScreen.jsx";
+import OnboardingSlides from "./components/OnboardingSlides.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Login from "./views/Login.jsx";
 import Dashboard from "./views/Dashboard.jsx";
@@ -21,12 +22,29 @@ import Gameboard from "./views/Gameboard.jsx";
 import Navbar from "./components/Navbar.jsx";
 
 export default function App() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
   const [checkingSetup, setCheckingSetup] = useState(true);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [loadingStartTime] = useState(Date.now());
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+
+  // Function to refresh user profile (used after avatar creation)
+  const refreshUserProfile = async (userId) => {
+    try {
+      const result = await UserService.getUserProfile(userId);
+      if (result.success && result.profile) {
+        setUserProfile(result.profile);
+        return result.profile;
+      }
+    } catch (error) {
+      console.error("Error refreshing profile:", error);
+    }
+    return null;
+  };
 
   useEffect(() => {
     const MINIMUM_LOADING_TIME = 3000;
@@ -48,13 +66,18 @@ export default function App() {
           console.log("Profile fetch result:", result);
           if (result.success && result.profile) {
             setUserProfile(result.profile);
+            // Existing user logging in - show onboarding slides
+            setShowOnboarding(true);
           } else {
-            console.log("No profile found or fetch failed, will show avatar creator");
+            console.log("No profile found or fetch failed, will show avatar creator after onboarding");
             setUserProfile(null);
+            // New user signing up - show onboarding slides
+            setShowOnboarding(true);
           }
         } catch (error) {
           console.error("Error fetching profile:", error);
           setUserProfile(null);
+          setShowOnboarding(true);
         }
         setProfileLoaded(true);
         
@@ -69,6 +92,8 @@ export default function App() {
       } else {
         setUserProfile(null);
         setProfileLoaded(true);
+        setShowOnboarding(false);
+        setOnboardingComplete(false);
         clearTimeout(timeout);
         setLoading(false);
         setCheckingSetup(false);
@@ -81,15 +106,49 @@ export default function App() {
     };
   }, [loadingStartTime]);
 
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    setOnboardingComplete(true);
+  };
+
+  const handleSetupComplete = async (profile) => {
+    // Refresh the profile after avatar creation
+    const updatedProfile = await refreshUserProfile(user.uid);
+    if (updatedProfile && updatedProfile.hasCompletedSetup) {
+      setOnboardingComplete(true);
+      // Navigate to dashboard after successful setup
+      setTimeout(() => navigate("/dashboard"), 100);
+    }
+  };
+
+  // Show initial loading screen
   if (loading || checkingSetup || !profileLoaded) return <LoadingScreen />;
 
-  if (!user) return <Login />;
+  // Show onboarding slides after login/signup but before main app (only for logged-in users)
+  if (user && showOnboarding && !onboardingComplete) {
+    return <OnboardingSlides onComplete={handleOnboardingComplete} />;
+  }
 
+  // After onboarding, check if user needs to complete setup (only for logged-in users)
+  if (user && (!userProfile || !userProfile.hasCompletedSetup)) {
+    return <AvatarCreator user={user} isFirstTimeSetup={true} onSetupComplete={handleSetupComplete} userProfile={userProfile} />;
+  }
+
+  // Render routes (public and protected)
   return (
     <div>
-      <Navbar user={user} userProfile={userProfile} />
+      {user && <Navbar user={user} userProfile={userProfile} />}
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" />} />
+        <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
+        <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
+        
+        {/* Public routes */}
+        <Route 
+          path="/burnouts" 
+          element={<Burnouts user={user} userProfile={userProfile} />} 
+        />
+        
+        {/* Protected routes */}
         <Route 
           path="/dashboard" 
           element={
@@ -108,21 +167,13 @@ export default function App() {
         />
         <Route 
           path="/avatar-creator" 
-          element={user ? <AvatarCreator user={user} userProfile={userProfile} /> : <Navigate to="/" />} 
+          element={user ? <AvatarCreator user={user} userProfile={userProfile} /> : <Navigate to="/login" />} 
         />
         <Route 
           path="/solo" 
           element={
             <ProtectedRoute user={user} userProfile={userProfile}>
               <Solo user={user} userProfile={userProfile} />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/burnouts" 
-          element={
-            <ProtectedRoute user={user} userProfile={userProfile}>
-              <Burnouts user={user} userProfile={userProfile} />
             </ProtectedRoute>
           } 
         />

@@ -444,7 +444,7 @@ export default function Burnouts({ user, userProfile }) {
     }
   };
 
-  const endSession = () => {
+  const endSession = async () => {
     if (cameraRef.current) {
       cameraRef.current.stop();
     }
@@ -462,6 +462,34 @@ export default function Burnouts({ user, userProfile }) {
     }
 
     setIsWorkoutActive(false);
+    
+    // Save stats to Firebase if user is logged in
+    if (user && user.uid) {
+      try {
+        const { db } = await import("../firebase.js");
+        const { doc, updateDoc, getDoc, setDoc, increment } = await import("firebase/firestore");
+        
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if (userSnap.exists()) {
+          await updateDoc(userRef, {
+            totalReps: increment(totalReps),
+            diceBalance: increment(dice)
+          });
+        } else {
+          await setDoc(userRef, {
+            userId: user.uid,
+            totalReps: totalReps,
+            diceBalance: dice
+          });
+        }
+        console.log("Burnout stats saved successfully");
+      } catch (error) {
+        console.error("Error saving burnout stats:", error);
+      }
+    }
+    
     alert(`Burnout complete!\nTotal Reps: ${totalReps}\nDice Earned: ${dice}`);
   };
 
