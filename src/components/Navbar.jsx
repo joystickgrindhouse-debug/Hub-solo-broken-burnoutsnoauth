@@ -17,27 +17,30 @@ export default function Navbar({ user, userProfile }) {
 
   const avatarURL = userProfile?.avatarURL || user?.photoURL || "";
   const nickname = userProfile?.nickname || user?.displayName || "User";
+  const hasCompletedSetup = userProfile?.hasCompletedSetup || false;
 
   return (
     <nav className="navbar">
       <div className="logo">Rivalis Hub</div>
       <div className="nav-right">
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          {avatarURL && (
-            <img 
-              src={avatarURL} 
-              alt={nickname} 
-              style={{ 
-                width: "40px", 
-                height: "40px", 
-                borderRadius: "50%", 
-                background: "#fff",
-                border: "2px solid #ff4081"
-              }}
-            />
-          )}
-          <span style={{ color: "#fff", fontWeight: "600" }}>{nickname}</span>
-        </div>
+        {hasCompletedSetup && (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            {avatarURL && (
+              <img 
+                src={avatarURL} 
+                alt={nickname} 
+                style={{ 
+                  width: "40px", 
+                  height: "40px", 
+                  borderRadius: "50%", 
+                  background: "#fff",
+                  border: "2px solid #ff4081"
+                }}
+              />
+            )}
+            <span style={{ color: "#fff", fontWeight: "600" }}>{nickname}</span>
+          </div>
+        )}
         <div className="menu">
           <button onClick={() => setOpen(!open)}>Menu</button>
           {open && (
