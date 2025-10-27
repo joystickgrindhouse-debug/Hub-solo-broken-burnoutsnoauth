@@ -1,274 +1,56 @@
 # Rivalis Hub
 
 ## Overview
-Rivalis Hub is a mobile-friendly, React-based fitness and gaming dashboard with Firebase authentication, user profiles with nicknames, avatar creator, achievements tracking, real-time global and DM chat with Firestore persistence, and a comprehensive leaderboard integrating all game modes including Solo mode.
+Rivalis Hub is a mobile-friendly, React-based fitness and gaming dashboard. Its purpose is to gamify fitness through features like Firebase authentication, user profiles with nicknames and avatar creation, achievements tracking, real-time global and direct message chat with Firestore persistence, and a comprehensive leaderboard that integrates all game modes, including camera-based workout modes (Solo, Burnouts) and an interactive Gameboard. The project aims to provide an engaging and social fitness experience, combining exercise with gaming elements and community interaction.
 
-## Tech Stack
-- React 18
-- Vite 4 (dev server)
-- React Router v6
-- Firebase (Authentication & Firestore)
-- Emoji Mart for chat emojis
+## User Preferences
+I prefer simple, clear explanations and want the agent to adopt an iterative development approach. Before making any major architectural changes or implementing significant new features, please ask for confirmation. Do not make changes to the `assets/` folder.
 
-## Project Structure
-```
-rivalis-hub/
-├── index.html
-├── vite.config.js
-├── package.json
-├── src/
-│   ├── main.jsx (entry point)
-│   ├── App.jsx (main app with routing)
-│   ├── firebase.js (Firebase config)
-│   ├── avatarService.js (legacy avatar generation)
-│   ├── components/
-│   │   ├── Navbar.jsx (displays user avatar, nickname, Profile submenu)
-│   │   ├── LoadingScreen.jsx
-│   │   ├── UserAvatar.jsx
-│   │   ├── UserAvatarCustomizer.jsx (avatar creation with nickname)
-│   │   └── ProtectedRoute.jsx (authentication guard for routes)
-│   ├── services/
-│   │   ├── userService.js (user profile management)
-│   │   ├── nicknameService.js (nickname generation and validation)
-│   │   ├── chatService.js (chat message persistence)
-│   │   └── leaderboardService.js (score tracking and retrieval)
-│   └── views/
-│       ├── Login.jsx
-│       ├── Dashboard.jsx (with flickering "FITNESS REIMAGINED")
-│       ├── Profile.jsx (bio editing, achievements, streaks)
-│       ├── AvatarCreator.jsx (standalone avatar customization)
-│       ├── Solo.jsx (MediaPipe pose detection, card system, dice rewards)
-│       ├── Achievements.jsx
-│       ├── GlobalChat.jsx (140vh container, doubled message history)
-│       ├── DMChat.jsx (140vh container, doubled message history)
-│       ├── Leaderboard.jsx (aggregates all game modes)
-│       ├── Burnouts.jsx (MediaPipe pose detection, rep counting, dice rewards)
-│       ├── Live.jsx
-│       ├── Run.jsx
-│       └── Gameboard.jsx
-└── assets/
-    ├── images/
-    │   ├── background.png
-    │   ├── burnouts.png
-    │   ├── gameboard.jpeg
-    │   ├── live.png
-    │   ├── run.png
-    │   └── solo.png
-    └── styles/
-        └── main.css
-```
+## System Architecture
 
-## Available Images
-- background.png - Main hero background
-- burnouts.png - Burnouts tile
-- gameboard.jpeg - Game board image
-- live.png - Live tile
-- run.png - Run tile
-- solo.png - Solo tile
+**UI/UX Decisions:**
+- Mobile-friendly, responsive design.
+- Red/black gaming theme with neon effects, utilizing the "Press Start 2P" font for a retro aesthetic.
+- Interactive event modals with themed buttons and animations.
+- Clean and modern UI for avatar creation with gradients and smooth animations.
+- Initial loading screen features "RIVALIS FITNESS REIMAGINED" with neon glow and crossing screen animation.
+- Onboarding system with 3-slide feature highlights after login/signup.
 
-## Key Features
+**Technical Implementations:**
+- **Frontend:** React 18 with Vite 4, React Router v6.
+- **Backend/Database:** Firebase (Authentication, Firestore).
+- **Chat System:** Real-time global and direct messaging with Firestore persistence (last 50 messages). Displays user avatars and nicknames.
+- **Workout Modes (Solo & Burnouts):**
+    - Camera-based workout modes using MediaPipe Pose detection for automatic rep counting.
+    - 16 exercises across 4 categories (Arms, Legs, Core, Cardio).
+    - Real-time pose skeleton overlay on camera feed.
+    - Dice reward system (1 dice per 30 reps).
+    - Wake lock support to prevent screen sleep.
+- **Gameboard Mode:**
+    - Interactive 40-space board game where users spend earned dice to roll and move.
+    - 6 unique space types (Challenge, Reward, Mystery, Boost, Plot Twist, Safe) with diverse events.
+    - Choice mechanics (Risk vs. Safe paths) and battle system (roll dice to defeat rivals).
+    - Special items (bonus dice, shields, free rolls, double points).
+    - Game progress (position, score, items, dice balance) tracked via Firestore.
+    - Dice balance saved immediately upon spending to prevent exploits.
+- **Leaderboard:** Aggregates scores across all game modes, filterable by mode or combined totals.
+- **User Profile & Avatar:**
+    - Forced avatar and nickname creation for first-time users.
+    - DiceBear avatar system (10 styles) with customization, randomizer, and custom seed.
+    - Nickname generation with validation.
+    - Profile page for bio editing, achievements, and streaks.
 
-### First-Time User Flow
-1. User signs up and logs in
-2. Forced to create avatar and nickname before accessing app
-3. Profile saved to Firestore with `hasCompletedSetup` flag
-4. Can edit profile anytime via Profile page
+**System Design Choices:**
+- **Authentication:** Firebase Authentication with `ProtectedRoute` component for route-level access control. New users are redirected through avatar creation flow.
+- **State Management:** Assumed React's internal state management and context API for simplicity.
+- **Data Persistence:** Firestore is the primary database for user profiles, chat messages, leaderboard scores, and game states.
+- **Modularity:** Services (userService, chatService, leaderboardService) abstract Firebase interactions.
+- **Routing:** Dedicated routes for login, dashboard, profile, avatar creation, and various game modes.
 
-### Chat System
-- **Global Chat**: Real-time messaging with all users, displays avatars and nicknames
-- **Direct Messages**: Search for users by nickname, send private messages
-- Both systems persist last 50 messages to Firestore for history
-
-### Solo Mode & Burnouts Mode
-- Camera-based workout modes with MediaPipe pose detection
-- **16 Total Exercises** across 4 categories with automatic rep counting:
-  - Arms: Push-ups, Plank Up-Downs, Tricep Dips, Shoulder Taps
-  - Legs: Squats, Lunges, Glute Bridges, Calf Raises
-  - Core: Crunches, Plank, Russian Twists, Leg Raises
-  - Cardio: Jumping Jacks, High Knees, Burpees, Mountain Climbers
-- Card system with random exercise selection (Solo) / Category-based selection (Burnouts)
-- Dice reward system: 1 dice earned per 30 reps
-- Real-time pose skeleton overlay on camera feed
-- Red/black gaming theme
-- Wake lock support to prevent screen sleep during workouts
-
-### Leaderboard
-- Aggregates scores across all game modes
-- Filter by specific game mode or view combined totals
-- Displays individual mode breakdowns for each player
-
-### Avatar System
-- 10 DiceBear avatar styles with customization
-- Nickname generation with validation
-- Avatar and nickname displayed in navbar and chats
-
-## Firestore Collections
-- `users`: User profiles with nickname, avatar, setup status
-- `globalChat`: Global chat messages with user info and avatars
-- `directMessages`: Direct messages between users
-- `leaderboard`: Scores from all game modes with metadata
-
-## Development
-- Dev server runs on port 5000
-- Configured for Replit proxy with all hosts allowed
-- Firebase authentication and Firestore pre-configured
-
-## Recent Changes
-
-### October 27, 2025 - Loading Screens, Onboarding System & Burnouts Public Access
-- **New Initial Loading Screen**:
-  - Replaced feature-heavy loading screen with clean "RIVALIS FITNESS REIMAGINED" display
-  - Uses Press Start 2P gaming font with neon glow effect
-  - Added crossing screen animation effect for retro gaming aesthetic
-  - Reduced loading time to 3 seconds for faster app responsiveness
-- **3-Slide Onboarding System**:
-  - Created OnboardingSlides component showing 3 feature highlights (4 seconds each)
-  - Slide 1: AI-Powered Workouts - Camera-based rep counting
-  - Slide 2: Gamified Training - Multiple game modes
-  - Slide 3: Compete & Connect - Leaderboards and social features
-  - Shows after login for existing users (directs to dashboard after)
-  - Shows after signup for new users (directs to avatar creator after)
-- **Avatar Creator Navigation Fix**:
-  - Fixed infinite redirect loop preventing users from leaving avatar creator
-  - Added automatic profile refresh after avatar save
-  - Implemented automatic navigation to dashboard after successful setup
-  - Users can now properly access dropdown menus and navigate after avatar creation
-- **Burnouts Mode Public Access**:
-  - Removed authentication requirement - now accessible to all users without login
-  - Maintains Solo-style scoring system with dice rewards (1 dice per 30 reps)
-  - Stats automatically saved to Firebase for authenticated users
-  - Unauthenticated users can use Burnouts without account creation
-- **Routing Architecture Update**:
-  - Restructured App.jsx to support both public and protected routes
-  - Created dedicated /login route for unauthenticated users
-  - Navbar only displays for authenticated users
-  - Maintained protection for dashboard, chat, achievements, and other private features
-
-### October 27, 2025 - Authentication Flow Fix & Theme Update
-- **Fixed Sign Up Freezing Issue**:
-  - Updated Login.jsx to create Firestore profile document when new users sign up
-  - Profile created with temporary nickname and avatar URL
-  - `hasCompletedSetup` flag set to false for new users
-- **Improved Loading Screen**:
-  - Reduced loading timeout from 15 seconds to 3 seconds for faster app responsiveness
-  - Loading screen now shows while checking user profile existence
-- **Fixed User Flow Routing**:
-  - ProtectedRoute now redirects new users to /avatar-creator instead of causing infinite loop
-  - /avatar-creator route made accessible to authenticated users without setup completion
-  - Proper redirect flow: New user → Sign up → Loading (3s) → Avatar Creator → Dashboard
-  - Proper redirect flow: Existing user → Sign in → Loading (3s) → Dashboard
-- **Avatar Creator Theme Update**:
-  - Changed from pastel purple theme to red/black neon matching app aesthetic
-  - All buttons now use red gradient (#ff3050 to #cc0033) with neon glow
-  - Avatar wrapper, active states, and errors all use consistent red theme
-  - Background changed to black/dark red gradient
-- **Navbar Enhancement**:
-  - Added Press Start 2P font to "Rivalis Hub" logo
-  - Logo maintains neon pulsating effect with red glow
-  - Avatar/nickname now hidden during profile creation, only shown after setup completion
-- **Replit Environment Setup**:
-  - Successfully migrated project to Replit environment
-  - Installed all npm dependencies using Replit package manager
-  - Workflow configured and running on port 5000
-  - All progress tracker items marked as complete
-
-### October 26, 2025 - Full Exercise Library Implementation
-- **Expanded Exercise Library (16 Total Exercises)**:
-  - **Solo Mode & Burnouts Mode** now support all 16 exercises with MediaPipe pose detection:
-    - **Arms** (4): Push-ups, Plank Up-Downs, Tricep Dips, Shoulder Taps
-    - **Legs** (4): Squats, Lunges, Glute Bridges, Calf Raises*
-    - **Core** (4): Crunches, Plank, Russian Twists, Leg Raises
-    - **Cardio** (4): Jumping Jacks, High Knees, Burpees, Mountain Climbers
-  - All exercises have working pose detection algorithms with rep counting
-  - *Calf Raises uses adaptive baseline calibration to accommodate different body types
-  - Plank exercise includes 3-second hold timer with form validation
-  - Both modes maintain consistent exercise detection logic
-
-### October 26, 2025 - Burnouts Mode & UI Improvements
-- **Burnouts Mode Complete Implementation**:
-  - Implemented MediaPipe Pose detection for camera-based automatic rep counting
-  - Full exercise library with 16 exercises across 4 categories
-  - Dice reward system: 1 dice per 30 reps
-  - Real-time pose skeleton overlay with green connections and red joints
-  - Red/black gaming theme matching app design
-  - Wake lock support to prevent screen sleep during workouts
-  - Camera permissions handling with proper error messages
-- **Navbar Dropdown Menu Fix**:
-  - Increased z-index to 99999 for full visibility
-  - Added max-height and overflow scrolling to prevent clipping
-  - Wider dropdown (200px) for better readability
-  - Works correctly on all screen sizes including mobile
-
-### October 26, 2025 - Solo Mode Pose Detection & Authentication Enhancement
-- **Solo Mode Complete Overhaul**:
-  - Implemented MediaPipe Pose detection for camera-based automatic rep counting
-  - Card system with random exercise draws from 4 categories (Arms, Legs, Core, Cardio)
-  - Full exercise library with 16 total exercises
-  - Dice reward system: 1 dice per 30 reps
-  - Real-time pose skeleton overlay with green connections and red joints
-  - Red/black gaming theme matching original Solo design
-  - Wake lock support to prevent screen sleep during workouts
-  - Camera permissions handling with proper error messages
-- **Authentication Protection**:
-  - Created ProtectedRoute component for route-level auth checks
-  - All routes now wrapped with ProtectedRoute
-  - Automatic redirect to login if authentication expires
-  - Ensures user and profile exist before accessing any protected page
-- **Dependencies Added**:
-  - @mediapipe/pose - Pose detection library
-  - @mediapipe/camera_utils - Camera utilities
-  - @mediapipe/drawing_utils - Drawing utilities for skeleton overlay
-
-### October 26, 2025 - Profile Restructure and Chat Enhancement
-- **Profile System Restructure**:
-  - Created dedicated Profile view page for bio editing, achievements display, and streaks (future feature)
-  - Moved Avatar Creator to separate route `/avatar-creator`
-  - Profile page focuses on user's fitness journey and accomplishments, not avatar customization
-- **Navbar Navigation Enhancement**:
-  - Added Profile dropdown submenu with "View Profile" and "Avatar Creator" options
-  - Submenu fully accessible via keyboard (Enter/Space), touch, and mouse interactions
-  - Submenu automatically closes after navigation selection for improved UX
-  - Semantic button element ensures proper keyboard focus and screen reader support
-- **Chat Message History Expansion**:
-  - Doubled message history viewing area in both Global Chat and Direct Messages
-  - Container height increased from 80vh to 140vh minimum
-  - Input textarea reduced from 80-120px to fixed 40px for more message visibility
-  - Users can now view approximately 2x more chat history at a glance
-- **Routing Structure**:
-  - `/profile` → Profile view (bio, achievements, streaks)
-  - `/avatar-creator` → Avatar customization page
-  - Clear separation of profile content vs avatar editing
-
-### October 24, 2025 - Major Feature Implementation
-- **User Profile System**: Users create nickname and avatar on first login (required before app access)
-- **Nickname System**: Auto-generated nicknames with manual customization and validation
-- **Chat System Overhaul**:
-  - GlobalChat: Real-time messaging with last 50 messages persisted to Firestore
-  - DMChat: Direct messaging with user search, recipient selection, last 50 messages persisted
-  - Both chats display user avatars and nicknames (no more emails)
-- **Solo Mode Integration**: 
-  - Created internal Solo page matching app design (no longer external link)
-  - Rep tracking system with automatic leaderboard submission (1 rep = 1 point)
-- **Leaderboard Enhancement**: 
-  - Aggregates scores from all game modes including Solo
-  - Filter by game mode or view all combined
-  - Displays individual mode breakdowns for each player
-- **Dashboard Update**: Added flickering "FITNESS REIMAGINED" power surge effect
-- **Navbar Enhancement**: Displays user avatar and nickname
-
-### October 23, 2025 - Initial Setup
-- Initial project setup from GitHub import
-- All PNG assets moved to assets/images/
-- Vite configured for Replit environment:
-  - Port 5000 on 0.0.0.0 host
-  - allowedHosts set to true to support Replit proxy
-- Dependencies installed: React 18, Vite 4.5, Firebase 10, React Router 6, Emoji Mart
-- Deployment configured for autoscale with preview server
-- Modern DiceBear avatar creator implemented:
-  - 10 beautiful avatar styles to choose from
-  - DiceBear API v7.x integration
-  - Smart avatar persistence (preserves both DiceBear and external URLs)
-  - Mobile-responsive design with vertical layout
-  - Randomize and custom seed functionality
-  - Backward compatible with legacy avatars (auto-migrates 9.x to 7.x)
-  - Clean, modern UI with gradients and smooth animations
+## External Dependencies
+- **Firebase:** For Authentication and Firestore (database).
+- **Vite:** As the development server and build tool.
+- **React Router:** For client-side routing.
+- **Emoji Mart:** For emoji support in the chat system.
+- **@mediapipe/pose, @mediapipe/camera_utils, @mediapipe/drawing_utils:** For camera-based pose detection and visualization in workout modes.
+- **DiceBear API (v7.x):** For avatar generation and customization.
