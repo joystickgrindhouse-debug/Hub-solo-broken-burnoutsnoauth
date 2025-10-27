@@ -75,20 +75,6 @@ export default function App() {
 
   if (!user) return <Login />;
 
-  // Only show avatar creator for truly new users (no profile exists at all)
-  if (user && !userProfile && profileLoaded) {
-    return (
-      <AvatarCreator 
-        user={user} 
-        isFirstTimeSetup={true} 
-        onSetupComplete={(profile) => {
-          console.log("Setup complete, updating profile:", profile);
-          setUserProfile(profile);
-        }} 
-      />
-    );
-  }
-
   return (
     <div>
       <Navbar user={user} userProfile={userProfile} />
@@ -107,6 +93,14 @@ export default function App() {
           element={
             <ProtectedRoute user={user} userProfile={userProfile}>
               <Profile user={user} userProfile={userProfile} />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/avatar-creator" 
+          element={
+            <ProtectedRoute user={user} userProfile={userProfile}>
+              <AvatarCreator user={user} userProfile={userProfile} />
             </ProtectedRoute>
           } 
         />
