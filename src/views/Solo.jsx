@@ -377,7 +377,6 @@ export default function Solo({ user, userProfile }) {
 
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
     
     if (results.poseLandmarks) {
       drawSkeleton(results.poseLandmarks);
@@ -507,12 +506,40 @@ export default function Solo({ user, userProfile }) {
         </header>
 
       <section style={styles.cardArea}>
-        <div style={styles.card}>
-          <div style={styles.cardSuit}>{currentSuit} {currentGroup}</div>
-          <div style={styles.cardExercise}>{currentExercise || 'Ready to start'}</div>
-          <div style={styles.cardReps}>Reps: {repGoal}</div>
-          <div style={styles.cardProgress}>Progress: {currentReps} / {repGoal}</div>
-          <div style={styles.cardDesc}>{currentExercise ? descriptions[currentExercise] : 'Click Start Workout to begin'}</div>
+        <div style={styles.playingCard}>
+          <div style={styles.cardCorner}>
+            <div style={styles.cardCornerValue}>{repGoal || '?'}</div>
+            <div style={styles.cardCornerSuit}>
+              {currentSuit === '♠' && '♠'}
+              {currentSuit === '♥' && '♥'}
+              {currentSuit === '♦' && '♦'}
+              {currentSuit === '♣' && '♣'}
+              {!currentSuit && '♠'}
+            </div>
+          </div>
+          <div style={styles.cardCenter}>
+            <div style={styles.cardSuitLarge}>
+              {currentSuit === '♠' && '♠'}
+              {currentSuit === '♥' && '♥'}
+              {currentSuit === '♦' && '♦'}
+              {currentSuit === '♣' && '♣'}
+              {!currentSuit && '♠'}
+            </div>
+            <div style={styles.cardExerciseName}>{currentExercise || 'READY'}</div>
+            <div style={styles.cardProgressText}>
+              {currentExercise ? `${currentReps} / ${repGoal}` : 'TAP START'}
+            </div>
+          </div>
+          <div style={styles.cardCornerBottom}>
+            <div style={styles.cardCornerValue}>{repGoal || '?'}</div>
+            <div style={styles.cardCornerSuit}>
+              {currentSuit === '♠' && '♠'}
+              {currentSuit === '♥' && '♥'}
+              {currentSuit === '♦' && '♦'}
+              {currentSuit === '♣' && '♣'}
+              {!currentSuit && '♠'}
+            </div>
+          </div>
         </div>
         <div style={styles.controls}>
           {!isWorkoutActive && (
@@ -528,6 +555,13 @@ export default function Solo({ user, userProfile }) {
       </section>
 
       <section style={styles.cameraArea}>
+        {userProfile?.avatarURL && (
+          <img 
+            src={userProfile.avatarURL} 
+            alt="Your Avatar"
+            style={styles.avatarBackground}
+          />
+        )}
         <video 
           ref={videoRef} 
           autoPlay 
@@ -586,41 +620,78 @@ const styles = {
     maxWidth: '640px',
     flexShrink: 0,
   },
-  card: {
-    background: 'rgba(255, 255, 255, 0.9)',
+  playingCard: {
+    position: 'relative',
+    background: '#ffffff',
     color: '#000',
-    border: '2px solid #ff2e2e',
-    borderRadius: '12px',
-    boxShadow: '0 0 20px rgba(255, 46, 46, 0.5)',
-    padding: '12px',
+    border: '3px solid #000',
+    borderRadius: '16px',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), inset 0 0 0 8px #ffffff',
+    padding: '20px',
     marginBottom: '10px',
+    aspectRatio: '2.5/3.5',
+    maxWidth: '280px',
+    margin: '0 auto 10px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
   },
-  cardSuit: {
+  cardCorner: {
+    position: 'absolute',
+    top: '12px',
+    left: '12px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '2px',
+  },
+  cardCornerBottom: {
+    position: 'absolute',
+    bottom: '12px',
+    right: '12px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '2px',
+    transform: 'rotate(180deg)',
+  },
+  cardCornerValue: {
+    fontSize: '2rem',
+    fontWeight: 'bold',
+    lineHeight: 1,
     color: '#ff2e2e',
+  },
+  cardCornerSuit: {
+    fontSize: '1.5rem',
+    lineHeight: 1,
+  },
+  cardCenter: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    flex: 1,
+    paddingTop: '40px',
+    paddingBottom: '40px',
+  },
+  cardSuitLarge: {
+    fontSize: '4rem',
+    lineHeight: 1,
+  },
+  cardExerciseName: {
+    fontSize: 'clamp(1.1rem, 4vw, 1.4rem)',
     fontWeight: 'bold',
-    fontSize: 'clamp(0.9rem, 3vw, 1.1rem)',
-    margin: '2px 0',
+    color: '#000',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
   },
-  cardExercise: {
-    fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
+  cardProgressText: {
+    fontSize: 'clamp(1rem, 3vw, 1.2rem)',
     fontWeight: 'bold',
-    margin: '4px 0',
-  },
-  cardReps: {
-    fontSize: 'clamp(0.85rem, 2.5vw, 1rem)',
-    margin: '2px 0',
-    color: '#333',
-  },
-  cardProgress: {
-    fontSize: 'clamp(0.85rem, 2.5vw, 1rem)',
-    margin: '2px 0',
-    color: '#333',
-  },
-  cardDesc: {
-    fontSize: 'clamp(0.75rem, 2vw, 0.9rem)',
-    margin: '4px 0',
-    color: '#555',
-    fontStyle: 'italic',
+    color: '#ff2e2e',
+    textAlign: 'center',
   },
   controls: {
     display: 'flex',
@@ -645,11 +716,24 @@ const styles = {
     maxWidth: '640px',
     maxHeight: '50vh',
     aspectRatio: '4/3',
-    border: '2px solid #ff2e2e',
+    border: '3px solid #ff2e2e',
     borderRadius: '12px',
     overflow: 'hidden',
-    background: '#000',
+    background: '#1a1a1a',
     flexShrink: 1,
+    boxShadow: '0 0 30px rgba(255, 46, 46, 0.6)',
+  },
+  avatarBackground: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '60%',
+    height: '60%',
+    objectFit: 'contain',
+    opacity: 0.4,
+    filter: 'blur(2px)',
+    zIndex: 1,
   },
   video: {
     position: 'absolute',
@@ -658,7 +742,10 @@ const styles = {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
-    display: 'none',
+    opacity: 0,
+    visibility: 'hidden',
+    pointerEvents: 'none',
+    zIndex: 0,
   },
   canvas: {
     position: 'absolute',
@@ -667,6 +754,7 @@ const styles = {
     width: '100%',
     height: '100%',
     objectFit: 'contain',
+    zIndex: 3,
   },
   toast: {
     position: 'fixed',
