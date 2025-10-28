@@ -14,6 +14,7 @@ export default function Burnouts({ user, userProfile }) {
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [toast, setToast] = useState('');
   const [showDrawButton, setShowDrawButton] = useState(false);
+  const [selectedBurnoutType, setSelectedBurnoutType] = useState(null);
   
   const repInProgressRef = useRef(false);
   const poseRef = useRef(null);
@@ -62,8 +63,21 @@ export default function Burnouts({ user, userProfile }) {
   };
 
   const drawCard = () => {
-    const categories = ['Arms', 'Legs', 'Core', 'Cardio'];
-    const randCategory = categories[Math.floor(Math.random() * categories.length)];
+    let categoriesToUse = [];
+    
+    if (selectedBurnoutType === 'Full Body') {
+      categoriesToUse = ['Arms', 'Legs', 'Core', 'Cardio'];
+    } else if (selectedBurnoutType === 'Arms') {
+      categoriesToUse = ['Arms'];
+    } else if (selectedBurnoutType === 'Legs') {
+      categoriesToUse = ['Legs'];
+    } else if (selectedBurnoutType === 'Core') {
+      categoriesToUse = ['Core'];
+    } else {
+      categoriesToUse = ['Arms', 'Legs', 'Core', 'Cardio'];
+    }
+    
+    const randCategory = categoriesToUse[Math.floor(Math.random() * categoriesToUse.length)];
     const categoryExercises = exercises[randCategory];
     const exercise = categoryExercises[Math.floor(Math.random() * categoryExercises.length)];
     const goal = Math.floor(Math.random() * 13) + 2;
@@ -385,6 +399,11 @@ export default function Burnouts({ user, userProfile }) {
   };
 
   const startWorkout = async () => {
+    if (!selectedBurnoutType) {
+      alert('Please select a burnout type first!');
+      return;
+    }
+    
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
@@ -394,8 +413,15 @@ export default function Burnouts({ user, userProfile }) {
         } 
       });
       
+      if (!stream || !stream.active) {
+        throw new Error('Camera stream not available');
+      }
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        await videoRef.current.play().catch(err => {
+          console.error('Video play error:', err);
+        });
       }
 
       if ('wakeLock' in navigator) {
@@ -440,7 +466,13 @@ export default function Burnouts({ user, userProfile }) {
       showToast('Burnout started!');
     } catch (err) {
       console.error('Camera error:', err);
-      alert('Camera permission denied. Please allow camera access to use Burnouts mode.');
+      if (err.name === 'NotAllowedError') {
+        alert('Camera permission denied. Please allow camera access in your browser settings to use Burnouts mode.');
+      } else if (err.name === 'NotFoundError') {
+        alert('No camera found. Please connect a camera to use Burnouts mode.');
+      } else {
+        alert('Camera error: ' + err.message + '. Please check your camera permissions and try again.');
+      }
     }
   };
 
@@ -516,7 +548,54 @@ export default function Burnouts({ user, userProfile }) {
           <div style={styles.diceCounter}>🎲 Dice: {dice}</div>
         </header>
 
-      <section style={styles.cardArea}>
+      {!selectedBurnoutType && !isWorkoutActive && (
+        <section style={styles.selectionScreen}>
+          <h2 style={styles.selectionTitle}>Select Your Burnout Type</h2>
+          <div style={styles.selectionGrid}>
+            <button 
+              onClick={() => setSelectedBurnoutType('Arms')} 
+              style={styles.selectionButton}
+            >
+              <div style={styles.selectionIcon}>💪</div>
+              <div style={styles.selectionName}>ARMS</div>
+              <div style={styles.selectionDesc}>Push-ups, Dips, Shoulder Taps</div>
+            </button>
+            <button 
+              onClick={() => setSelectedBurnoutType('Legs')} 
+              style={styles.selectionButton}
+            >
+              <div style={styles.selectionIcon}>🦵</div>
+              <div style={styles.selectionName}>LEGS</div>
+              <div style={styles.selectionDesc}>Squats, Lunges, Calf Raises</div>
+            </button>
+            <button 
+              onClick={() => setSelectedBurnoutType('Core')} 
+              style={styles.selectionButton}
+            >
+              <div style={styles.selectionIcon}>🔥</div>
+              <div style={styles.selectionName}>CORE</div>
+              <div style={styles.selectionDesc}>Crunches, Planks, Twists</div>
+            </button>
+            <button 
+              onClick={() => setSelectedBurnoutType('Full Body')} 
+              style={styles.selectionButton}
+            >
+              <div style={styles.selectionIcon}>⚡</div>
+              <div style={styles.selectionName}>FULL BODY</div>
+              <div style={styles.selectionDesc}>All exercises combined</div>
+            </button>
+          </div>
+        </section>
+      )}
+
+      {selectedBurnoutType && (
+        <section style={styles.cardArea}>
+        <div style={styles.selectedTypeDisplay}>
+          <span style={styles.selectedTypeText}>Selected: {selectedBurnoutType}</span>
+          {!isWorkoutActive && (
+            <button onClick={() => setSelectedBurnoutType(null)} style={styles.changeButton}>Change</button>
+          )}
+        </div>
         <div style={styles.card}>
           <div style={styles.cardCategory}>💪 {currentCategory}</div>
           <div style={styles.cardExercise}>{currentExercise || 'Ready to start'}</div>
@@ -536,26 +615,29 @@ export default function Burnouts({ user, userProfile }) {
           )}
         </div>
       </section>
+      )}
 
-      <section style={styles.cameraArea}>
-        <video 
-          ref={videoRef} 
-          autoPlay 
-          playsInline 
-          muted 
-          style={styles.video}
-        />
-        <canvas 
-          ref={canvasRef} 
-          width="640" 
-          height="480"
-          style={styles.canvas}
-        />
-      </section>
+      {selectedBurnoutType && (
+        <section style={styles.cameraArea}>
+          <video 
+            ref={videoRef} 
+            autoPlay 
+            playsInline 
+            muted 
+            style={styles.video}
+          />
+          <canvas 
+            ref={canvasRef} 
+            width="640" 
+            height="480"
+            style={styles.canvas}
+          />
+        </section>
+      )}
 
-        {toast && <div style={styles.toast}>{toast}</div>}
+      {toast && <div style={styles.toast}>{toast}</div>}
 
-        <footer style={styles.footer}>Push yourself to the limit. Break through barriers.</footer>
+      <footer style={styles.footer}>Push yourself to the limit. Break through barriers.</footer>
       </div>
     </div>
   );
@@ -694,5 +776,73 @@ const styles = {
     fontSize: 'clamp(0.7rem, 2vw, 0.9rem)',
     color: '#ff2e2e',
     marginTop: '10px',
+  },
+  selectionScreen: {
+    width: '100%',
+    maxWidth: '800px',
+    padding: '20px',
+  },
+  selectionTitle: {
+    color: '#ff2e2e',
+    fontSize: 'clamp(1.2rem, 4vw, 1.8rem)',
+    marginBottom: '20px',
+  },
+  selectionGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+    gap: '16px',
+    width: '100%',
+  },
+  selectionButton: {
+    background: 'rgba(255, 255, 255, 0.9)',
+    border: '3px solid #ff2e2e',
+    borderRadius: '12px',
+    padding: '20px',
+    cursor: 'pointer',
+    transition: '0.3s',
+    fontFamily: 'inherit',
+    color: '#000',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  selectionIcon: {
+    fontSize: '3rem',
+  },
+  selectionName: {
+    fontSize: 'clamp(1rem, 3vw, 1.3rem)',
+    fontWeight: 'bold',
+    color: '#ff2e2e',
+  },
+  selectionDesc: {
+    fontSize: 'clamp(0.7rem, 2vw, 0.85rem)',
+    color: '#555',
+    textAlign: 'center',
+  },
+  selectedTypeDisplay: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    background: 'rgba(255, 255, 255, 0.9)',
+    border: '2px solid #ff2e2e',
+    borderRadius: '8px',
+    padding: '10px 15px',
+    marginBottom: '10px',
+  },
+  selectedTypeText: {
+    color: '#ff2e2e',
+    fontWeight: 'bold',
+    fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
+  },
+  changeButton: {
+    background: 'transparent',
+    border: '2px solid #ff2e2e',
+    color: '#ff2e2e',
+    padding: '5px 12px',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: 'clamp(0.75rem, 2vw, 0.9rem)',
+    fontFamily: 'inherit',
   },
 };

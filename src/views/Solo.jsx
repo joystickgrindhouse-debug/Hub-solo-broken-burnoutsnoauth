@@ -397,8 +397,15 @@ export default function Solo({ user, userProfile }) {
         } 
       });
       
+      if (!stream || !stream.active) {
+        throw new Error('Camera stream not available');
+      }
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        await videoRef.current.play().catch(err => {
+          console.error('Video play error:', err);
+        });
       }
 
       if ('wakeLock' in navigator) {
@@ -445,7 +452,13 @@ export default function Solo({ user, userProfile }) {
       showToast('Workout started!');
     } catch (err) {
       console.error('Camera error:', err);
-      alert('Camera permission denied. Please allow camera access to use Solo mode.');
+      if (err.name === 'NotAllowedError') {
+        alert('Camera permission denied. Please allow camera access in your browser settings to use Solo mode.');
+      } else if (err.name === 'NotFoundError') {
+        alert('No camera found. Please connect a camera to use Solo mode.');
+      } else {
+        alert('Camera error: ' + err.message + '. Please check your camera permissions and try again.');
+      }
     }
   };
 
