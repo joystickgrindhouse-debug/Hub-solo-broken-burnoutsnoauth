@@ -23,9 +23,12 @@ I prefer simple, clear explanations and want the agent to adopt an iterative dev
 - **Workout Modes (Solo & Burnouts):**
     - Camera-based workout modes using MediaPipe Pose detection for automatic rep counting.
     - 16 exercises across 4 categories (Arms, Legs, Core, Cardio).
-    - Real-time pose skeleton overlay on camera feed.
+    - **Burnouts Mode:** Selection screen for workout type (Arms, Legs, Core, Full Body) with proper game logic filtering exercises by selected category.
+    - **Playing Card UI:** Workout cards designed to look like authentic playing cards with corner values, center suit icons, and clear exercise names.
+    - **Avatar Background System:** User's avatar displays as a blurred background (40% opacity) with green pose skeleton overlay on transparent canvas, providing visual feedback without showing actual camera feed.
     - Dice reward system (1 dice per 30 reps).
     - Wake lock support to prevent screen sleep.
+    - Enhanced camera permission handling with specific error messages for different failure types.
 - **Gameboard Mode:**
     - Interactive 40-space board game where users spend earned dice to roll and move.
     - 6 unique space types (Challenge, Reward, Mystery, Boost, Plot Twist, Safe) with diverse events.
