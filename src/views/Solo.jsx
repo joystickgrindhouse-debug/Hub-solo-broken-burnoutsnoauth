@@ -177,10 +177,17 @@ export default function Solo({ user, userProfile }) {
 
   const drawSkeleton = (keypoints, canvas) => {
     const ctx = canvasCtxRef.current;
-    if (!canvas || !ctx) return;
+    if (!canvas || !ctx || !canvasRef.current) return;
 
-    const width = canvas.width;
-    const height = canvas.height;
+    // Ensure canvas has the right dimensions
+    const rect = canvasRef.current.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    
+    if (canvasRef.current.width !== width || canvasRef.current.height !== height) {
+      canvasRef.current.width = width;
+      canvasRef.current.height = height;
+    }
 
     ctx.strokeStyle = isCorrectForm ? "#00ff00" : "#ff2e2e";
     ctx.lineWidth = 2;
@@ -446,23 +453,28 @@ export default function Solo({ user, userProfile }) {
     videoContainer: {
       position: "relative",
       width: "100%",
-      backgroundColor: "#000",
       maxWidth: "640px",
-      margin: "0 auto"
+      margin: "0 auto",
+      aspectRatio: "4/3"
     },
     video: {
-      width: "100%",
-      height: "auto",
-      display: "block",
-      borderRadius: "5px"
-    },
-    canvas: {
-      width: "100%",
-      height: "auto",
       position: "absolute",
       top: 0,
       left: 0,
-      borderRadius: "5px"
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
+      borderRadius: "5px",
+      zIndex: 1
+    },
+    canvas: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      borderRadius: "5px",
+      zIndex: 2
     },
     stats: {
       display: "grid",
@@ -577,10 +589,8 @@ export default function Solo({ user, userProfile }) {
                   autoPlay
                   muted
                   playsInline
-                  width="640"
-                  height="480"
                 />
-                <canvas ref={canvasRef} width={640} height={480} style={styles.canvas} />
+                <canvas ref={canvasRef} style={styles.canvas} />
               </div>
 
               <div style={styles.stats}>
