@@ -189,17 +189,10 @@ export default function Burnouts({ user, userProfile }) {
 
   const drawSkeleton = (keypoints, canvas) => {
     const ctx = canvasCtxRef.current;
-    if (!canvas || !ctx || !canvasRef.current) return;
+    if (!canvas || !ctx) return;
 
-    // Ensure canvas has the right dimensions
-    const rect = canvasRef.current.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    
-    if (canvasRef.current.width !== width || canvasRef.current.height !== height) {
-      canvasRef.current.width = width;
-      canvasRef.current.height = height;
-    }
+    const width = 640;
+    const height = 480;
 
     // Draw connections
     ctx.strokeStyle = "#00ff00";
@@ -726,6 +719,8 @@ export default function Burnouts({ user, userProfile }) {
                   />
                   <canvas
                     ref={canvasRef}
+                    width={640}
+                    height={480}
                     style={styles.canvas}
                   />
                 </div>

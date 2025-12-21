@@ -177,17 +177,10 @@ export default function Solo({ user, userProfile }) {
 
   const drawSkeleton = (keypoints, canvas) => {
     const ctx = canvasCtxRef.current;
-    if (!canvas || !ctx || !canvasRef.current) return;
+    if (!canvas || !ctx) return;
 
-    // Ensure canvas has the right dimensions
-    const rect = canvasRef.current.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    
-    if (canvasRef.current.width !== width || canvasRef.current.height !== height) {
-      canvasRef.current.width = width;
-      canvasRef.current.height = height;
-    }
+    const width = 640;
+    const height = 480;
 
     ctx.strokeStyle = isCorrectForm ? "#00ff00" : "#ff2e2e";
     ctx.lineWidth = 2;
@@ -590,7 +583,7 @@ export default function Solo({ user, userProfile }) {
                   muted
                   playsInline
                 />
-                <canvas ref={canvasRef} style={styles.canvas} />
+                <canvas ref={canvasRef} width={640} height={480} style={styles.canvas} />
               </div>
 
               <div style={styles.stats}>
