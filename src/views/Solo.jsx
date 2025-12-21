@@ -237,7 +237,9 @@ export default function Solo({ user, userProfile }) {
 
   const startWorkout = async () => {
     try {
+      console.log("Starting solo workout...");
       detectorRef.current = await initializePoseDetection();
+      console.log("Detector initialized");
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -246,10 +248,19 @@ export default function Solo({ user, userProfile }) {
           height: { ideal: 480 }
         }
       });
+      console.log("Camera stream obtained");
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        videoRef.current.onloadedmetadata = () => {
+          console.log("Video metadata loaded");
+        };
+        
+        videoRef.current.play().then(() => {
+          console.log("Video playing");
+        }).catch(err => {
+          console.error("Play error:", err);
+        });
       }
 
       if ("wakeLock" in navigator) {
@@ -264,7 +275,11 @@ export default function Solo({ user, userProfile }) {
       smootherRef.current = new LandmarkSmoother(5);
       setIsWorkoutActive(true);
       drawCard();
-      animationFrameRef.current = requestAnimationFrame(processFrame);
+      
+      // Start frame processing with a small delay to let video start
+      setTimeout(() => {
+        animationFrameRef.current = requestAnimationFrame(processFrame);
+      }, 500);
     } catch (err) {
       console.error("Camera error:", err);
       alert("Camera error: " + err.message);
@@ -431,17 +446,23 @@ export default function Solo({ user, userProfile }) {
     videoContainer: {
       position: "relative",
       width: "100%",
-      backgroundColor: "#000"
+      backgroundColor: "#000",
+      maxWidth: "640px",
+      margin: "0 auto"
     },
     video: {
-      display: "none",
-      width: "100%"
+      width: "100%",
+      height: "auto",
+      display: "block",
+      borderRadius: "5px"
     },
     canvas: {
       width: "100%",
-      border: "2px solid #ff2e2e",
-      borderRadius: "5px",
-      backgroundColor: "#000"
+      height: "auto",
+      position: "absolute",
+      top: 0,
+      left: 0,
+      borderRadius: "5px"
     },
     stats: {
       display: "grid",
@@ -550,7 +571,15 @@ export default function Solo({ user, userProfile }) {
           <>
             <div style={styles.workoutArea}>
               <div style={styles.videoContainer}>
-                <video ref={videoRef} style={styles.video} />
+                <video 
+                  ref={videoRef} 
+                  style={styles.video}
+                  autoPlay
+                  muted
+                  playsInline
+                  width="640"
+                  height="480"
+                />
                 <canvas ref={canvasRef} width={640} height={480} style={styles.canvas} />
               </div>
 
