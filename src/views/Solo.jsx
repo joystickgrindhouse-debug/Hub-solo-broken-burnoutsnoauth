@@ -155,9 +155,9 @@ export default function Solo({ user, userProfile }) {
       const avgHipY = (leftHip.y + rightHip.y) / 2;
       const kneeFlexion = avgKneeY - avgHipY;
       
-      if (kneeFlexion > 0.15 && !repInProgressRef.current) {
+      if (kneeFlexion > 0.10 && !repInProgressRef.current) {
         repInProgressRef.current = true;
-      } else if (kneeFlexion < 0.05 && repInProgressRef.current) {
+      } else if (kneeFlexion < 0.02 && repInProgressRef.current) {
         repInProgressRef.current = false;
         incrementRep();
       }
