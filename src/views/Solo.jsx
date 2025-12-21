@@ -176,11 +176,11 @@ export default function Solo({ user, userProfile }) {
       const avgHipY = (leftHip.y + rightHip.y) / 2;
       const kneeFlexion = avgKneeY - avgHipY;
       
-      setIsCorrectForm(kneeFlexion > 0.08);
+      setIsCorrectForm(kneeFlexion > 0.06);
       
-      if (kneeFlexion > 0.10 && !repInProgressRef.current) {
+      if (kneeFlexion > 0.07 && !repInProgressRef.current) {
         repInProgressRef.current = true;
-      } else if (kneeFlexion < 0.02 && repInProgressRef.current) {
+      } else if (kneeFlexion < 0.00 && repInProgressRef.current) {
         repInProgressRef.current = false;
         incrementRep();
       }
@@ -189,9 +189,9 @@ export default function Solo({ user, userProfile }) {
       const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
       const elbowFlexion = avgElbowY - avgShoulderY;
       
-      if (elbowFlexion > 0.09 && !repInProgressRef.current) {
+      if (elbowFlexion > 0.07 && !repInProgressRef.current) {
         repInProgressRef.current = true;
-      } else if (elbowFlexion < 0.01 && repInProgressRef.current) {
+      } else if (elbowFlexion < -0.01 && repInProgressRef.current) {
         repInProgressRef.current = false;
         incrementRep();
       }
@@ -199,9 +199,9 @@ export default function Solo({ user, userProfile }) {
       const avgWristY = (leftWrist.y + rightWrist.y) / 2;
       const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
       
-      if (avgWristY < avgShoulderY - 0.03 && !repInProgressRef.current) {
+      if (avgWristY < avgShoulderY - 0.02 && !repInProgressRef.current) {
         repInProgressRef.current = true;
-      } else if (avgWristY > avgShoulderY + 0.10 && repInProgressRef.current) {
+      } else if (avgWristY > avgShoulderY + 0.08 && repInProgressRef.current) {
         repInProgressRef.current = false;
         incrementRep();
       }
@@ -210,9 +210,9 @@ export default function Solo({ user, userProfile }) {
       const avgHipY = (leftHip.y + rightHip.y) / 2;
       const kneeRaise = avgHipY - maxKneeY;
       
-      if (kneeRaise > 0.12 && !repInProgressRef.current) {
+      if (kneeRaise > 0.10 && !repInProgressRef.current) {
         repInProgressRef.current = true;
-      } else if (kneeRaise < 0.02 && repInProgressRef.current) {
+      } else if (kneeRaise < 0.01 && repInProgressRef.current) {
         repInProgressRef.current = false;
         incrementRep();
       }
@@ -221,9 +221,9 @@ export default function Solo({ user, userProfile }) {
       const avgHipY = (leftHip.y + rightHip.y) / 2;
       const crunchDistance = avgHipY - avgShoulderY;
       
-      if (crunchDistance < 0.28 && !repInProgressRef.current) {
+      if (crunchDistance < 0.30 && !repInProgressRef.current) {
         repInProgressRef.current = true;
-      } else if (crunchDistance > 0.32 && repInProgressRef.current) {
+      } else if (crunchDistance > 0.30 && repInProgressRef.current) {
         repInProgressRef.current = false;
         incrementRep();
       }
@@ -231,7 +231,7 @@ export default function Solo({ user, userProfile }) {
       const avgElbowY = (leftElbow.y + rightElbow.y) / 2;
       const avgWristY = (leftWrist.y + rightWrist.y) / 2;
       const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-      const elbowDown = avgElbowY > avgShoulderY - 0.02;
+      const elbowDown = avgElbowY > avgShoulderY - 0.05;
       
       if (elbowDown && !repInProgressRef.current) {
         repInProgressRef.current = true;
@@ -244,9 +244,9 @@ export default function Solo({ user, userProfile }) {
       const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
       const dipDepth = avgElbowY - avgShoulderY;
       
-      if (dipDepth > 0.06 && !repInProgressRef.current) {
+      if (dipDepth > 0.04 && !repInProgressRef.current) {
         repInProgressRef.current = true;
-      } else if (dipDepth < 0.00 && repInProgressRef.current) {
+      } else if (dipDepth < -0.02 && repInProgressRef.current) {
         repInProgressRef.current = false;
         incrementRep();
       }
@@ -255,7 +255,7 @@ export default function Solo({ user, userProfile }) {
       const rightWristX = rightWrist.x;
       const leftShoulderX = leftShoulder.x;
       const rightShoulderX = rightShoulder.x;
-      const tapDetected = Math.abs(leftWristX - rightShoulderX) < 0.18 || Math.abs(rightWristX - leftShoulderX) < 0.18;
+      const tapDetected = Math.abs(leftWristX - rightShoulderX) < 0.20 || Math.abs(rightWristX - leftShoulderX) < 0.20;
       
       if (tapDetected && !repInProgressRef.current) {
         repInProgressRef.current = true;
@@ -269,9 +269,9 @@ export default function Solo({ user, userProfile }) {
       const lowerKneeY = Math.max(leftKnee.y, rightKnee.y);
       const lungeDepth = lowerKneeY - avgHipY;
       
-      if (lungeDepth > 0.15 && kneeYDiff > 0.12 && !repInProgressRef.current) {
+      if (lungeDepth > 0.12 && kneeYDiff > 0.10 && !repInProgressRef.current) {
         repInProgressRef.current = true;
-      } else if (lungeDepth < 0.08 && repInProgressRef.current) {
+      } else if (lungeDepth < 0.06 && repInProgressRef.current) {
         repInProgressRef.current = false;
         incrementRep();
       }
@@ -281,9 +281,9 @@ export default function Solo({ user, userProfile }) {
       const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
       const hipRaise = avgKneeY - avgHipY;
       
-      if (hipRaise > 0.08 && !repInProgressRef.current) {
+      if (hipRaise > 0.06 && !repInProgressRef.current) {
         repInProgressRef.current = true;
-      } else if (hipRaise < -0.08 && repInProgressRef.current) {
+      } else if (hipRaise < -0.10 && repInProgressRef.current) {
         repInProgressRef.current = false;
         incrementRep();
       }
@@ -299,8 +299,8 @@ export default function Solo({ user, userProfile }) {
           calfStartTimeRef.current = Date.now();
         }
         const elapsed = Date.now() - calfStartTimeRef.current;
-        const minThreshold = elapsed > 3000 ? 0.25 : 0.35;
-        const maxThreshold = elapsed > 3000 ? 0.55 : 0.48;
+        const minThreshold = elapsed > 3000 ? 0.20 : 0.30;
+        const maxThreshold = elapsed > 3000 ? 0.50 : 0.45;
         
         if (!repInProgressRef.current && ankleToHipDistance > minThreshold && ankleToHipDistance < maxThreshold) {
           calfFramesAccumRef.current.push(ankleToHipDistance);
@@ -313,8 +313,8 @@ export default function Solo({ user, userProfile }) {
           }
         }
       } else {
-        const raised = ankleToHipDistance <= calfBaselineRef.current - 0.035;
-        const lowered = ankleToHipDistance >= calfBaselineRef.current + 0.005;
+        const raised = ankleToHipDistance <= calfBaselineRef.current - 0.030;
+        const lowered = ankleToHipDistance >= calfBaselineRef.current + 0.000;
         
         if (raised && !repInProgressRef.current) {
           repInProgressRef.current = true;
@@ -328,7 +328,7 @@ export default function Solo({ user, userProfile }) {
       const avgHipY = (leftHip.y + rightHip.y) / 2;
       const plankAlignment = Math.abs(avgShoulderY - avgHipY);
       
-      if (plankAlignment < 0.18 && !repInProgressRef.current) {
+      if (plankAlignment < 0.20 && !repInProgressRef.current) {
         repInProgressRef.current = true;
         setTimeout(() => {
           if (repInProgressRef.current) {
@@ -336,7 +336,7 @@ export default function Solo({ user, userProfile }) {
             repInProgressRef.current = false;
           }
         }, 3000);
-      } else if (plankAlignment >= 0.25 && repInProgressRef.current) {
+      } else if (plankAlignment >= 0.30 && repInProgressRef.current) {
         repInProgressRef.current = false;
       }
     } else if (currentExercise === 'Russian Twists') {
@@ -346,9 +346,9 @@ export default function Solo({ user, userProfile }) {
       const avgWristX = (leftWristX + rightWristX) / 2;
       const twistDistance = Math.abs(avgWristX - avgShoulderX);
       
-      if (twistDistance > 0.15 && !repInProgressRef.current) {
+      if (twistDistance > 0.12 && !repInProgressRef.current) {
         repInProgressRef.current = true;
-      } else if (twistDistance < 0.07 && repInProgressRef.current) {
+      } else if (twistDistance < 0.05 && repInProgressRef.current) {
         repInProgressRef.current = false;
         incrementRep();
       }
@@ -359,9 +359,9 @@ export default function Solo({ user, userProfile }) {
       const avgHipY = (leftHip.y + rightHip.y) / 2;
       const legRaise = avgHipY - avgAnkleY;
       
-      if (legRaise < 0.35 && !repInProgressRef.current) {
+      if (legRaise < 0.40 && !repInProgressRef.current) {
         repInProgressRef.current = true;
-      } else if (legRaise > 0.45 && repInProgressRef.current) {
+      } else if (legRaise > 0.40 && repInProgressRef.current) {
         repInProgressRef.current = false;
         incrementRep();
       }
@@ -369,11 +369,11 @@ export default function Solo({ user, userProfile }) {
       const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
       const avgHipY = (leftHip.y + rightHip.y) / 2;
       const avgKneeY = (leftKnee.y + rightKnee.y) / 2;
-      const isDown = avgShoulderY > 0.55;
+      const isDown = avgShoulderY > 0.58;
       
       if (isDown && !repInProgressRef.current) {
         repInProgressRef.current = true;
-      } else if (!isDown && avgShoulderY < 0.35 && repInProgressRef.current) {
+      } else if (!isDown && avgShoulderY < 0.38 && repInProgressRef.current) {
         repInProgressRef.current = false;
         incrementRep();
       }
@@ -384,9 +384,9 @@ export default function Solo({ user, userProfile }) {
       const minKneeY = Math.min(leftKneeY, rightKneeY);
       const kneeToShoulder = avgShoulderY - minKneeY;
       
-      if (kneeToShoulder < -0.08 && !repInProgressRef.current) {
+      if (kneeToShoulder < -0.06 && !repInProgressRef.current) {
         repInProgressRef.current = true;
-      } else if (kneeToShoulder > 0.03 && repInProgressRef.current) {
+      } else if (kneeToShoulder > 0.05 && repInProgressRef.current) {
         repInProgressRef.current = false;
         incrementRep();
       }
