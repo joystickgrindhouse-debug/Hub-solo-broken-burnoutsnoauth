@@ -542,8 +542,12 @@ export default function Burnouts({ user, userProfile }) {
       position: "relative",
       width: "100%",
       maxWidth: "640px",
+      height: "480px",
       margin: "0 auto",
-      aspectRatio: "4/3"
+      backgroundColor: "#000",
+      border: "2px solid #ff2e2e",
+      borderRadius: "5px",
+      overflow: "hidden"
     },
     video: {
       position: "absolute",
