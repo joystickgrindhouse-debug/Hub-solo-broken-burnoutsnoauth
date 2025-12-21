@@ -1,0 +1,51 @@
+Replace the existing pose tracking implementation in this project with MoveNet Thunder using TensorFlow.js.
+Requirements:
+Pose Tracking
+Use MoveNet Thunder (movenet_thunder) from TensorFlow.js
+Run fully in the browser using the webcam
+Track 17 keypoints reliably in real time
+Smooth landmark positions using a moving average or similar filter to reduce jitter
+Video & Overlay
+Display live webcam video
+Draw a real-time skeleton overlay on a canvas
+Render joints and limb connections clearly
+Ensure skeleton stays aligned with the video feed
+Reference Movement / Form Target
+Define ideal joint angle ranges for push-ups (elbows, shoulders, hips)
+Support looping a reference “correct form” target (angle-based, not video)
+Continuously compare user pose to ideal ranges
+Form Corrections (Audio + Logic)
+Detect common push-up form issues:
+Chest not low enough
+Right or left hip too high or uneven
+Elbow angle not bending enough
+Use Web Speech API for audible coaching cues such as:
+“Lower your chest”
+“Lower your right hip”
+“Keep your hips level”
+Throttle audio feedback to avoid repeating too frequently
+Rep Counting
+Implement a reliable rep counter using a state machine:
+Top position → Bottom position → Top position = 1 rep
+Base rep detection on elbow angle and chest height
+Display a live visual rep counter
+Speak the rep number aloud when a rep is completed
+Exercise Cards & Progression
+Define exercise cards with:
+Exercise name
+Target rep count
+Automatically advance to the next card when target reps are reached
+Reset rep counter for each new card
+Tracking & Stats
+Track total reps completed across all exercises
+Display total reps on screen
+Code Structure
+Remove or disable all previous pose tracking code (MediaPipe or others)
+Use clean, well-commented JavaScript
+Separate logic for:
+Pose detection
+Angle calculations
+Rep counting
+Audio feedback
+UI updates
+The final result should be a stable, real-time fitness form tracker using MoveNet Thunder with visual skeleton overlay, audible coaching, rep counting, exercise progression, and total rep tracking.
