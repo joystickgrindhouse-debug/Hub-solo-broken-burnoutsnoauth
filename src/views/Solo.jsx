@@ -15,8 +15,10 @@ export default function Solo({ user, userProfile }) {
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [toast, setToast] = useState('');
   const [showDrawButton, setShowDrawButton] = useState(false);
+  const [isCorrectForm, setIsCorrectForm] = useState(false);
   
   const repInProgressRef = useRef(false);
+  const audioQueueRef = useRef(null);
   const poseRef = useRef(null);
   const cameraRef = useRef(null);
   const wakeLockRef = useRef(null);
@@ -63,14 +65,21 @@ export default function Solo({ user, userProfile }) {
   };
 
   const speakRepCount = (repCount) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(repCount.toString());
-      utterance.rate = 1.2;
-      utterance.pitch = 1;
-      utterance.volume = 1;
-      window.speechSynthesis.speak(utterance);
-    }
+    if (audioQueueRef.current) clearTimeout(audioQueueRef.current);
+    audioQueueRef.current = setTimeout(() => {
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(repCount.toString());
+          utterance.rate = 1.5;
+          utterance.pitch = 1;
+          utterance.volume = 1;
+          window.speechSynthesis.speak(utterance);
+        } catch (e) {
+          console.log('Audio speak error:', e);
+        }
+      }
+    }, 100);
   };
 
   const drawCard = () => {
@@ -123,7 +132,7 @@ export default function Solo({ user, userProfile }) {
     const width = canvas.width;
     const height = canvas.height;
     
-    ctx.strokeStyle = '#00ff00';
+    ctx.strokeStyle = isCorrectForm ? '#00ff00' : '#ff2e2e';
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     
@@ -138,7 +147,7 @@ export default function Solo({ user, userProfile }) {
       }
     });
     
-    ctx.fillStyle = '#ff2e2e';
+    ctx.fillStyle = isCorrectForm ? '#00ff00' : '#ff2e2e';
     landmarks.forEach(landmark => {
       if (landmark) {
         ctx.beginPath();
@@ -166,6 +175,8 @@ export default function Solo({ user, userProfile }) {
       const avgKneeY = (leftKnee.y + rightKnee.y) / 2;
       const avgHipY = (leftHip.y + rightHip.y) / 2;
       const kneeFlexion = avgKneeY - avgHipY;
+      
+      setIsCorrectForm(kneeFlexion > 0.08);
       
       if (kneeFlexion > 0.10 && !repInProgressRef.current) {
         repInProgressRef.current = true;
@@ -541,6 +552,11 @@ export default function Solo({ user, userProfile }) {
             <div style={styles.cardProgressText}>
               {currentExercise ? `${currentReps} / ${repGoal}` : 'TAP START'}
             </div>
+            {currentExercise && (
+              <div style={styles.cardDescription}>
+                {descriptions[currentExercise]}
+              </div>
+            )}
           </div>
           <div style={styles.cardCornerBottom}>
             <div style={styles.cardCornerValue}>{repGoal || '?'}</div>
@@ -704,6 +720,14 @@ const styles = {
     fontWeight: 'bold',
     color: '#ff2e2e',
     textAlign: 'center',
+  },
+  cardDescription: {
+    fontSize: 'clamp(0.75rem, 2vw, 0.9rem)',
+    color: '#555',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: '8px',
+    lineHeight: 1.3,
   },
   controls: {
     display: 'flex',
