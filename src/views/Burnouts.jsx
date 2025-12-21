@@ -4,6 +4,7 @@ import { calculateAngle, isConfident, getFormIssues } from "../logic/angleCalcul
 import { speakFeedback, speakNumber, getCoachingMessage } from "../logic/audioFeedback.js";
 import RepCounter from "../logic/repCounter.js";
 import LandmarkSmoother from "../logic/smoothing.js";
+import ExerciseAvatar from "../components/ExerciseAvatar.jsx";
 
 export default function Burnouts({ user, userProfile }) {
   const videoRef = useRef(null);
@@ -714,13 +715,7 @@ export default function Burnouts({ user, userProfile }) {
             <>
               <div style={styles.workoutArea}>
                 <div style={styles.videoContainer}>
-                  <video 
-                    ref={videoRef} 
-                    style={styles.video}
-                    autoPlay
-                    muted
-                    playsInline
-                  />
+                  <ExerciseAvatar exercise={currentExercise} animationKey={currentExercise} />
                   <canvas
                     ref={canvasRef}
                     width={640}
