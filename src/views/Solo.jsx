@@ -778,10 +778,10 @@ const styles = {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
-    opacity: 0,
-    visibility: 'hidden',
+    opacity: 1,
+    visibility: 'visible',
     pointerEvents: 'none',
-    zIndex: 0,
+    zIndex: 1,
   },
   canvas: {
     position: 'absolute',
@@ -790,7 +790,7 @@ const styles = {
     width: '100%',
     height: '100%',
     objectFit: 'contain',
-    zIndex: 3,
+    zIndex: 2,
   },
   toast: {
     position: 'fixed',
