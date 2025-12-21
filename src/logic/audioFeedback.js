@@ -20,7 +20,7 @@ export function speakFeedback(text) {
   speechSynthesis.cancel();
   
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 1.2; // Faster speech for coaching
+  utterance.rate = 0.8; // Slower speech for clarity
   utterance.pitch = 1;
   utterance.volume = 1;
   
