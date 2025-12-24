@@ -249,34 +249,35 @@ export default function Burnouts({ user, userProfile }) {
     }
 
     try {
-      // Ensure canvas context exists
+      // Ensure canvas context exists with transparency
       if (canvasRef.current && !canvasCtxRef.current) {
-        canvasCtxRef.current = canvasRef.current.getContext("2d");
+        canvasCtxRef.current = canvasRef.current.getContext("2d", { alpha: true });
       }
 
       const pose = await detectPose(videoRef.current);
 
-      if (pose && pose.keypoints) {
-        const smoothed = smootherRef.current.smooth(pose.keypoints);
-        processExerciseDetection(smoothed);
+      if (canvasRef.current && canvasCtxRef.current) {
+        // Always clear canvas to keep it transparent
+        canvasCtxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
-        // Capture keypoint data for storage
-        keypointsDataRef.current.push({
-          timestamp: Date.now() - (workoutStartTimeRef.current || Date.now()),
-          exercise: currentExercise,
-          category: currentCategory,
-          repsAtCapture: currentReps,
-          keypoints: smoothed.map(kp => ({
-            x: kp.x,
-            y: kp.y,
-            z: kp.z || 0,
-            name: kp.name || ""
-          }))
-        });
+        if (pose && pose.keypoints) {
+          const smoothed = smootherRef.current.smooth(pose.keypoints);
+          processExerciseDetection(smoothed);
 
-        if (canvasRef.current && canvasCtxRef.current) {
-          // Clear canvas
-          canvasCtxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          // Capture keypoint data for storage
+          keypointsDataRef.current.push({
+            timestamp: Date.now() - (workoutStartTimeRef.current || Date.now()),
+            exercise: currentExercise,
+            category: currentCategory,
+            repsAtCapture: currentReps,
+            keypoints: smoothed.map(kp => ({
+              x: kp.x,
+              y: kp.y,
+              z: kp.z || 0,
+              name: kp.name || ""
+            }))
+          });
+
           // Draw skeleton
           drawSkeleton(smoothed, canvasRef.current);
         }
@@ -661,7 +662,8 @@ export default function Burnouts({ user, userProfile }) {
       width: "100%",
       height: "100%",
       borderRadius: "5px",
-      zIndex: 2
+      zIndex: 2,
+      display: "block"
     },
     stats: {
       display: "grid",
