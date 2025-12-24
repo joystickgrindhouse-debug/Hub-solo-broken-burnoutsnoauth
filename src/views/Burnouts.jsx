@@ -31,6 +31,8 @@ export default function Burnouts({ user, userProfile }) {
   const fpsCounterRef = useRef({ frames: 0, lastTime: Date.now() });
   const wakeLockRef = useRef(null);
   const lastFeedbackRef = useRef({ time: 0, message: "" });
+  const keypointsDataRef = useRef([]);
+  const workoutStartTimeRef = useRef(null);
 
   const exercises = {
     Arms: ["Push-ups", "Plank Up-Downs", "Pike Push ups", "Shoulder Taps"],
@@ -258,6 +260,20 @@ export default function Burnouts({ user, userProfile }) {
         const smoothed = smootherRef.current.smooth(pose.keypoints);
         processExerciseDetection(smoothed);
 
+        // Capture keypoint data for storage
+        keypointsDataRef.current.push({
+          timestamp: Date.now() - (workoutStartTimeRef.current || Date.now()),
+          exercise: currentExercise,
+          category: currentCategory,
+          repsAtCapture: currentReps,
+          keypoints: smoothed.map(kp => ({
+            x: kp.x,
+            y: kp.y,
+            z: kp.z || 0,
+            name: kp.name || ""
+          }))
+        });
+
         if (canvasRef.current && canvasCtxRef.current) {
           // Clear canvas
           canvasCtxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
@@ -336,6 +352,8 @@ export default function Burnouts({ user, userProfile }) {
 
       repCounterRef.current = new RepCounter(currentExercise);
       smootherRef.current = new LandmarkSmoother(5);
+      keypointsDataRef.current = [];
+      workoutStartTimeRef.current = Date.now();
       setIsWorkoutActive(true);
       drawCard();
       
@@ -352,6 +370,32 @@ export default function Burnouts({ user, userProfile }) {
       } else {
         alert("Camera error: " + err.message);
       }
+    }
+  };
+
+  const savePoseDataToFirestore = async (exerciseName, category, repCount) => {
+    if (!user || !user.uid || keypointsDataRef.current.length === 0) return;
+
+    try {
+      const { db } = await import("../firebase.js");
+      const { collection, addDoc, serverTimestamp } = await import("firebase/firestore");
+
+      const exerciseData = {
+        userId: user.uid,
+        exerciseName: exerciseName,
+        category: category,
+        repCount: repCount,
+        totalFramesCaptured: keypointsDataRef.current.length,
+        sessionDuration: Date.now() - workoutStartTimeRef.current,
+        keypoints: keypointsDataRef.current,
+        createdAt: serverTimestamp()
+      };
+
+      const docRef = await addDoc(collection(db, "exerciseData"), exerciseData);
+      console.log("Exercise data saved to Firestore:", docRef.id);
+      return docRef.id;
+    } catch (error) {
+      console.error("Error saving pose data to Firestore:", error);
     }
   };
 
@@ -385,10 +429,11 @@ export default function Burnouts({ user, userProfile }) {
 
     setIsWorkoutActive(false);
 
-    // Save exercise data with proper naming
-    if (currentExercise) {
+    // Save detailed pose data to Firestore
+    if (currentExercise && currentReps > 0) {
+      await savePoseDataToFirestore(currentExercise, currentCategory, currentReps);
       const { filename, cleanExerciseName } = saveExerciseData(currentExercise);
-      console.log(`Exercise data for ${currentExercise} would be saved as: ${filename}`);
+      console.log(`Exercise data for ${currentExercise} saved with filename: ${filename}`);
     }
 
     // Save stats to Firebase
