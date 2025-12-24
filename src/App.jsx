@@ -31,6 +31,7 @@ export default function App() {
   const [loadingStartTime] = useState(Date.now());
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [isNewSignup, setIsNewSignup] = useState(false);
 
   // Function to refresh user profile (used after avatar creation)
   const refreshUserProfile = async (userId) => {
@@ -66,18 +67,28 @@ export default function App() {
           console.log("Profile fetch result:", result);
           if (result.success && result.profile) {
             setUserProfile(result.profile);
-            // Existing user logging in - show onboarding slides
-            setShowOnboarding(true);
+            // Existing user logging in - skip onboarding if setup complete
+            if (result.profile.hasCompletedSetup) {
+              setShowOnboarding(false);
+              setOnboardingComplete(true);
+              setIsNewSignup(false);
+            } else {
+              // User has profile but setup not complete (shouldn't happen normally)
+              setShowOnboarding(true);
+              setIsNewSignup(true);
+            }
           } else {
-            console.log("No profile found or fetch failed, will show avatar creator after onboarding");
+            console.log("No profile found - new user signing up");
             setUserProfile(null);
             // New user signing up - show onboarding slides
             setShowOnboarding(true);
+            setIsNewSignup(true);
           }
         } catch (error) {
           console.error("Error fetching profile:", error);
           setUserProfile(null);
           setShowOnboarding(true);
+          setIsNewSignup(true);
         }
         setProfileLoaded(true);
         
@@ -94,6 +105,7 @@ export default function App() {
         setProfileLoaded(true);
         setShowOnboarding(false);
         setOnboardingComplete(false);
+        setIsNewSignup(false);
         clearTimeout(timeout);
         setLoading(false);
         setCheckingSetup(false);
@@ -129,8 +141,8 @@ export default function App() {
     return <OnboardingSlides onComplete={handleOnboardingComplete} />;
   }
 
-  // After onboarding, check if user needs to complete setup (only for logged-in users)
-  if (user && (!userProfile || !userProfile.hasCompletedSetup)) {
+  // After onboarding, check if user needs to complete setup (only for NEW signups)
+  if (user && isNewSignup && (!userProfile || !userProfile.hasCompletedSetup)) {
     return <AvatarCreator user={user} isFirstTimeSetup={true} onSetupComplete={handleSetupComplete} userProfile={userProfile} />;
   }
 
