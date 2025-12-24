@@ -318,31 +318,6 @@ export default function Burnouts({ user, userProfile }) {
       });
       console.log("Camera stream obtained");
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        
-        // Ensure video plays
-        videoRef.current.onloadedmetadata = async () => {
-          console.log("Video metadata loaded");
-          try {
-            await videoRef.current.play();
-            console.log("Video playing successfully");
-          } catch (err) {
-            console.error("Play error:", err);
-          }
-        };
-        
-        // For already loaded videos
-        if (videoRef.current.readyState >= 2) {
-          try {
-            await videoRef.current.play();
-            console.log("Video playing (already loaded)");
-          } catch (err) {
-            console.error("Play error:", err);
-          }
-        }
-      }
-
       if ("wakeLock" in navigator) {
         try {
           wakeLockRef.current = await navigator.wakeLock.request("screen");
@@ -355,13 +330,41 @@ export default function Burnouts({ user, userProfile }) {
       smootherRef.current = new LandmarkSmoother(5);
       keypointsDataRef.current = [];
       workoutStartTimeRef.current = Date.now();
+      
+      // First: set active to render video element
       setIsWorkoutActive(true);
       drawCard();
       
-      // Start frame processing with a small delay to let video start
+      // Wait for React to render the video element
       setTimeout(() => {
+        console.log("Attempting to set stream after render");
+        if (videoRef.current) {
+          console.log("Video ref exists, setting stream");
+          videoRef.current.srcObject = stream;
+          
+          // Try to play the video
+          const playVideo = async () => {
+            try {
+              console.log("Playing video...");
+              await videoRef.current.play();
+              console.log("Video playing!");
+            } catch (err) {
+              console.error("Video play failed:", err);
+            }
+          };
+          
+          if (videoRef.current.readyState >= 2) {
+            playVideo();
+          } else {
+            videoRef.current.addEventListener("loadedmetadata", playVideo, { once: true });
+          }
+        } else {
+          console.error("Video ref not available!");
+        }
+        
+        // Start frame processing
         animationFrameRef.current = requestAnimationFrame(processFrame);
-      }, 500);
+      }, 100);
     } catch (err) {
       console.error("Camera error:", err);
       if (err.name === "NotAllowedError") {
