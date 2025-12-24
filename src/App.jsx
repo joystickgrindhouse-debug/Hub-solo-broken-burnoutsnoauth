@@ -179,7 +179,17 @@ export default function App() {
         />
         <Route 
           path="/avatar-creator" 
-          element={user ? <AvatarCreator user={user} userProfile={userProfile} /> : <Navigate to="/login" />} 
+          element={
+            user ? (
+              isNewSignup ? (
+                <AvatarCreator user={user} userProfile={userProfile} />
+              ) : (
+                <Navigate to="/profile" replace />
+              )
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
         />
         <Route 
           path="/solo" 
