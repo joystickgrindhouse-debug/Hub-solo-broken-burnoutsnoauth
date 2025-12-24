@@ -590,7 +590,7 @@ export default function Solo({ user, userProfile }) {
           <>
             <div style={styles.workoutArea}>
               <div style={styles.videoContainer}>
-                <ExerciseAvatar exercise={currentExercise} animationKey={currentExercise} />
+                <video ref={videoRef} style={styles.video} autoPlay playsInline muted />
                 <canvas ref={canvasRef} width={640} height={480} style={styles.canvas} />
               </div>
 
