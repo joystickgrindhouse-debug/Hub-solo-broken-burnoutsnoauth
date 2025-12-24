@@ -32,18 +32,18 @@ export function isConfident(keypoint, minConfidence = 0.5) {
 export function getFormIssues(keypoints) {
   const issues = [];
   
-  // Get reliable keypoints
+  // Get reliable keypoints (BlazePose indices)
   const nose = keypoints[0];
-  const leftShoulder = keypoints[5];
-  const rightShoulder = keypoints[6];
-  const leftElbow = keypoints[7];
-  const rightElbow = keypoints[8];
-  const leftWrist = keypoints[9];
-  const rightWrist = keypoints[10];
-  const leftHip = keypoints[11];
-  const rightHip = keypoints[12];
-  const leftKnee = keypoints[13];
-  const rightKnee = keypoints[14];
+  const leftShoulder = keypoints[11];
+  const rightShoulder = keypoints[12];
+  const leftElbow = keypoints[13];
+  const rightElbow = keypoints[14];
+  const leftWrist = keypoints[15];
+  const rightWrist = keypoints[16];
+  const leftHip = keypoints[23];
+  const rightHip = keypoints[24];
+  const leftKnee = keypoints[25];
+  const rightKnee = keypoints[26];
   
   if (!isConfident(leftHip) || !isConfident(rightHip)) return issues;
   

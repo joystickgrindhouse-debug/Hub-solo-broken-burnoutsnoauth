@@ -276,6 +276,31 @@ const ExerciseAvatar = ({ exercise, animationKey }) => {
           </>
         );
 
+      case "pike push ups":
+      case "pike pushups":
+        return (
+          <>
+            <style>{`
+              @keyframes pike {
+                0%, 100% { transform: translateY(0px) scaleY(1); }
+                50% { transform: translateY(15px) scaleY(0.85); }
+              }
+              .figure-group { animation: pike 1.7s ease-in-out infinite; transform-origin: 50% 130px; }
+              @keyframes pike-arms {
+                0%, 100% { transform: rotate(-30deg); }
+                50% { transform: rotate(50deg); }
+              }
+              .left-arm { animation: pike-arms 1.7s ease-in-out infinite; transform-origin: 37px 38px; }
+              @keyframes pike-arms-right {
+                0%, 100% { transform: rotate(30deg); }
+                50% { transform: rotate(-50deg); }
+              }
+              .right-arm { animation: pike-arms-right 1.7s ease-in-out infinite; transform-origin: 63px 38px; }
+            `}</style>
+            <RealisticFigure animation={null} />
+          </>
+        );
+
       default:
         return (
           <>

@@ -148,6 +148,15 @@ export default function Solo({ user, userProfile }) {
         const flexion = avgHipY - avgShoulderY;
         repCompleted = repCounterRef.current.processTorsoFlexion(flexion, 0.25);
       }
+    } else if (currentExercise === "Pike Push ups") {
+      if (isConfident(leftShoulder) && isConfident(leftElbow) && isConfident(leftWrist)) {
+        const leftAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
+        if (isConfident(rightShoulder) && isConfident(rightElbow) && isConfident(rightWrist)) {
+          const rightAngle = calculateAngle(rightShoulder, rightElbow, rightWrist);
+          const avgAngle = (leftAngle + rightAngle) / 2;
+          repCompleted = repCounterRef.current.processElbowBased(avgAngle, 60, 160);
+        }
+      }
     } else {
       if (isConfident(leftShoulder) && isConfident(leftElbow) && isConfident(leftWrist)) {
         const leftAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
