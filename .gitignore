@@ -5,3 +5,16 @@ dist
 .env
 .env.local
 .vite
+
+# Netlify
+.netlify
+netlify/functions/node_modules
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
