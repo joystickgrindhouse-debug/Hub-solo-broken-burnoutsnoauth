@@ -247,14 +247,21 @@ export default function Burnouts({ user, userProfile }) {
     }
 
     try {
+      // Ensure canvas context exists
+      if (canvasRef.current && !canvasCtxRef.current) {
+        canvasCtxRef.current = canvasRef.current.getContext("2d");
+      }
+
       const pose = await detectPose(videoRef.current);
 
       if (pose && pose.keypoints) {
         const smoothed = smootherRef.current.smooth(pose.keypoints);
         processExerciseDetection(smoothed);
 
-        if (canvasRef.current) {
+        if (canvasRef.current && canvasCtxRef.current) {
+          // Clear canvas
           canvasCtxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          // Draw skeleton
           drawSkeleton(smoothed, canvasRef.current);
         }
       }
@@ -296,15 +303,27 @@ export default function Burnouts({ user, userProfile }) {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
+        
+        // Ensure video plays
+        videoRef.current.onloadedmetadata = async () => {
           console.log("Video metadata loaded");
+          try {
+            await videoRef.current.play();
+            console.log("Video playing successfully");
+          } catch (err) {
+            console.error("Play error:", err);
+          }
         };
         
-        videoRef.current.play().then(() => {
-          console.log("Video playing");
-        }).catch(err => {
-          console.error("Play error:", err);
-        });
+        // For already loaded videos
+        if (videoRef.current.readyState >= 2) {
+          try {
+            await videoRef.current.play();
+            console.log("Video playing (already loaded)");
+          } catch (err) {
+            console.error("Play error:", err);
+          }
+        }
       }
 
       if ("wakeLock" in navigator) {
@@ -336,6 +355,15 @@ export default function Burnouts({ user, userProfile }) {
     }
   };
 
+  const saveExerciseData = (exerciseName) => {
+    // Generate CSV filename based on exercise
+    const timestamp = Date.now();
+    const cleanExerciseName = exerciseName.replace(/\s+/g, "_").toLowerCase();
+    const filename = `${cleanExerciseName}_${timestamp}.csv`;
+    
+    return { filename, cleanExerciseName };
+  };
+
   const endSession = async () => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -356,6 +384,12 @@ export default function Burnouts({ user, userProfile }) {
     }
 
     setIsWorkoutActive(false);
+
+    // Save exercise data with proper naming
+    if (currentExercise) {
+      const { filename, cleanExerciseName } = saveExerciseData(currentExercise);
+      console.log(`Exercise data for ${currentExercise} would be saved as: ${filename}`);
+    }
 
     // Save stats to Firebase
     if (user && user.uid) {
