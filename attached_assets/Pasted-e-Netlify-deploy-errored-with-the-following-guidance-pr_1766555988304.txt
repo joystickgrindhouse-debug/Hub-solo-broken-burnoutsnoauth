@@ -1,0 +1,119 @@
+e Netlify deploy errored, with the following guidance provided:
+
+**Diagnosis**
+
+- Relevant log lines:
+  - [line 59](#L59) shows Netlify running the build script (`npm run build`).
+  - [line 60](#L60) shows the package script being executed (`rivalis-hub@1.0.0 build`).
+  - [line 62](#L62) is the key error: `sh: 1: vite: not found`.
+  - [line 68](#L68) shows the build exited with code 127 because the vite binary was not available.
+
+- Error type and cause:
+  - The build failed because the vite CLI executable is not installed in the build environment. This typically happens when vite is only declared as a devDependency and the build environment installs only production dependencies (so devDependencies are skipped), or because vite is not present in package.json at all.
+
+Check whether vite is listed in your repository's package.json: https://github.com/joystickgrindhouse-debug/Hub-solo-broken-burnoutsnoauth/blob/main/package.json
+
+**Solution**
+
+1. Verify vite is declared in package.json
+   - Open the linked package.json and confirm vite exists (usually under devDependencies). If vite is missing, add it (step 2a). If it exists under devDependencies, proceed to step 2b.
+
+2. Fix options (pick one)
+
+   Option A — Install devDependencies during Netlify builds (recommended if you want to keep vite as a devDependency)
+   - In Netlify UI: Site settings → Build & deploy → Environment → Add a variable:
+     - Key: NPM_CONFIG_PRODUCTION
+     - Value: false
+   - Or add to netlify.toml at the repo root (commit and push):
+```toml
+[build.environment]
+  NPM_CONFIG_PRODUCTION = "false"
+```
+   - This ensures npm installs devDependencies so the vite binary from node_modules/.bin is available during the build.
+
+   Option B — Move vite into dependencies (makes vite available with production installs)
+   - If you prefer not to change Netlify environment settings, install vite as a regular dependency and push the change:
+```bash
+# locally
+npm install vite --save
+git add package.json package-lock.json
+git commit -m "Move vite to dependencies so build tool is available on Netlify"
+git push
+```
+   - Verify the change on GitHub and retry the Netlify build.
+
+   Option C — If vite is missing entirely, add it as a devDependency and commit:
+```bash
+npm install -D vite
+git add package.json package-lock.json
+git commit -m "Add vite devDependency"
+git push
+```
+   - Then either enable devDependencies on Netlify (Option A) or move vite to dependencies (Option B).
+
+3. Re-run the Netlify build
+   - After committing the change or updating Netlify environment variables, trigger a new deploy. The `vite: not found` error ([line 62](#L62)) should be resolved because the vite binary will be installed and available.
+
+If you want me to, I can check your package.json and suggest the exact change (devDependency → dependency or updating netlify.toml) — tell me which approach you prefer.
+
+The relevant error logs are:
+
+Line 0: build-image version: 4eb552cf97517bc57f136e719a1cf73a7f3cefbb (noble)
+Line 1: buildbot version: 4eb552cf97517bc57f136e719a1cf73a7f3cefbb
+Line 2: Fetching cached dependencies
+Line 3: Failed to fetch cache, continuing with build
+Line 4: Starting to prepare the repo for build
+Line 5: No cached dependencies found. Cloning fresh repo
+Line 6: git clone --filter=blob:none https://github.com/joystickgrindhouse-debug/Hub-solo-broken-burnoutsnoauth
+Line 7: Preparing Git Reference refs/heads/main
+Line 8: Starting to install dependencies
+Line 9: Downloading and installing node v20.19.6...
+Line 10: Downloading https://nodejs.org/dist/v20.19.6/node-v20.19.6-linux-x64.tar.xz...
+Line 11: Computing checksum with sha256sum
+Line 12: Checksums matched!
+Line 13: Now using node v20.19.6 (npm v10.8.2)
+Line 54:   production
+Line 55: [96m[1m​[22m[39m
+Line 56: [96m[1mbuild.command from netlify.toml                               [22m[39m
+Line 57: [96m[1m────────────────────────────────────────────────────────────────[22m[39m
+Line 58: ​
+Line 59: [36m$ npm run build[39m
+Line 60: > rivalis-hub@1.0.0 build
+Line 61: > vite build
+Line 62: sh: 1: vite: not found
+Line 63: [91m[1m​[22m[39m
+Line 64: [91m[1m"build.command" failed                                        [22m[39m
+Line 65: [91m[1m────────────────────────────────────────────────────────────────[22m[39m
+Line 66: ​
+Line 67:   [31m[1mError message[22m[39m
+Line 68:   Command failed with exit code 127: npm run build
+Line 69: ​
+Line 70:   [31m[1mError location[22m[39m
+Line 71:   In build.command from netlify.toml:
+Line 72:   npm run build
+Line 73: ​
+Line 74:   [31m[1mResolved config[22m[39m
+Line 75:   build:
+Line 76:     command: npm run build
+Line 77:     commandOrigin: config
+Line 78:     environment:
+Line 79:       - NODE_VERSION
+Line 80:       - NODE_ENV
+Line 81:       - VITE_FIREBASE_API_KEY
+Line 82:       - VITE_FIREBASE_AUTH_DOMAIN
+Line 83:       - VITE_FIREBASE_PROJECT_ID
+Line 84:       - VITE_FIREBASE_STORAGE_BUCKET
+Line 85:       - VITE_FIREBASE_MESSAGING_SENDER_ID
+Line 86:       - VITE_FIREBASE_APP_ID
+Line 87:     publish: /opt/build/repo/dist
+Line 88:     publishOrigin: config
+Line 89:   functionsDirectory: /opt/build/repo/netlify/functions
+Line 90:   headers:
+Line 91: Failed during stage 'building site': Build script returned non-zero exit code: 2
+Line 92:     - for: /*
+      values:
+        Permissions-Policy: camera=*, microphone=*
+        Referrer-Policy: strict-origin-when-cross
+Line 93: Build failed due to a user error: Build script returned non-zero exit code: 2
+Line 94: Failing build: Failed to build site
+Line 95: Finished processing build request in 37.018s
