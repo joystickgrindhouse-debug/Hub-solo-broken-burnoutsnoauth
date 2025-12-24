@@ -33,7 +33,7 @@ export default function Burnouts({ user, userProfile }) {
   const lastFeedbackRef = useRef({ time: 0, message: "" });
 
   const exercises = {
-    Arms: ["Push-ups", "Plank Up-Downs", "Tricep Dips", "Shoulder Taps"],
+    Arms: ["Push-ups", "Plank Up-Downs", "Pike Push ups", "Shoulder Taps"],
     Legs: ["Squats", "Lunges", "Glute Bridges", "Calf Raises"],
     Core: ["Crunches", "Plank", "Russian Twists", "Leg Raises"],
     Cardio: ["Jumping Jacks", "High Knees", "Burpees", "Mountain Climbers"]
@@ -42,7 +42,7 @@ export default function Burnouts({ user, userProfile }) {
   const descriptions = {
     "Push-ups": "Lower your chest to the ground. Keep your body straight.",
     "Plank Up-Downs": "Move from elbow plank to push-up position.",
-    "Tricep Dips": "Lower your body using a chair or bench.",
+    "Pike Push ups": "Lower your body using a chair or bench.",
     "Shoulder Taps": "Tap opposite shoulders while in plank.",
     "Squats": "Lower your hips, keep chest up.",
     "Lunges": "Step forward and lower back knee.",

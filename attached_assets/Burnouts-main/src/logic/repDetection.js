@@ -131,7 +131,7 @@ export class RepDetector {
       }
     } else if (this.currentExercise === 'Plank Hold' || this.currentExercise === 'Plank') {
       return null;
-    } else if (this.currentExercise === 'Tricep Dips') {
+    } else if (this.currentExercise === 'Pike Push ups') {
       const avgElbowY = (leftElbow.y + rightElbow.y) / 2;
       const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
       const elbowFlexion = avgElbowY - avgShoulderY;

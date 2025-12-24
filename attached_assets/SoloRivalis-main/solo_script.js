@@ -18,7 +18,7 @@ let repInProgress = false;
 let wakeLock = null;
 
 const exercises = {
-  Arms: ["Push-ups", "Plank Up-Downs", "Tricep Dips", "Shoulder Taps"],
+  Arms: ["Push-ups", "Plank Up-Downs", "Pike Push ups", "Shoulder Taps"],
   Legs: ["Squats", "Lunges", "Glute Bridges", "Calf Raises"],
   Core: ["Crunches", "Plank", "Russian Twists", "Leg Raises"],
   Cardio: ["Jumping Jacks", "High Knees", "Burpees", "Mountain Climbers"]
@@ -27,7 +27,7 @@ const exercises = {
 const descriptions = {
   "Push-ups": "Maintain a straight line from shoulders to heels.",
   "Plank Up-Downs": "Move from elbow to push-up position repeatedly.",
-  "Tricep Dips": "Lower body until elbows reach 90° using a surface.",
+  "Pike Push ups": "Lower body until elbows reach 90° using a surface.",
   "Shoulder Taps": "Tap alternate shoulders keeping core tight.",
   "Squats": "Keep chest up and push hips back.",
   "Lunges": "Step forward and lower knee near floor.",
