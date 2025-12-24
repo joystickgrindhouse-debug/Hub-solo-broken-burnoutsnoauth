@@ -92,9 +92,9 @@ export default function Burnouts({ user, userProfile }) {
     setFormFeedback("");
     lastRepCountRef.current = 0;
 
-    if (repCounterRef.current) {
-      repCounterRef.current = new RepCounter(exercise);
-    }
+    // Create fresh rep counter for this exercise
+    repCounterRef.current = new RepCounter(exercise);
+    console.log("Drew card:", exercise, "- Goal:", goal, "- RepCounter initialized");
 
     setShowDrawButton(false);
     showToast(`New exercise: ${exercise}!`);
@@ -260,25 +260,30 @@ export default function Burnouts({ user, userProfile }) {
         // Always clear canvas to keep it transparent
         canvasCtxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
-        if (pose && pose.keypoints) {
+        if (pose && pose.keypoints && pose.keypoints.length > 0) {
           const smoothed = smootherRef.current.smooth(pose.keypoints);
           processExerciseDetection(smoothed);
 
           // Capture keypoint data for storage
-          keypointsDataRef.current.push({
-            timestamp: Date.now() - (workoutStartTimeRef.current || Date.now()),
-            exercise: currentExercise,
-            category: currentCategory,
-            repsAtCapture: currentReps,
-            keypoints: smoothed.map(kp => ({
-              x: kp.x,
-              y: kp.y,
-              z: kp.z || 0,
-              name: kp.name || ""
-            }))
-          });
+          if (keypointsDataRef.current.length < 10000) { // Limit storage
+            keypointsDataRef.current.push({
+              timestamp: Date.now() - (workoutStartTimeRef.current || Date.now()),
+              exercise: currentExercise,
+              category: currentCategory,
+              repsAtCapture: currentReps,
+              keypoints: smoothed.map(kp => ({
+                x: kp.x,
+                y: kp.y,
+                z: kp.z || 0,
+                name: kp.name || ""
+              }))
+            });
+          }
 
-          // Draw skeleton
+          // Draw skeleton with debug logging every 30 frames
+          if (fpsCounterRef.current.frames % 30 === 0) {
+            console.log("Drawing skeleton with", smoothed.length, "keypoints, currentExercise:", currentExercise);
+          }
           drawSkeleton(smoothed, canvasRef.current);
         }
       }
