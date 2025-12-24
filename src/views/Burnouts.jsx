@@ -111,6 +111,8 @@ export default function Burnouts({ user, userProfile }) {
         speakFeedback(message);
         lastFeedbackRef.current = { time: Date.now(), message };
       }
+    } else {
+      setFormFeedback("");
     }
 
     // Exercise-specific detection
@@ -159,6 +161,15 @@ export default function Burnouts({ user, userProfile }) {
         const flexion = avgHipY - avgShoulderY;
         repCompleted = repCounterRef.current.processTorsoFlexion(flexion, 0.25);
       }
+    } else if (currentExercise === "Pike Push ups") {
+      if (isConfident(leftShoulder) && isConfident(leftElbow) && isConfident(leftWrist)) {
+        const leftAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
+        if (isConfident(rightShoulder) && isConfident(rightElbow) && isConfident(rightWrist)) {
+          const rightAngle = calculateAngle(rightShoulder, rightElbow, rightWrist);
+          const avgAngle = (leftAngle + rightAngle) / 2;
+          repCompleted = repCounterRef.current.processElbowBased(avgAngle, 60, 160);
+        }
+      }
     } else {
       // Fallback to elbow-based for other arm exercises
       if (isConfident(leftShoulder) && isConfident(leftElbow) && isConfident(leftWrist)) {
@@ -195,8 +206,12 @@ export default function Burnouts({ user, userProfile }) {
     const width = 640;
     const height = 480;
 
+    // Determine form quality for color
+    const issues = getFormIssues(keypoints);
+    const isGoodForm = issues.length === 0;
+
     // Draw connections
-    ctx.strokeStyle = "#00ff00";
+    ctx.strokeStyle = isGoodForm ? "#00ff00" : "#ff2e2e";
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
 
@@ -213,7 +228,7 @@ export default function Burnouts({ user, userProfile }) {
     });
 
     // Draw keypoints
-    ctx.fillStyle = "#ff2e2e";
+    ctx.fillStyle = isGoodForm ? "#00ff00" : "#ff2e2e";
     keypoints.forEach((kp) => {
       if (kp && isConfident(kp)) {
         ctx.beginPath();
