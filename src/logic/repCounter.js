@@ -1,21 +1,36 @@
 // Rep counting state machine with exercise-specific logic
+import { getExerciseReference } from './exerciseReferences.js';
 
 class RepCounter {
-  constructor(exercise, referenceData = null) {
+  constructor(exercise) {
     this.exercise = exercise;
     this.repCount = 0;
     this.inProgress = false;
     this.lastRepTime = 0;
     this.repThreshold = 300; // Minimum ms between reps to prevent doubles
-    this.referenceData = referenceData;
     
-    // Calculate ranges from reference data if available
-    if (referenceData && referenceData.analysis) {
-      const { minElbowY, maxElbowY, midpoint } = referenceData.analysis;
-      this.refMin = minElbowY;
-      this.refMax = maxElbowY;
-      this.refMid = midpoint;
-      this.refRange = maxElbowY - minElbowY;
+    // Default ranges for fallback detection
+    this.elbowRange = { min: 0.2, max: 0.8, mid: 0.5 };
+    this.kneeRange = { min: 0.3, max: 0.85, mid: 0.6 };
+    this.hipRange = { min: 0.3, max: 0.8, mid: 0.55 };
+    this.wristRange = { min: 0.1, max: 0.9, mid: 0.5 };
+    
+    // Load reference data asynchronously
+    this.initializeReferences(exercise);
+  }
+  
+  async initializeReferences(exercise) {
+    try {
+      const reference = await getExerciseReference(exercise);
+      if (reference && reference.analysis) {
+        const { elbowRange, kneeRange, hipRange, wristRange } = reference.analysis;
+        if (elbowRange) this.elbowRange = elbowRange;
+        if (kneeRange) this.kneeRange = kneeRange;
+        if (hipRange) this.hipRange = hipRange;
+        if (wristRange) this.wristRange = wristRange;
+      }
+    } catch (error) {
+      console.log(`Using default ranges for ${exercise}`);
     }
   }
 
@@ -25,37 +40,21 @@ class RepCounter {
     this.lastRepTime = 0;
   }
 
-  // Push-ups: elbow angle with reference-based detection
-  processElbowBased(currentAngle, minAngle = 60, maxAngle = 160) {
+  // Arm exercises: elbow Y position detection
+  processElbowBased(currentElbowY) {
     const now = Date.now();
+    if (!currentElbowY || !this.elbowRange) return false;
     
-    // If we have reference data, use position-based detection
-    if (this.referenceData && this.refMin !== undefined && currentAngle !== undefined) {
-      // currentAngle here is actually elbowY position (0-1)
-      const elbowY = currentAngle; // Position in frame
-      const midpoint = this.refMid;
-      
-      // Elbows bent (low Y = high position) = in motion
-      if (elbowY < midpoint && !this.inProgress) {
-        this.inProgress = true;
-      }
-      // Elbows extended (high Y = low position) = rep completed
-      else if (elbowY > midpoint && this.inProgress && now - this.lastRepTime > this.repThreshold) {
-        this.inProgress = false;
-        this.repCount++;
-        this.lastRepTime = now;
-        return true;
-      }
-      return false;
-    }
+    const mid = this.elbowRange.mid;
+    const range = this.elbowRange.max - this.elbowRange.min;
+    const threshold = range * 0.2; // 20% of range for threshold
     
-    // Fallback: angle-based detection
-    // Elbows bent = in motion
-    if (currentAngle < minAngle && !this.inProgress) {
+    // Up position (low Y = elbows bent)
+    if (currentElbowY < mid - threshold && !this.inProgress) {
       this.inProgress = true;
     }
-    // Elbows extended = completed
-    else if (currentAngle > maxAngle && this.inProgress && now - this.lastRepTime > this.repThreshold) {
+    // Down position (high Y = elbows extended) = rep complete
+    else if (currentElbowY > mid + threshold && this.inProgress && now - this.lastRepTime > this.repThreshold) {
       this.inProgress = false;
       this.repCount++;
       this.lastRepTime = now;
@@ -65,13 +64,21 @@ class RepCounter {
     return false;
   }
 
-  // Squats/Lunges: knee flexion
-  processKneeBased(kneeFlexion, threshold = 0.15) {
+  // Leg exercises: knee Y position detection  
+  processKneeBased(currentKneeY) {
     const now = Date.now();
+    if (!currentKneeY || !this.kneeRange) return false;
     
-    if (kneeFlexion > threshold && !this.inProgress) {
+    const mid = this.kneeRange.mid;
+    const range = this.kneeRange.max - this.kneeRange.min;
+    const threshold = range * 0.15;
+    
+    // Up (knees extended)
+    if (currentKneeY > mid + threshold && !this.inProgress) {
       this.inProgress = true;
-    } else if (kneeFlexion < threshold * 0.7 && this.inProgress && now - this.lastRepTime > this.repThreshold) {
+    }
+    // Down (knees bent) = rep complete
+    else if (currentKneeY < mid - threshold && this.inProgress && now - this.lastRepTime > this.repThreshold) {
       this.inProgress = false;
       this.repCount++;
       this.lastRepTime = now;
@@ -81,14 +88,16 @@ class RepCounter {
     return false;
   }
 
-  // Jumping Jacks: arms raised
-  processArmsRaised(wristY, shoulderY, threshold = 0.05) {
+  // Wrist-based (shoulder taps, jumping jacks)
+  processWristBased(currentWristY, shoulderY) {
     const now = Date.now();
-    const armsRaised = wristY < shoulderY - threshold;
+    if (!currentWristY || !shoulderY) return false;
     
-    if (armsRaised && !this.inProgress) {
+    const isRaised = currentWristY < shoulderY - 0.05;
+    
+    if (isRaised && !this.inProgress) {
       this.inProgress = true;
-    } else if (!armsRaised && this.inProgress && now - this.lastRepTime > this.repThreshold) {
+    } else if (!isRaised && this.inProgress && now - this.lastRepTime > this.repThreshold) {
       this.inProgress = false;
       this.repCount++;
       this.lastRepTime = now;
@@ -98,31 +107,21 @@ class RepCounter {
     return false;
   }
 
-  // Planks: static hold for duration
-  processPlank(isAligned, holdDuration = 3000) {
+  // Hip-based (glute bridges, leg raises)
+  processHipBased(currentHipY) {
     const now = Date.now();
+    if (!currentHipY || !this.hipRange) return false;
     
-    if (isAligned && !this.inProgress) {
+    const mid = this.hipRange.mid;
+    const range = this.hipRange.max - this.hipRange.min;
+    const threshold = range * 0.1;
+    
+    // Hips down
+    if (currentHipY > mid + threshold && !this.inProgress) {
       this.inProgress = true;
-      this.lastRepTime = now;
-    } else if (isAligned && this.inProgress && now - this.lastRepTime > holdDuration) {
-      this.repCount++;
-      this.inProgress = false;
-      return true;
-    } else if (!isAligned && this.inProgress) {
-      this.inProgress = false;
     }
-    
-    return false;
-  }
-
-  // Crunches: torso flexion
-  processTorsoFlexion(flexionDistance, threshold = 0.25) {
-    const now = Date.now();
-    
-    if (flexionDistance < threshold && !this.inProgress) {
-      this.inProgress = true;
-    } else if (flexionDistance > threshold + 0.1 && this.inProgress && now - this.lastRepTime > this.repThreshold) {
+    // Hips raised = rep complete
+    else if (currentHipY < mid - threshold && this.inProgress && now - this.lastRepTime > this.repThreshold) {
       this.inProgress = false;
       this.repCount++;
       this.lastRepTime = now;

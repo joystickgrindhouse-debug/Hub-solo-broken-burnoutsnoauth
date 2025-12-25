@@ -1,97 +1,90 @@
-// Exercise reference data extracted from CSV files
-// Maps exercises to their movement patterns and detection logic
+// Exercise reference data loaded asynchronously from CSV files
+// Maps all exercises to their movement ranges and detection logic
 
-import pushupCSV1 from '../../attached_assets/Push-up_media_pose_pose_1766553282744.csv?raw';
-import plankCSV1 from '../../attached_assets/Plank_up_down_media_pose_pose_1766553282744.csv?raw';
-import pikeCSV1 from '../../attached_assets/Pike_pushup_pose_1766553282743.csv?raw';
-import shoulderCSV1 from '../../attached_assets/Shoulder_taps2_pose_1766553282744.csv?raw';
+// CSV file paths
+const CSV_PATHS = {
+  "Push-ups": "/attached_assets/Push-up_media_pose_pose_1766553282744.csv",
+  "Plank Up-Downs": "/attached_assets/Plank_up_down_media_pose_pose_1766553282744.csv",
+  "Pike Push-ups": "/attached_assets/Pike_pushup_pose_1766553282743.csv",
+  "Shoulder Taps": "/attached_assets/Shoulder_taps2_pose_1766553282744.csv",
+  "Squats": "/attached_assets/Squat_pose_1766670463888.csv",
+  "Lunges": "/attached_assets/Lunge_pose_1766670463888.csv",
+  "Glute Bridges": "/attached_assets/GluteBridges_pose_1766670463888.csv",
+  "Calf Raises": "/attached_assets/CalfRaises_pose_1766670463888.csv",
+  "Crunches": "/attached_assets/Crunches_pose_1766670463888.csv",
+  "Plank": "/attached_assets/Plank_pose_1766670463888.csv",
+  "Russian Twists": "/attached_assets/RussianTwists_pose_1766670463887.csv",
+  "Leg Raises": "/attached_assets/LegRaises_pose_1766670463888.csv",
+  "Jumping Jacks": "/attached_assets/Jumping_jacks_pose_1766670463888.csv",
+  "High Knees": "/attached_assets/HighKnees_pose_1766670463888.csv",
+  "Burpees": "/attached_assets/Burpees_pose_1766670463888.csv",
+  "Mountain Climbers": "/attached_assets/MountainClimbers_pose_1766670463888.csv"
+};
 
-// Parse CSV string into array of pose frames
+// Parse CSV string into pose data
 function parseCSV(csvString) {
   const lines = csvString.trim().split('\n');
   return lines.map(line => {
     const values = line.split(',').map(v => parseFloat(v));
-    return values;
-  });
+    return values.length === 99 ? values : null;
+  }).filter(v => v !== null);
 }
 
-// Extract keypoints from flattened array (33 keypoints * 3 values each)
-function getKeypoints(frameData) {
-  const keypoints = [];
-  for (let i = 0; i < 33; i++) {
-    keypoints.push({
-      x: frameData[i * 3],
-      y: frameData[i * 3 + 1],
-      z: frameData[i * 3 + 2],
-      name: getKeypointName(i)
-    });
-  }
-  return keypoints;
+// Analyze movement ranges from pose data
+function analyzeExerciseRange(csvData) {
+  if (!csvData || csvData.length === 0) return {};
+  
+  // Extract Y positions for key joints (3 values per joint: x, y, z)
+  // Indices: 11,12=shoulders, 13,14=elbows, 15,16=wrists, 23,24=hips, 25,26=knees
+  const elbowY = csvData.map(frame => (frame[13*3+1] + frame[14*3+1]) / 2).filter(v => !isNaN(v));
+  const kneeY = csvData.map(frame => (frame[25*3+1] + frame[26*3+1]) / 2).filter(v => !isNaN(v));
+  const hipY = csvData.map(frame => (frame[23*3+1] + frame[24*3+1]) / 2).filter(v => !isNaN(v));
+  const wristY = csvData.map(frame => (frame[15*3+1] + frame[16*3+1]) / 2).filter(v => !isNaN(v));
+  
+  return {
+    elbowRange: elbowY.length > 0 ? { min: Math.min(...elbowY), max: Math.max(...elbowY), mid: (Math.min(...elbowY) + Math.max(...elbowY)) / 2 } : null,
+    kneeRange: kneeY.length > 0 ? { min: Math.min(...kneeY), max: Math.max(...kneeY), mid: (Math.min(...kneeY) + Math.max(...kneeY)) / 2 } : null,
+    hipRange: hipY.length > 0 ? { min: Math.min(...hipY), max: Math.max(...hipY), mid: (Math.min(...hipY) + Math.max(...hipY)) / 2 } : null,
+    wristRange: wristY.length > 0 ? { min: Math.min(...wristY), max: Math.max(...wristY), mid: (Math.min(...wristY) + Math.max(...wristY)) / 2 } : null,
+  };
 }
 
-// MediaPipe 33 keypoint names
-function getKeypointName(index) {
-  const names = [
-    'nose', 'left_eye_inner', 'left_eye', 'left_eye_outer', 'right_eye_inner', 'right_eye', 'right_eye_outer',
-    'left_ear', 'right_ear', 'mouth_left', 'mouth_right', 'left_shoulder', 'right_shoulder',
-    'left_elbow', 'right_elbow', 'left_wrist', 'right_wrist', 'left_pinky', 'right_pinky',
-    'left_index', 'right_index', 'left_thumb', 'right_thumb', 'left_hip', 'right_hip',
-    'left_knee', 'right_knee', 'left_ankle', 'right_ankle', 'left_heel', 'right_heel',
-    'left_foot_index', 'right_foot_index'
-  ];
-  return names[index] || `keypoint_${index}`;
+// Cache for loaded reference data
+let referenceCache = {};
+let loadingPromises = {};
+
+// Load CSV file
+async function loadCSV(exerciseName) {
+  if (referenceCache[exerciseName]) return referenceCache[exerciseName];
+  if (loadingPromises[exerciseName]) return loadingPromises[exerciseName];
+  
+  const path = CSV_PATHS[exerciseName];
+  if (!path) return null;
+  
+  loadingPromises[exerciseName] = (async () => {
+    try {
+      const response = await fetch(path);
+      if (!response.ok) {
+        console.warn(`Failed to load CSV for ${exerciseName}`);
+        return null;
+      }
+      const text = await response.text();
+      const data = parseCSV(text);
+      const reference = {
+        data,
+        analysis: analyzeExerciseRange(data)
+      };
+      referenceCache[exerciseName] = reference;
+      return reference;
+    } catch (error) {
+      console.error(`Error loading ${exerciseName} CSV:`, error);
+      return null;
+    }
+  })();
+  
+  return loadingPromises[exerciseName];
 }
 
-// Analyze movement range from CSV to find motion peaks
-function analyzeMovementRange(csvData) {
-  const keypoints = csvData.map(frame => getKeypoints(frame));
-  
-  // For arm exercises, track elbow and wrist positions
-  const elbowY = keypoints.map(kps => (kps[13].y + kps[14].y) / 2);
-  const shoulderY = keypoints.map(kps => (kps[11].y + kps[12].y) / 2);
-  
-  const minElbowY = Math.min(...elbowY);
-  const maxElbowY = Math.max(...elbowY);
-  const midpoint = (minElbowY + maxElbowY) / 2;
-  
-  return { minElbowY, maxElbowY, midpoint, elbowY };
+export async function getExerciseReference(exerciseName) {
+  return await loadCSV(exerciseName);
 }
-
-// Load and cache reference data
-let referenceData = {};
-
-function loadReferenceData() {
-  if (Object.keys(referenceData).length > 0) return referenceData;
-  
-  try {
-    referenceData['Push-up'] = {
-      csv: parseCSV(pushupCSV1),
-      analysis: null
-    };
-    referenceData['Plank Up-Downs'] = {
-      csv: parseCSV(plankCSV1),
-      analysis: null
-    };
-    referenceData['Pike Push-ups'] = {
-      csv: parseCSV(pikeCSV1),
-      analysis: null
-    };
-    referenceData['Shoulder Taps'] = {
-      csv: parseCSV(shoulderCSV1),
-      analysis: null
-    };
-    
-    // Analyze each exercise
-    Object.keys(referenceData).forEach(exercise => {
-      referenceData[exercise].analysis = analyzeMovementRange(referenceData[exercise].csv);
-    });
-    
-    console.log('Exercise reference data loaded:', Object.keys(referenceData));
-  } catch (error) {
-    console.error('Error loading exercise references:', error);
-  }
-  
-  return referenceData;
-}
-
-export { loadReferenceData, analyzeMovementRange, parseCSV, getKeypoints };

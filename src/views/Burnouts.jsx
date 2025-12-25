@@ -117,7 +117,7 @@ export default function Burnouts({ user, userProfile }) {
       setFormFeedback("");
     }
 
-    // Exercise-specific detection
+    // Extract key joints
     const leftShoulder = keypoints[11];
     const rightShoulder = keypoints[12];
     const leftElbow = keypoints[13];
@@ -131,40 +131,60 @@ export default function Burnouts({ user, userProfile }) {
 
     let repCompleted = false;
 
-    // Use elbow Y position for all arm exercises (matches CSV reference data)
-    const avgElbowY = leftElbow && rightElbow ? (leftElbow.y + rightElbow.y) / 2 : (leftElbow?.y || rightElbow?.y || null);
-    
-    if (["Push-ups", "Plank Up-Downs", "Pike Push-ups", "Shoulder Taps", "Push-up", "Plank Up-Down", "Pike Push-up", "Shoulder Tap"].includes(currentExercise)) {
-      // All arm exercises use elbow Y position detection
-      if (avgElbowY !== null) {
-        repCompleted = repCounterRef.current.processElbowBased(avgElbowY, 60, 160);
-        if (fpsCounterRef.current.frames % 60 === 0) {
-          console.log("Detecting", currentExercise, "- elbowY:", avgElbowY.toFixed(3), "- reps:", repCounterRef.current.getCount());
-        }
-      }
-    } else if (currentExercise === "Squats") {
-      if (isConfident(leftHip) && isConfident(leftKnee) && isConfident(rightHip) && isConfident(rightKnee)) {
-        const kneeFlexion = Math.max(leftKnee.y - leftHip.y, rightKnee.y - rightHip.y);
-        repCompleted = repCounterRef.current.processKneeBased(kneeFlexion, 0.15);
-      }
-    } else if (currentExercise === "Jumping Jacks") {
-      if (isConfident(leftWrist) && isConfident(rightWrist) && isConfident(leftShoulder) && isConfident(rightShoulder)) {
-        const avgWristY = (leftWrist.y + rightWrist.y) / 2;
-        const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-        repCompleted = repCounterRef.current.processArmsRaised(avgWristY, avgShoulderY);
-      }
-    } else if (currentExercise === "Plank") {
-      if (isConfident(leftShoulder) && isConfident(leftHip) && isConfident(rightShoulder) && isConfident(rightHip)) {
-        const alignment = Math.abs(leftShoulder.y - leftHip.y) + Math.abs(rightShoulder.y - rightHip.y) / 2 < 0.15;
-        repCompleted = repCounterRef.current.processPlank(alignment, 3000);
-      }
-    } else if (currentExercise === "Crunches") {
-      if (isConfident(leftShoulder) && isConfident(leftHip) && isConfident(rightShoulder) && isConfident(rightHip)) {
-        const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-        const avgHipY = (leftHip.y + rightHip.y) / 2;
-        const flexion = avgHipY - avgShoulderY;
-        repCompleted = repCounterRef.current.processTorsoFlexion(flexion, 0.25);
-      }
+    // Calculate averages for paired joints
+    const avgElbowY = (leftElbow?.y + rightElbow?.y) / 2;
+    const avgKneeY = (leftKnee?.y + rightKnee?.y) / 2;
+    const avgHipY = (leftHip?.y + rightHip?.y) / 2;
+    const avgWristY = (leftWrist?.y + rightWrist?.y) / 2;
+    const avgShoulderY = (leftShoulder?.y + rightShoulder?.y) / 2;
+
+    // Route to exercise-specific detection
+    switch(currentExercise) {
+      // ARM EXERCISES - Elbow based
+      case "Push-ups":
+      case "Plank Up-Downs":
+      case "Pike Push-ups":
+      case "Shoulder Taps":
+        repCompleted = repCounterRef.current.processElbowBased(avgElbowY);
+        break;
+      
+      // LEG EXERCISES - Knee based
+      case "Squats":
+      case "Lunges":
+      case "Calf Raises":
+        repCompleted = repCounterRef.current.processKneeBased(avgKneeY);
+        break;
+      
+      // HIP BASED - Glute Bridges, Leg Raises
+      case "Glute Bridges":
+      case "Leg Raises":
+        repCompleted = repCounterRef.current.processHipBased(avgHipY);
+        break;
+      
+      // WRIST BASED - Jumping Jacks
+      case "Jumping Jacks":
+      case "High Knees":
+        repCompleted = repCounterRef.current.processWristBased(avgWristY, avgShoulderY);
+        break;
+      
+      // COMPLEX EXERCISES
+      case "Burpees":
+      case "Mountain Climbers":
+        // Use elbow movement for these
+        repCompleted = repCounterRef.current.processElbowBased(avgElbowY);
+        break;
+      
+      // STATIC HOLDS
+      case "Plank":
+      case "Russian Twists":
+      case "Crunches":
+        // Use hip-based for these
+        repCompleted = repCounterRef.current.processHipBased(avgHipY);
+        break;
+    }
+
+    if (fpsCounterRef.current.frames % 60 === 0) {
+      console.log("Detecting", currentExercise, "- reps:", repCounterRef.current.getCount());
     }
 
     if (repCompleted) {
