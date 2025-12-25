@@ -190,19 +190,26 @@ export default function Burnouts({ user, userProfile }) {
 
   const drawSkeleton = (keypoints, canvas) => {
     const ctx = canvasCtxRef.current;
-    if (!canvas || !ctx) return;
+    if (!canvas || !ctx || !keypoints || keypoints.length === 0) {
+      return;
+    }
 
-    const width = 640;
-    const height = 480;
+    const width = canvas.width;
+    const height = canvas.height;
 
+    // Force refresh canvas context
+    ctx.clearRect(0, 0, width, height);
+    
     // Determine form quality for color
     const issues = getFormIssues(keypoints);
     const isGoodForm = issues.length === 0;
+    const color = isGoodForm ? "#00ff00" : "#ff2e2e";
 
-    // Draw connections
-    ctx.strokeStyle = isGoodForm ? "#00ff00" : "#ff2e2e";
-    ctx.lineWidth = 2;
+    // Draw connections with thick lines for visibility
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 4;
     ctx.lineCap = "round";
+    ctx.lineJoin = "round";
 
     SKELETON_CONNECTIONS.forEach(([i, j]) => {
       const start = keypoints[i];
@@ -216,12 +223,14 @@ export default function Burnouts({ user, userProfile }) {
       }
     });
 
-    // Draw keypoints
-    ctx.fillStyle = isGoodForm ? "#00ff00" : "#ff2e2e";
+    // Draw keypoints as circles - ONLY confident points
+    ctx.fillStyle = color;
     keypoints.forEach((kp) => {
       if (kp && isConfident(kp)) {
+        const px = kp.x * width;
+        const py = kp.y * height;
         ctx.beginPath();
-        ctx.arc(kp.x * width, kp.y * height, 4, 0, 2 * Math.PI);
+        ctx.arc(px, py, 5, 0, 2 * Math.PI);
         ctx.fill();
       }
     });
@@ -239,6 +248,7 @@ export default function Burnouts({ user, userProfile }) {
       // Ensure canvas context exists with transparency
       if (canvasRef.current && !canvasCtxRef.current) {
         canvasCtxRef.current = canvasRef.current.getContext("2d", { alpha: true });
+        console.log("Canvas context created:", { width: canvasRef.current.width, height: canvasRef.current.height });
       }
 
       const pose = await detectPose(videoRef.current);
@@ -250,7 +260,7 @@ export default function Burnouts({ user, userProfile }) {
         if (pose && pose.keypoints && pose.keypoints.length > 0) {
           const smoothed = smootherRef.current.smooth(pose.keypoints);
           
-          // Draw skeleton
+          // Draw skeleton immediately
           drawSkeleton(smoothed, canvasRef.current);
           
           processExerciseDetection(smoothed);
@@ -271,12 +281,14 @@ export default function Burnouts({ user, userProfile }) {
             });
           }
 
-          // Draw skeleton with debug logging every 30 frames
           if (fpsCounterRef.current.frames % 30 === 0) {
-            console.log("Drawing skeleton with", smoothed.length, "keypoints, currentExercise:", currentExercise);
+            console.log("Frame processed - Keypoints:", smoothed.length, "Exercise:", currentExercise);
           }
-          drawSkeleton(smoothed, canvasRef.current);
+        } else if (fpsCounterRef.current.frames % 30 === 0) {
+          console.log("No pose detected in frame");
         }
+      } else if (fpsCounterRef.current.frames % 30 === 0) {
+        console.log("Canvas or context not ready");
       }
 
       // FPS counter
@@ -662,7 +674,9 @@ export default function Burnouts({ user, userProfile }) {
       height: "100%",
       borderRadius: "5px",
       zIndex: 2,
-      display: "block"
+      display: "block",
+      backgroundColor: "transparent",
+      border: "1px solid rgba(255,0,0,0.3)" // Debug border
     },
     stats: {
       display: "grid",
