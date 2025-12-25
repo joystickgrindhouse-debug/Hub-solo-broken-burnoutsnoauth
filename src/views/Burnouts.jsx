@@ -131,13 +131,15 @@ export default function Burnouts({ user, userProfile }) {
 
     let repCompleted = false;
 
-    if (currentExercise === "Push-ups") {
-      if (isConfident(leftShoulder) && isConfident(leftElbow) && isConfident(leftWrist)) {
-        const leftAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
-        if (isConfident(rightShoulder) && isConfident(rightElbow) && isConfident(rightWrist)) {
-          const rightAngle = calculateAngle(rightShoulder, rightElbow, rightWrist);
-          const avgAngle = (leftAngle + rightAngle) / 2;
-          repCompleted = repCounterRef.current.processElbowBased(avgAngle, 60, 160);
+    // Use elbow Y position for all arm exercises (matches CSV reference data)
+    const avgElbowY = leftElbow && rightElbow ? (leftElbow.y + rightElbow.y) / 2 : (leftElbow?.y || rightElbow?.y || null);
+    
+    if (["Push-ups", "Plank Up-Downs", "Pike Push-ups", "Shoulder Taps", "Push-up", "Plank Up-Down", "Pike Push-up", "Shoulder Tap"].includes(currentExercise)) {
+      // All arm exercises use elbow Y position detection
+      if (avgElbowY !== null) {
+        repCompleted = repCounterRef.current.processElbowBased(avgElbowY, 60, 160);
+        if (fpsCounterRef.current.frames % 60 === 0) {
+          console.log("Detecting", currentExercise, "- elbowY:", avgElbowY.toFixed(3), "- reps:", repCounterRef.current.getCount());
         }
       }
     } else if (currentExercise === "Squats") {
@@ -162,21 +164,6 @@ export default function Burnouts({ user, userProfile }) {
         const avgHipY = (leftHip.y + rightHip.y) / 2;
         const flexion = avgHipY - avgShoulderY;
         repCompleted = repCounterRef.current.processTorsoFlexion(flexion, 0.25);
-      }
-    } else if (currentExercise === "Pike Push ups") {
-      if (isConfident(leftShoulder) && isConfident(leftElbow) && isConfident(leftWrist)) {
-        const leftAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
-        if (isConfident(rightShoulder) && isConfident(rightElbow) && isConfident(rightWrist)) {
-          const rightAngle = calculateAngle(rightShoulder, rightElbow, rightWrist);
-          const avgAngle = (leftAngle + rightAngle) / 2;
-          repCompleted = repCounterRef.current.processElbowBased(avgAngle, 60, 160);
-        }
-      }
-    } else {
-      // Fallback to elbow-based for other arm exercises
-      if (isConfident(leftShoulder) && isConfident(leftElbow) && isConfident(leftWrist)) {
-        const leftAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
-        repCompleted = repCounterRef.current.processElbowBased(leftAngle, 50, 170);
       }
     }
 
@@ -262,6 +249,10 @@ export default function Burnouts({ user, userProfile }) {
 
         if (pose && pose.keypoints && pose.keypoints.length > 0) {
           const smoothed = smootherRef.current.smooth(pose.keypoints);
+          
+          // Draw skeleton
+          drawSkeleton(smoothed, canvasRef.current);
+          
           processExerciseDetection(smoothed);
 
           // Capture keypoint data for storage
