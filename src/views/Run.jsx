@@ -307,43 +307,21 @@ export default function Run({ user, userProfile }) {
               <button style={{...styles.button, background: '#ff3050'}} onClick={endRun}>STOP</button>
             </div>
 
-            <div style={styles.mapContainer}>
-              <div style={{ height: "300px", width: "100%", background: "#1a1a1a", position: "relative", zIndex: 1, overflow: "hidden" }}>
-                <MapContainer 
-                  center={currentPos || [51.505, -0.09]} 
-                  zoom={15} 
-                  style={{ height: "300px", width: "100%" }}
-                  scrollWheelZoom={false}
-                  key={currentPos ? `map-${currentPos[0]}-${currentPos[1]}` : 'map-placeholder'}
+            <div style={styles.trackContainer}>
+              <div style={styles.track}>
+                <div 
+                  style={{
+                    ...styles.runner,
+                    left: `${Math.min((distance % 0.25) / 0.25 * 100, 90)}%`,
+                    transition: 'left 1s linear'
+                  }}
                 >
-                  <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  />
-                  {currentPos && <Marker position={currentPos} />}
-                  {route.length > 1 && (
-                    <Polyline positions={route.map(p => [p.lat, p.lng])} color="#ff3050" weight={5} />
-                  )}
-                </MapContainer>
-                <link 
-                  rel="stylesheet" 
-                  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-                />
-                <style>
-                  {`
-                    .leaflet-container {
-                      height: 300px !important;
-                      width: 100% !important;
-                      background: #1a1a1a !important;
-                      position: relative;
-                    }
-                    .leaflet-map-pane { z-index: 2 !important; }
-                    .leaflet-tile-pane { z-index: 1 !important; }
-                    .leaflet-control-container .leaflet-top,
-                    .leaflet-control-container .leaflet-bottom { z-index: 1000 !important; }
-                    .leaflet-marker-pane img { z-index: 1001 !important; }
-                  `}
-                </style>
+                  🏃‍♂️
+                </div>
+                <div style={styles.finishLine}>🏁</div>
+              </div>
+              <div style={{ color: '#fff', marginTop: '10px', fontSize: '0.8rem', opacity: 0.7 }}>
+                Lap Progress (0.25mi)
               </div>
             </div>
           </>
@@ -418,15 +396,32 @@ const styles = {
   },
   error: { color: "#ff3050", background: "rgba(255, 48, 80, 0.2)", padding: "10px", borderRadius: "8px" },
   controls: { display: "flex", gap: "10px" },
-  mapContainer: {
+  trackContainer: {
     width: "100%",
     maxWidth: "500px",
-    height: "300px",
-    border: "2px solid #ff3050",
-    borderRadius: "14px",
-    overflow: "hidden",
-    boxShadow: "0 0 20px rgba(255, 48, 80, 0.4)",
-    marginTop: "20px"
+    marginTop: "40px",
+    textAlign: "center"
+  },
+  track: {
+    width: "100%",
+    height: "10px",
+    background: "rgba(255, 48, 80, 0.3)",
+    borderRadius: "5px",
+    position: "relative",
+    marginTop: "20px",
+    border: "1px solid #ff3050"
+  },
+  runner: {
+    position: "absolute",
+    top: "-30px",
+    fontSize: "2rem",
+    transform: "translateX(-50%)"
+  },
+  finishLine: {
+    position: "absolute",
+    right: "0",
+    top: "-25px",
+    fontSize: "1.5rem"
   },
   background: {
     minHeight: "100vh",
