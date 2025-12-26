@@ -93,14 +93,22 @@ export default function Burnouts({ user, userProfile }) {
 
   const drawSkeleton = (keypoints, canvas) => {
     const ctx = canvasCtxRef.current;
-    if (!canvas || !ctx) return;
+    if (!canvas || !ctx) {
+      console.warn("Canvas or context not available");
+      return;
+    }
 
     const width = canvas.width;
     const height = canvas.height;
 
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw skeleton lines
     ctx.strokeStyle = "#00ff00";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.lineCap = "round";
+    ctx.lineJoin = "round";
 
     SKELETON_CONNECTIONS.forEach(([i, j]) => {
       const start = keypoints[i];
@@ -114,11 +122,12 @@ export default function Burnouts({ user, userProfile }) {
       }
     });
 
+    // Draw keypoint circles
     ctx.fillStyle = "#00ff00";
     keypoints.forEach((kp) => {
       if (kp && kp.score >= MIN_POSE_CONFIDENCE) {
         ctx.beginPath();
-        ctx.arc(kp.x * width, kp.y * height, 4, 0, 2 * Math.PI);
+        ctx.arc(kp.x * width, kp.y * height, 5, 0, 2 * Math.PI);
         ctx.fill();
       }
     });
@@ -190,19 +199,39 @@ export default function Burnouts({ user, userProfile }) {
           height: { ideal: 480 }
         }
       });
-      console.log("Camera stream obtained");
+      console.log("Camera stream obtained", stream);
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        
+        // Wait for video to load before playing
+        const playVideo = async () => {
+          try {
+            await videoRef.current.play();
+            console.log("Video playing successfully");
+          } catch (err) {
+            console.error("Video play error:", err);
+            // Try again with muted if autoplay failed
+            videoRef.current.muted = true;
+            try {
+              await videoRef.current.play();
+              console.log("Video playing after mute");
+            } catch (err2) {
+              console.error("Video play failed even with mute:", err2);
+            }
+          }
+        };
+
+        // Play when metadata is loaded
         videoRef.current.onloadedmetadata = () => {
           console.log("Video metadata loaded");
+          playVideo();
         };
-        
-        videoRef.current.play().then(() => {
-          console.log("Video playing");
-        }).catch(err => {
-          console.error("Play error:", err);
-        });
+
+        // Also try playing immediately in case metadata loads before this line
+        if (videoRef.current.readyState >= 1) {
+          playVideo();
+        }
       }
 
       if ("wakeLock" in navigator) {
