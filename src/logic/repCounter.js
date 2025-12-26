@@ -120,6 +120,19 @@ class RepCounter {
   }
 
   getJointAngle(keypoints, joint) {
+    if (joint === 'torso_rotation') {
+      const ls = keypoints[11];
+      const rs = keypoints[12];
+      const lh = keypoints[23];
+      const rh = keypoints[24];
+      if (!ls || !rs || !lh || !rh) return null;
+      // Calculate shoulder-to-hip plane rotation relative to camera
+      const shoulderMidZ = (ls.z + rs.z) / 2;
+      const hipMidZ = (lh.z + rh.z) / 2;
+      const rotation = (ls.z - rs.z) * 100; // Simplified rotation metric
+      return rotation;
+    }
+
     const mapping = {
       'left_elbow': [11, 13, 15],
       'right_elbow': [12, 14, 16],
@@ -131,6 +144,7 @@ class RepCounter {
       'left_ankle': [25, 27, 29],
       'right_ankle': [26, 28, 30],
       'ankle': [25, 27, 29], // Default to left
+      'torso_rotation': [11, 12, 23, 24], // Special handling for rotation
       'front_knee': [23, 25, 27], // Default to left for logic
       'back_knee': [24, 26, 28]   // Default to right for logic
     };
