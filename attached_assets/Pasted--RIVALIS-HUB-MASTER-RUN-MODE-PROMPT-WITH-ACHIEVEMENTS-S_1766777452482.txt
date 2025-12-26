@@ -1,0 +1,154 @@
+🏁 RIVALIS HUB — MASTER RUN MODE PROMPT (WITH ACHIEVEMENTS)
+🔥 SYSTEM CONTEXT
+You are extending an existing fitness platform called Rivalis Hub.
+Rivalis Hub already includes:
+Firebase Authentication
+Firestore user profiles
+A Dice-based reward economy
+Workout rep tracking (MediaPipe-based)
+Leaderboards, achievements, streaks, and gamification
+A competitive but privacy-first philosophy
+Your task is to implement a complete Run Mode system that integrates seamlessly with the existing ecosystem.
+🏃 RUN MODE — CORE FUNCTIONALITY
+GPS & DISTANCE
+Track running distance using the device Geolocation API.
+Distance unit: miles.
+Calculate distance using the Haversine formula.
+Runs support:
+Start
+Pause
+Resume
+End
+Distance and time must persist correctly across pauses.
+🎲 DICE ECONOMY (CONSISTENT WITH RIVALIS)
+Earn 1 dice for every 0.5 miles completed.
+Dice are awarded only when a new 0.5-mile threshold is crossed.
+Dice must never double-count due to pausing, lag, or GPS jitter.
+Dice rewards apply equally to:
+Manual runs
+Ghost races
+Imported external runs
+🔒 PRIVACY-FIRST GPS DESIGN (MANDATORY)
+Default Behavior
+GPS route coordinates must be stored in-memory only.
+By default, no GPS points are written to Firestore.
+Store only run summaries:
+total distance
+total duration
+average pace
+dice earned
+verification status
+Optional Route Sharing (Opt-In Only)
+Provide a toggle: “Share Route” (default OFF).
+If enabled:
+Store GPS points as a compressed polyline or array.
+Allow visibility selection:
+Private
+Friends
+Public
+If disabled:
+GPS points must be discarded permanently after the run ends.
+Routes must never be recoverable retroactively.
+🚫 CHEAT DETECTION & VERIFICATION
+Ignore GPS segments that imply unrealistic speeds.
+Thresholds:
+Sustained speed > 10 mph → suspicious
+Instant spikes > 15 mph → discard segment
+Ignore GPS jumps that imply impossible acceleration.
+If >25% of distance is flagged:
+Mark run as unverified
+Reduce dice rewards proportionally
+Do not auto-ban users.
+🔁 RUN STREAK LOGIC
+A run streak continues if the user logs a qualifying run on consecutive calendar days.
+Minimum qualifying run: 0.5 miles.
+Streak resets if a full day is missed.
+Imported runs (Apple Health / Google Fit) may count toward streaks.
+Firestore fields:
+users/{uid} {
+  runStreak: number
+  lastRunDate: timestamp
+}
+🏆 RUN LEADERBOARDS
+Integrate Run Mode into existing leaderboard systems.
+Leaderboards:
+Total miles run (lifetime)
+Fastest average pace (minimum 1-mile run)
+Longest run streak
+Privacy rule:
+Leaderboard inclusion must NOT require route sharing.
+🏁 LIVE RUN MODE — GHOST RACING
+Allow users to race:
+Their previous runs
+Friends’ shared runs
+Ghosts are distance-time interpolated (no live GPS sharing).
+Ghost data is read-only.
+Optional dice multiplier for beating ghost pace.
+🍎 EXTERNAL PLATFORM INTEGRATION
+Import runs from:
+Apple Health
+Google Fit
+Imported runs:
+Add to total miles
+Count toward streaks
+Earn dice using the same 0.5-mile rule
+Mark imported runs:
+source: "external"
+Respect original route privacy settings.
+🏅 RUNNING ACHIEVEMENTS — RIVALIS THEMED
+ACHIEVEMENT DESIGN PRINCIPLES
+Competitive
+Progression-focused
+Dice-aligned
+Visible on profile & leaderboards
+Unlocks should feel earned, not trivial
+🥉 ENTRY TIER
+First Blood — Complete your first run
+Half Dice Down — Earn dice from running for the first time
+Breaking Stride — Run 1 mile total
+🥈 MID TIER
+Dice on the Move — Earn 10 dice from running
+No Days Off — 5-day run streak
+Ghost Breaker — Beat one ghost race
+Verified Rival — Complete 5 verified runs
+🥇 HIGH TIER
+Road Warrior — Run 50 total miles
+Relentless — 14-day run streak
+Speed Dealer — Sub-8:00 pace on a 1+ mile run
+Shadow Hunter — Beat 10 ghost races
+🏆 LEGEND TIER
+Marathon Mindset — 26.2 lifetime miles
+Dice Lord: Endurance — Earn 100 dice from running
+Untouchable — 30-day run streak
+Rivalis Runner — Rank top 1% on a Run leaderboard
+🗂 ACHIEVEMENT STORAGE
+achievements/{uid} {
+  running: {
+    firstRun: boolean
+    totalMiles: number
+    longestStreak: number
+    ghostWins: number
+    diceFromRuns: number
+  }
+}
+Achievements should:
+Unlock instantly when criteria are met
+Never require route sharing
+Trigger UI notifications and profile badges
+🧩 CODE QUALITY & ARCHITECTURE
+Modular logic:
+GPS tracking
+Distance calculation
+Dice rewards
+Verification
+Achievements
+No duplication of logic from workout modes
+Designed to coexist cleanly with MediaPipe rep systems
+Production-ready, readable, and scalable
+🧠 FINAL GOAL
+Build Run Mode so it feels like a natural extension of Rivalis Hub, not a bolt-on feature:
+Competitive
+Rewarding
+Private by default
+Dice-driven
+Progression-focused
