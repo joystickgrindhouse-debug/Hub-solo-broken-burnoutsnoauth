@@ -197,6 +197,10 @@ export default function Solo({ user, userProfile }) {
     }
 
     try {
+      if (videoRef.current.readyState < 2) {
+        animationFrameRef.current = requestAnimationFrame(processFrame);
+        return;
+      }
       const pose = await detectPose(videoRef.current);
 
       // Draw detecting status even if no pose
