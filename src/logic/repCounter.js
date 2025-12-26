@@ -57,54 +57,28 @@ class RepCounter {
     return this.process(keypoints);
   }
 
-  process(keypoints) {
-    if (!this.isInitialized || !this.config || !keypoints) return false;
-    this.lastProcessedKeypoints = keypoints;
+  process(landmarks) {
+    if (!landmarks || landmarks.length < 33) return false;
 
-    // Handle isometric holds (like Plank)
-    if (this.config.type === 'hold') {
-      const isMatching = this.checkStateMatch(keypoints, this.config.angles);
-      if (isMatching) {
-        const now = Date.now();
-        if (this.lastStateChangeTime === 0) this.lastStateChangeTime = now;
-        
-        // Count 1 "rep" every 1 second of holding for progression feedback
-        if (now - this.lastStateChangeTime >= 1000) {
-          this.repCount++;
-          this.lastStateChangeTime = now;
-          return true;
-        }
-      } else {
-        this.lastStateChangeTime = 0;
-      }
-      return false;
-    }
+    // Mediapipe landmarks: 11 (L Shoulder), 13 (L Elbow), 15 (L Wrist)
+    const p1 = landmarks[11];
+    const p2 = landmarks[13];
+    const p3 = landmarks[15];
 
-    const currentTargetState = this.config.rep_order[this.currentStateIndex];
-    const stateAngles = this.config.angles[currentTargetState];
+    if (!p1 || !p2 || !p3) return false;
+
+    const angle = calculateAngle(p1, p2, p3);
     
-    if (this.checkStateMatch(keypoints, stateAngles)) {
-      const now = Date.now();
-      
-      // Advance state
-      this.currentStateIndex++;
-      this.lastStateChangeTime = now;
-
-      // Check if rep complete
-      if (this.currentStateIndex >= this.config.rep_order.length) {
-        const repDuration = (now - (this.history[0]?.time || now)) / 1000;
-        
-        if (repDuration >= (this.config.constraints?.min_rep_time || 0.5)) {
-          this.repCount++;
-          this.resetRepProgress();
-          return true;
-        } else {
-          this.resetRepProgress();
-        }
-      } else if (this.currentStateIndex === 1) {
-        // Started new rep
-        this.history = [{ state: currentTargetState, time: now }];
+    // Count 1 rep when the angle goes from >160 degrees to <30 degrees and back
+    if (angle > 160) {
+      if (this.stage === 'down') {
+        this.repCount++;
+        this.stage = 'up';
+        return true;
       }
+      this.stage = 'up';
+    } else if (angle < 30) {
+      this.stage = 'down';
     }
     return false;
   }
