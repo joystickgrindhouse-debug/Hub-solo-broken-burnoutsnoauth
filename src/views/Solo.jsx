@@ -159,10 +159,15 @@ export default function Solo({ user, userProfile }) {
       const start = keypoints[i];
       const end = keypoints[j];
 
-      if (start && end && (start.score >= MIN_POSE_CONFIDENCE || !start.score) && (end.score >= MIN_POSE_CONFIDENCE || !end.score)) {
+      if (start && end && (start.score >= MIN_POSE_CONFIDENCE || start.score === undefined) && (end.score >= MIN_POSE_CONFIDENCE || end.score === undefined)) {
         ctx.beginPath();
-        ctx.moveTo(start.x * (start.x <= 1 ? width : 1), start.y * (start.y <= 1 ? height : 1));
-        ctx.lineTo(end.x * (end.x <= 1 ? width : 1), end.y * (end.y <= 1 ? height : 1));
+        const startX = start.x <= 1.01 ? start.x * width : start.x;
+        const startY = start.y <= 1.01 ? start.y * height : start.y;
+        const endX = end.x <= 1.01 ? end.x * width : end.x;
+        const endY = end.y <= 1.01 ? end.y * height : end.y;
+        
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
         ctx.stroke();
       }
     });
@@ -170,9 +175,11 @@ export default function Solo({ user, userProfile }) {
     // Draw keypoint circles
     ctx.fillStyle = skeletonColor;
     keypoints.forEach((kp) => {
-      if (kp && (kp.score >= MIN_POSE_CONFIDENCE || !kp.score)) {
+      if (kp && (kp.score >= MIN_POSE_CONFIDENCE || kp.score === undefined)) {
+        const x = kp.x <= 1.01 ? kp.x * width : kp.x;
+        const y = kp.y <= 1.01 ? kp.y * height : kp.y;
         ctx.beginPath();
-        ctx.arc(kp.x * (kp.x <= 1 ? width : 1), kp.y * (kp.y <= 1 ? height : 1), 6, 0, 2 * Math.PI);
+        ctx.arc(x, y, 6, 0, 2 * Math.PI);
         ctx.fill();
       }
     });
@@ -202,6 +209,7 @@ export default function Solo({ user, userProfile }) {
         return;
       }
       const pose = await detectPose(videoRef.current);
+      console.log("Pose result:", pose);
 
       // Draw detecting status even if no pose
       if (canvasRef.current && canvasCtxRef.current) {

@@ -169,10 +169,15 @@ export default function Burnouts({ user, userProfile }) {
       const start = keypoints[i];
       const end = keypoints[j];
 
-      if (start && end && start.score >= MIN_POSE_CONFIDENCE && end.score >= MIN_POSE_CONFIDENCE) {
+      if (start && end && (start.score >= MIN_POSE_CONFIDENCE || start.score === undefined) && (end.score >= MIN_POSE_CONFIDENCE || end.score === undefined)) {
         ctx.beginPath();
-        ctx.moveTo(start.x * width, start.y * height);
-        ctx.lineTo(end.x * width, end.y * height);
+        const startX = start.x <= 1.01 ? start.x * width : start.x;
+        const startY = start.y <= 1.01 ? start.y * height : start.y;
+        const endX = end.x <= 1.01 ? end.x * width : end.x;
+        const endY = end.y <= 1.01 ? end.y * height : end.y;
+
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
         ctx.stroke();
       }
     });
@@ -180,9 +185,11 @@ export default function Burnouts({ user, userProfile }) {
     // Draw keypoint circles
     ctx.fillStyle = skeletonColor;
     keypoints.forEach((kp) => {
-      if (kp && kp.score >= MIN_POSE_CONFIDENCE) {
+      if (kp && (kp.score >= MIN_POSE_CONFIDENCE || kp.score === undefined)) {
+        const x = kp.x <= 1.01 ? kp.x * width : kp.x;
+        const y = kp.y <= 1.01 ? kp.y * height : kp.y;
         ctx.beginPath();
-        ctx.arc(kp.x * width, kp.y * height, 6, 0, 2 * Math.PI);
+        ctx.arc(x, y, 6, 0, 2 * Math.PI);
         ctx.fill();
       }
     });
@@ -207,7 +214,12 @@ export default function Burnouts({ user, userProfile }) {
     }
 
     try {
+      if (videoRef.current.readyState < 2) {
+        animationFrameRef.current = requestAnimationFrame(processFrame);
+        return;
+      }
       const pose = await detectPose(videoRef.current);
+      console.log("Pose result:", pose);
 
       // Draw detecting status even if no pose
       if (canvasRef.current && canvasCtxRef.current) {
@@ -555,7 +567,9 @@ export default function Burnouts({ user, userProfile }) {
       height: "100%",
       objectFit: "cover",
       borderRadius: "5px",
-      zIndex: 1
+      zIndex: 1,
+      visibility: "visible",
+      opacity: 1
     },
     canvas: {
       position: "absolute",
