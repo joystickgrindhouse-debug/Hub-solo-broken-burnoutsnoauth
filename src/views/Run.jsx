@@ -263,23 +263,20 @@ export default function Run({ user, userProfile }) {
           </div>
         </div>
 
-        {isActive && (
+        {isActive && currentPos && (
           <div style={styles.mapContainer}>
             <MapContainer 
-              center={currentPos || [51.505, -0.09]} 
+              center={currentPos} 
               zoom={15} 
               style={{ height: "100%", width: "100%", borderRadius: "12px" }}
+              scrollWheelZoom={false}
             >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
-              {currentPos && (
-                <>
-                  <Marker position={currentPos} />
-                  <MapAutoCenter center={currentPos} />
-                </>
-              )}
+              <Marker position={currentPos} />
+              <MapAutoCenter center={currentPos} />
               {route.length > 1 && (
                 <Polyline positions={route.map(p => [p.lat, p.lng])} color="#ff3050" weight={5} />
               )}
