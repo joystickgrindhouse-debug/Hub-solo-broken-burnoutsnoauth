@@ -101,7 +101,7 @@ export default function Run({ user, userProfile }) {
     setIsActive(false);
 
     // Save stats
-    const avgPace = duration > 0 ? (duration / 60) / distance : 0;
+    const avgPace = distance > 0 ? (duration / 60) / distance : 0;
     const runData = {
       totalDistance: distance,
       totalDuration: duration,
@@ -118,13 +118,17 @@ export default function Run({ user, userProfile }) {
 
     // Update user profile and leaderboard
     if (user) {
-      await UserService.updateUserProfile(user.uid, {
-        totalMiles: (userProfile?.totalMiles || 0) + distance,
-        diceBalance: (userProfile?.diceBalance || 0) + diceEarned,
-        lastRunDate: new Date().toISOString()
-      });
+      try {
+        await UserService.updateUserProfile(user.uid, {
+          totalMiles: (userProfile?.totalMiles || 0) + distance,
+          diceBalance: (userProfile?.diceBalance || 0) + diceEarned,
+          lastRunDate: new Date().toISOString()
+        });
 
-      await LeaderboardService.saveScore(user.uid, userProfile?.nickname || "Runner", "run", Math.floor(distance * 100));
+        await LeaderboardService.saveScore(user.uid, userProfile?.nickname || "Runner", "run", Math.floor(distance * 100));
+      } catch (err) {
+        console.error("Error saving run stats:", err);
+      }
     }
 
     // Reset local state or show summary
