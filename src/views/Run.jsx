@@ -32,7 +32,7 @@ export default function Run({ user, userProfile }) {
   const [lastPos, setLastPos] = useState(null);
   const [error, setError] = useState(null);
   const [isVerified, setIsVerified] = useState(true);
-  const [shareRoute, setShareRoute] = useState(false);
+  const [shareRoute, setShareRoute] = useState(true); // Default to true for better UX
   const [route, setRoute] = useState([]);
   const [currentPos, setCurrentPos] = useState(null);
 
@@ -307,47 +307,45 @@ export default function Run({ user, userProfile }) {
               <button style={{...styles.button, background: '#ff3050'}} onClick={endRun}>STOP</button>
             </div>
 
-            {currentPos && (
-              <div style={styles.mapContainer}>
-                <div style={{ height: "300px", width: "100%", background: "#1a1a1a", position: "relative", zIndex: 1, overflow: "hidden" }}>
-                  <MapContainer 
-                    center={currentPos} 
-                    zoom={15} 
-                    style={{ height: "300px", width: "100%" }}
-                    scrollWheelZoom={false}
-                    key={`map-${currentPos[0]}-${currentPos[1]}`}
-                  >
-                    <TileLayer
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    />
-                    <Marker position={currentPos} />
-                    {route.length > 1 && (
-                      <Polyline positions={route.map(p => [p.lat, p.lng])} color="#ff3050" weight={5} />
-                    )}
-                  </MapContainer>
-                  <link 
-                    rel="stylesheet" 
-                    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            <div style={styles.mapContainer}>
+              <div style={{ height: "300px", width: "100%", background: "#1a1a1a", position: "relative", zIndex: 1, overflow: "hidden" }}>
+                <MapContainer 
+                  center={currentPos || [51.505, -0.09]} 
+                  zoom={15} 
+                  style={{ height: "300px", width: "100%" }}
+                  scrollWheelZoom={false}
+                  key={currentPos ? `map-${currentPos[0]}-${currentPos[1]}` : 'map-placeholder'}
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                   />
-                  <style>
-                    {`
-                      .leaflet-container {
-                        height: 300px !important;
-                        width: 100% !important;
-                        background: #1a1a1a !important;
-                        position: relative;
-                      }
-                      .leaflet-map-pane { z-index: 2 !important; }
-                      .leaflet-tile-pane { z-index: 1 !important; }
-                      .leaflet-control-container .leaflet-top,
-                      .leaflet-control-container .leaflet-bottom { z-index: 1000 !important; }
-                      .leaflet-marker-pane img { z-index: 1001 !important; }
-                    `}
-                  </style>
-                </div>
+                  {currentPos && <Marker position={currentPos} />}
+                  {route.length > 1 && (
+                    <Polyline positions={route.map(p => [p.lat, p.lng])} color="#ff3050" weight={5} />
+                  )}
+                </MapContainer>
+                <link 
+                  rel="stylesheet" 
+                  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+                />
+                <style>
+                  {`
+                    .leaflet-container {
+                      height: 300px !important;
+                      width: 100% !important;
+                      background: #1a1a1a !important;
+                      position: relative;
+                    }
+                    .leaflet-map-pane { z-index: 2 !important; }
+                    .leaflet-tile-pane { z-index: 1 !important; }
+                    .leaflet-control-container .leaflet-top,
+                    .leaflet-control-container .leaflet-bottom { z-index: 1000 !important; }
+                    .leaflet-marker-pane img { z-index: 1001 !important; }
+                  `}
+                </style>
               </div>
-            )}
+            </div>
           </>
         )}
       </div>
