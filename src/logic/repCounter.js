@@ -106,6 +106,7 @@ class RepCounter {
       'right_elbow': [12, 14, 16],
       'left_hip': [11, 23, 25],
       'right_hip': [12, 24, 26],
+      'hip': [11, 23, 25], // Default to left
       'left_knee': [23, 25, 27],
       'right_knee': [24, 26, 28],
       'front_knee': [23, 25, 27], // Default to left for logic

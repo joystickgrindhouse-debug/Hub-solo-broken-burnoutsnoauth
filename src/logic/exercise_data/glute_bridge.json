@@ -1,0 +1,15 @@
+{
+  "exercise": "glute_bridge",
+  "states": ["DOWN", "UP"],
+  "rep_order": ["DOWN", "UP", "DOWN"],
+  "angles": {
+    "DOWN": {
+      "left_hip": [90, 120],
+      "right_hip": [90, 120]
+    },
+    "UP": {
+      "left_hip": [160, 180],
+      "right_hip": [160, 180]
+    }
+  }
+}
