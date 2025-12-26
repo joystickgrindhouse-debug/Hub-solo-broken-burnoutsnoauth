@@ -25,10 +25,20 @@ export default function Run({ user, userProfile }) {
     };
   }, []);
 
-  const startRun = () => {
+  const [ghostMode, setGhostMode] = useState(false);
+  const [ghostData, setGhostData] = useState(null);
+  const [ghostProgress, setGhostProgress] = useState(0);
+
+  const startRun = (ghost = null) => {
     if (!navigator.geolocation) {
       setError("Geolocation not supported");
       return;
+    }
+
+    if (ghost) {
+      setGhostMode(true);
+      setGhostData(ghost);
+      setGhostProgress(0);
     }
 
     setIsActive(true);
@@ -115,13 +125,22 @@ export default function Run({ user, userProfile }) {
     clearInterval(timerRef.current);
     setIsActive(false);
 
+    // Competitive multiplier for ghost racing
+    let finalDice = diceEarned;
+    if (ghostMode && ghostData) {
+      if (distance >= ghostData.distance && duration < ghostData.duration) {
+        finalDice = Math.floor(diceEarned * 1.5); // 50% bonus for beating ghost
+        alert("GHOST DEFEATED! 1.5x Dice Multiplier Active!");
+      }
+    }
+
     // Save stats
     const avgPace = distance > 0 ? (duration / 60) / distance : 0;
     const runData = {
       totalDistance: distance,
       totalDuration: duration,
       avgPace,
-      diceEarned,
+      diceEarned: finalDice,
       isVerified,
       timestamp: new Date().toISOString(),
       source: "internal"
@@ -136,7 +155,7 @@ export default function Run({ user, userProfile }) {
       try {
         await UserService.updateUserProfile(user.uid, {
           totalMiles: (userProfile?.totalMiles || 0) + distance,
-          diceBalance: (userProfile?.diceBalance || 0) + diceEarned,
+          diceBalance: (userProfile?.diceBalance || 0) + finalDice,
           lastRunDate: new Date().toISOString()
         });
 
@@ -146,12 +165,14 @@ export default function Run({ user, userProfile }) {
       }
     }
 
-    // Reset local state or show summary
-    alert(`Run Ended! \nDistance: ${distance.toFixed(2)} miles\nDice Earned: ${diceEarned}`);
+    // Reset local state
+    alert(`Run Ended! \nDistance: ${distance.toFixed(2)} miles\nDice Earned: ${finalDice}`);
     setDistance(0);
     setDuration(0);
     setDiceEarned(0);
     setRoute([]);
+    setGhostMode(false);
+    setGhostData(null);
   };
 
   const formatTime = (s) => {
@@ -160,9 +181,14 @@ export default function Run({ user, userProfile }) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const [recentRuns, setRecentRuns] = useState([
+    { id: 1, name: "Your Previous Best", distance: 1.0, duration: 480, date: "2025-12-25" },
+    { id: 2, name: "Global Ghost: Sonic", distance: 0.5, duration: 180, date: "2025-12-24" }
+  ]);
+
   return (
     <div className="hero-background" style={styles.container}>
-      <h1 style={styles.title}>RUN MODE</h1>
+      <h1 style={styles.title}>{ghostMode ? "GHOST RACE" : "RUN MODE"}</h1>
       
       {error && <div style={styles.error}>{error}</div>}
 
@@ -170,10 +196,16 @@ export default function Run({ user, userProfile }) {
         <div style={styles.statBox}>
           <div style={styles.statLabel}>DISTANCE</div>
           <div style={styles.statValue}>{distance.toFixed(2)} <span style={{fontSize: '1rem'}}>mi</span></div>
+          {ghostMode && ghostData && (
+            <div style={{fontSize: '0.8rem', color: '#667eea'}}>Target: {ghostData.distance} mi</div>
+          )}
         </div>
         <div style={styles.statBox}>
           <div style={styles.statLabel}>TIME</div>
           <div style={styles.statValue}>{formatTime(duration)}</div>
+          {ghostMode && ghostData && (
+            <div style={{fontSize: '0.8rem', color: '#667eea'}}>Ghost: {formatTime(ghostData.duration)}</div>
+          )}
         </div>
         <div style={styles.statBox}>
           <div style={styles.statLabel}>DICE</div>
@@ -182,17 +214,37 @@ export default function Run({ user, userProfile }) {
       </div>
 
       {!isActive ? (
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ marginBottom: '1rem', color: '#fff' }}>
-            <label>
-              <input 
-                type="checkbox" 
-                checked={shareRoute} 
-                onChange={(e) => setShareRoute(e.target.checked)}
-              /> Share Route (Private by default)
-            </label>
+        <div style={{ width: '100%', maxWidth: '500px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ marginBottom: '1rem', color: '#fff' }}>
+              <label>
+                <input 
+                  type="checkbox" 
+                  checked={shareRoute} 
+                  onChange={(e) => setShareRoute(e.target.checked)}
+                /> Share Route
+              </label>
+            </div>
+            <button style={styles.button} onClick={() => startRun()}>START SOLO RUN</button>
           </div>
-          <button style={styles.button} onClick={startRun}>START RUN</button>
+
+          <h3 style={{color: '#ff3050', marginBottom: '10px', textAlign: 'center'}}>GHOST RACING</h3>
+          <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+            {recentRuns.map(run => (
+              <div key={run.id} style={styles.ghostCard}>
+                <div>
+                  <div style={{fontWeight: 'bold'}}>{run.name}</div>
+                  <div style={{fontSize: '0.8rem', opacity: 0.7}}>{run.distance} mi • {formatTime(run.duration)}</div>
+                </div>
+                <button 
+                  style={styles.ghostButton}
+                  onClick={() => startRun(run)}
+                >
+                  RACE
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <div style={styles.controls}>
@@ -214,7 +266,27 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "20px"
+    gap: "20px",
+    paddingBottom: "100px"
+  },
+  ghostCard: {
+    background: "rgba(255, 255, 255, 0.05)",
+    border: "1px solid rgba(255, 48, 80, 0.3)",
+    padding: "15px",
+    borderRadius: "12px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    color: "#fff"
+  },
+  ghostButton: {
+    background: "#ff3050",
+    color: "#fff",
+    border: "none",
+    padding: "8px 15px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "bold"
   },
   title: {
     color: "#ff3050",
