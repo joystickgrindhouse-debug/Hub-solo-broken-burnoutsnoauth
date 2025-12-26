@@ -139,6 +139,7 @@ class RepCounter {
       'left_hip': [11, 23, 25],
       'right_hip': [12, 24, 26],
       'hip': [11, 23, 25], // Default to left
+      'shoulder': [13, 11, 23], // Elbow-Shoulder-Hip angle for abduction
       'left_knee': [23, 25, 27],
       'right_knee': [24, 26, 28],
       'left_ankle': [25, 27, 29],
