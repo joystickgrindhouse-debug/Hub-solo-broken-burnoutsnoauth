@@ -5,8 +5,8 @@ export default function OnboardingSlides({ onComplete }) {
   
   const slides = [
     {
-      title: "AI-POWERED WORKOUTS",
-      description: "Use your camera for automatic rep counting with pose detection",
+      title: "GAMIFIED WORKOUTS",
+      description: "Track your reps and dominate challenges",
       icon: "💪"
     },
     {

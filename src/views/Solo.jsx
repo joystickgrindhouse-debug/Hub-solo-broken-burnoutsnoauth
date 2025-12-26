@@ -1,15 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { initializePoseDetection, detectPose, SKELETON_CONNECTIONS, MIN_POSE_CONFIDENCE } from "../logic/poseDetection.js";
-import { calculateAngle, isConfident, getFormIssues } from "../logic/angleCalculations.js";
-import { speakFeedback, speakNumber, getCoachingMessage } from "../logic/audioFeedback.js";
-import RepCounter from "../logic/repCounter.js";
-import LandmarkSmoother from "../logic/smoothing.js";
+import { speakFeedback, speakNumber } from "../logic/audioFeedback.js";
 import ExerciseAvatar from "../components/ExerciseAvatar.jsx";
 
 export default function Solo({ user, userProfile }) {
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const canvasCtxRef = useRef(null);
   const [totalReps, setTotalReps] = useState(0);
   const [repGoal, setRepGoal] = useState(0);
   const [currentReps, setCurrentReps] = useState(0);
@@ -17,18 +10,7 @@ export default function Solo({ user, userProfile }) {
   const [currentExercise, setCurrentExercise] = useState("");
   const [currentSuit, setCurrentSuit] = useState("");
   const [currentGroup, setCurrentGroup] = useState("");
-  const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [toast, setToast] = useState("");
-  const [showDrawButton, setShowDrawButton] = useState(false);
-  const [isCorrectForm, setIsCorrectForm] = useState(false);
-  const [formFeedback, setFormFeedback] = useState("");
-
-  const repCounterRef = useRef(null);
-  const smootherRef = useRef(new LandmarkSmoother(5));
-  const detectorRef = useRef(null);
-  const animationFrameRef = useRef(null);
-  const wakeLockRef = useRef(null);
-  const lastFeedbackRef = useRef({ time: 0, message: "" });
 
   const exercises = {
     Arms: ["Push-ups", "Plank Up-Downs", "Pike Push ups", "Shoulder Taps"],
@@ -74,249 +56,35 @@ export default function Solo({ user, userProfile }) {
     setCurrentExercise(exercise);
     setRepGoal(goal);
     setCurrentReps(0);
-    setFormFeedback("");
 
-    if (repCounterRef.current) {
-      repCounterRef.current = new RepCounter(exercise);
-    }
-
-    setShowDrawButton(false);
     showToast(`New card: ${exercise}!`);
     speakFeedback(`${exercise}. ${goal} reps.`);
   };
 
-  const processExerciseDetection = (keypoints) => {
-    if (!currentExercise || !repCounterRef.current) return;
+  const addRep = () => {
+    const newReps = currentReps + 1;
+    setCurrentReps(newReps);
+    const newTotal = totalReps + 1;
+    setTotalReps(newTotal);
+    speakNumber(newReps);
 
-    const issues = getFormIssues(keypoints);
-    if (issues.length > 0) {
-      const mainIssue = issues[0];
-      const message = getCoachingMessage(mainIssue);
-      if (message && (Date.now() - lastFeedbackRef.current.time > 3000 || lastFeedbackRef.current.message !== message)) {
-        setFormFeedback(message);
-        setIsCorrectForm(false);
-        speakFeedback(message);
-        lastFeedbackRef.current = { time: Date.now(), message };
-      }
-    } else {
-      setIsCorrectForm(true);
-      setFormFeedback("");
+    if (newReps >= repGoal) {
+      showToast("Card complete! Draw a new card.");
     }
 
-    const leftShoulder = keypoints[11];
-    const rightShoulder = keypoints[12];
-    const leftElbow = keypoints[13];
-    const rightElbow = keypoints[14];
-    const leftWrist = keypoints[15];
-    const rightWrist = keypoints[16];
-    const leftHip = keypoints[23];
-    const rightHip = keypoints[24];
-    const leftKnee = keypoints[25];
-    const rightKnee = keypoints[26];
-
-    let repCompleted = false;
-
-    if (currentExercise === "Push-ups") {
-      if (isConfident(leftShoulder) && isConfident(leftElbow) && isConfident(leftWrist)) {
-        const leftAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
-        if (isConfident(rightShoulder) && isConfident(rightElbow) && isConfident(rightWrist)) {
-          const rightAngle = calculateAngle(rightShoulder, rightElbow, rightWrist);
-          const avgAngle = (leftAngle + rightAngle) / 2;
-          repCompleted = repCounterRef.current.processElbowBased(avgAngle, 60, 160);
-        }
-      }
-    } else if (currentExercise === "Squats") {
-      if (isConfident(leftHip) && isConfident(leftKnee) && isConfident(rightHip) && isConfident(rightKnee)) {
-        const kneeFlexion = Math.max(leftKnee.y - leftHip.y, rightKnee.y - rightHip.y);
-        repCompleted = repCounterRef.current.processKneeBased(kneeFlexion, 0.15);
-      }
-    } else if (currentExercise === "Jumping Jacks") {
-      if (isConfident(leftWrist) && isConfident(rightWrist) && isConfident(leftShoulder) && isConfident(rightShoulder)) {
-        const avgWristY = (leftWrist.y + rightWrist.y) / 2;
-        const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-        repCompleted = repCounterRef.current.processArmsRaised(avgWristY, avgShoulderY);
-      }
-    } else if (currentExercise === "Plank") {
-      if (isConfident(leftShoulder) && isConfident(leftHip) && isConfident(rightShoulder) && isConfident(rightHip)) {
-        const alignment = Math.abs(leftShoulder.y - leftHip.y) + Math.abs(rightShoulder.y - rightHip.y) / 2 < 0.15;
-        repCompleted = repCounterRef.current.processPlank(alignment, 3000);
-      }
-    } else if (currentExercise === "Crunches") {
-      if (isConfident(leftShoulder) && isConfident(leftHip) && isConfident(rightShoulder) && isConfident(rightHip)) {
-        const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-        const avgHipY = (leftHip.y + rightHip.y) / 2;
-        const flexion = avgHipY - avgShoulderY;
-        repCompleted = repCounterRef.current.processTorsoFlexion(flexion, 0.25);
-      }
-    } else if (currentExercise === "Pike Push ups") {
-      if (isConfident(leftShoulder) && isConfident(leftElbow) && isConfident(leftWrist)) {
-        const leftAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
-        if (isConfident(rightShoulder) && isConfident(rightElbow) && isConfident(rightWrist)) {
-          const rightAngle = calculateAngle(rightShoulder, rightElbow, rightWrist);
-          const avgAngle = (leftAngle + rightAngle) / 2;
-          repCompleted = repCounterRef.current.processElbowBased(avgAngle, 60, 160);
-        }
-      }
-    } else {
-      if (isConfident(leftShoulder) && isConfident(leftElbow) && isConfident(leftWrist)) {
-        const leftAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
-        repCompleted = repCounterRef.current.processElbowBased(leftAngle, 50, 170);
-      }
-    }
-
-    if (repCompleted) {
-      const newCount = repCounterRef.current.getCount();
-      setCurrentReps(newCount);
-      const newTotal = totalReps + 1;
-      setTotalReps(newTotal);
-      speakNumber(newCount);
-
-      if (newCount >= repGoal) {
-        showToast("Card complete! Draw a new card.");
-        setShowDrawButton(true);
-      }
-
-      if (newTotal % 30 === 0) {
-        const newDice = dice + 1;
-        setDice(newDice);
-        showToast(`🎲 Dice earned! Total: ${newDice}`);
-        speakFeedback(`Dice earned! Total: ${newDice}`);
-      }
+    if (newTotal % 30 === 0) {
+      const newDice = dice + 1;
+      setDice(newDice);
+      showToast(`🎲 Dice earned! Total: ${newDice}`);
+      speakFeedback(`Dice earned! Total: ${newDice}`);
     }
   };
 
-  const drawSkeleton = (keypoints, canvas) => {
-    const ctx = canvasCtxRef.current;
-    if (!canvas || !ctx) return;
-
-    const width = 640;
-    const height = 480;
-
-    ctx.strokeStyle = isCorrectForm ? "#00ff00" : "#ff2e2e";
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-
-    SKELETON_CONNECTIONS.forEach(([i, j]) => {
-      const start = keypoints[i];
-      const end = keypoints[j];
-
-      if (start && end && isConfident(start) && isConfident(end)) {
-        ctx.beginPath();
-        ctx.moveTo(start.x * width, start.y * height);
-        ctx.lineTo(end.x * width, end.y * height);
-        ctx.stroke();
-      }
-    });
-
-    ctx.fillStyle = isCorrectForm ? "#00ff00" : "#ff2e2e";
-    keypoints.forEach((kp) => {
-      if (kp && isConfident(kp)) {
-        ctx.beginPath();
-        ctx.arc(kp.x * width, kp.y * height, 4, 0, 2 * Math.PI);
-        ctx.fill();
-      }
-    });
-  };
-
-  const processFrame = async () => {
-    if (!videoRef.current || !detectorRef.current || !isWorkoutActive) {
-      if (isWorkoutActive) {
-        animationFrameRef.current = requestAnimationFrame(processFrame);
-      }
-      return;
-    }
-
-    try {
-      const pose = await detectPose(videoRef.current);
-
-      if (pose && pose.keypoints) {
-        const smoothed = smootherRef.current.smooth(pose.keypoints);
-        processExerciseDetection(smoothed);
-
-        if (canvasRef.current) {
-          canvasCtxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-          drawSkeleton(smoothed, canvasRef.current);
-        }
-      }
-    } catch (error) {
-      console.error("Frame processing error:", error);
-    }
-
-    animationFrameRef.current = requestAnimationFrame(processFrame);
-  };
-
-  const startWorkout = async () => {
-    try {
-      console.log("Starting solo workout...");
-      detectorRef.current = await initializePoseDetection();
-      console.log("Detector initialized");
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "user",
-          width: { ideal: 640 },
-          height: { ideal: 480 }
-        }
-      });
-      console.log("Camera stream obtained");
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          console.log("Video metadata loaded");
-        };
-        
-        videoRef.current.play().then(() => {
-          console.log("Video playing");
-        }).catch(err => {
-          console.error("Play error:", err);
-        });
-      }
-
-      if ("wakeLock" in navigator) {
-        try {
-          wakeLockRef.current = await navigator.wakeLock.request("screen");
-        } catch (err) {
-          console.log("Wake Lock not available");
-        }
-      }
-
-      repCounterRef.current = new RepCounter(currentExercise);
-      smootherRef.current = new LandmarkSmoother(5);
-      setIsWorkoutActive(true);
-      drawCard();
-      
-      // Start frame processing with a small delay to let video start
-      setTimeout(() => {
-        animationFrameRef.current = requestAnimationFrame(processFrame);
-      }, 500);
-    } catch (err) {
-      console.error("Camera error:", err);
-      alert("Camera error: " + err.message);
-    }
+  const startWorkout = () => {
+    drawCard();
   };
 
   const endSession = async () => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-
-    if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = videoRef.current.srcObject.getTracks();
-      tracks.forEach((track) => track.stop());
-      videoRef.current.srcObject = null;
-    }
-
-    if (wakeLockRef.current) {
-      try {
-        await wakeLockRef.current.release();
-      } catch (err) {
-        console.log("Wake lock release error");
-      }
-    }
-
-    setIsWorkoutActive(false);
-
     if (user && user.uid) {
       try {
         const { db } = await import("../firebase.js");
@@ -344,25 +112,6 @@ export default function Solo({ user, userProfile }) {
 
     alert(`Session complete!\nTotal Reps: ${totalReps}\nDice Earned: ${dice}`);
   };
-
-  useEffect(() => {
-    if (canvasRef.current) {
-      canvasCtxRef.current = canvasRef.current.getContext("2d");
-    }
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      if (videoRef.current && videoRef.current.srcObject) {
-        const tracks = videoRef.current.srcObject.getTracks();
-        tracks.forEach((track) => track.stop());
-      }
-      if (wakeLockRef.current) {
-        wakeLockRef.current.release().catch(() => {});
-      }
-    };
-  }, []);
 
   const styles = {
     root: {
@@ -452,36 +201,6 @@ export default function Solo({ user, userProfile }) {
       display: "flex",
       flexDirection: "column",
       gap: "15px"
-    },
-    videoContainer: {
-      position: "relative",
-      width: "100%",
-      maxWidth: "640px",
-      height: "480px",
-      margin: "0 auto",
-      backgroundColor: "#000",
-      border: "2px solid #ff2e2e",
-      borderRadius: "5px",
-      overflow: "hidden"
-    },
-    video: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      objectFit: "cover",
-      borderRadius: "5px",
-      zIndex: 1
-    },
-    canvas: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      borderRadius: "5px",
-      zIndex: 2
     },
     stats: {
       display: "grid",
@@ -586,46 +305,38 @@ export default function Solo({ user, userProfile }) {
           </div>
         </div>
 
-        {isWorkoutActive && (
-          <>
-            <div style={styles.workoutArea}>
-              <div style={styles.videoContainer}>
-                <video ref={videoRef} style={styles.video} autoPlay playsInline muted />
-                <canvas ref={canvasRef} width={640} height={480} style={styles.canvas} />
+        {currentExercise && (
+          <div style={styles.workoutArea}>
+            <div style={styles.stats}>
+              <div style={styles.statBox}>
+                <div style={styles.statValue}>{currentReps}</div>
+                <div style={styles.statLabel}>Set Reps</div>
               </div>
-
-              <div style={styles.stats}>
-                <div style={styles.statBox}>
-                  <div style={styles.statValue}>{currentReps}</div>
-                  <div style={styles.statLabel}>Set Reps</div>
-                </div>
-                <div style={styles.statBox}>
-                  <div style={styles.statValue}>{totalReps}</div>
-                  <div style={styles.statLabel}>Total Reps</div>
-                </div>
-              </div>
-
-              {formFeedback && <div style={styles.formFeedback}>{formFeedback}</div>}
-
-              <div style={styles.buttons}>
-                <button onClick={endSession} style={{ ...styles.button, ...styles.endButton }}>
-                  End Session
-                </button>
+              <div style={styles.statBox}>
+                <div style={styles.statValue}>{totalReps}</div>
+                <div style={styles.statLabel}>Total Reps</div>
               </div>
             </div>
-          </>
+
+            <div style={styles.buttons}>
+              <button onClick={addRep} style={{ ...styles.button, ...styles.startButton }}>
+                +1 Rep
+              </button>
+              <button onClick={drawCard} style={{ ...styles.button, ...styles.drawButton }}>
+                Draw Card
+              </button>
+              <button onClick={endSession} style={{ ...styles.button, ...styles.endButton }}>
+                End Session
+              </button>
+            </div>
+          </div>
         )}
 
-        {!isWorkoutActive && (
+        {!currentExercise && (
           <div style={styles.buttons}>
             <button onClick={startWorkout} style={{ ...styles.button, ...styles.startButton }}>
               Start Workout
             </button>
-            {showDrawButton && (
-              <button onClick={drawCard} style={{ ...styles.button, ...styles.drawButton }}>
-                Draw Card
-              </button>
-            )}
           </div>
         )}
       </section>
