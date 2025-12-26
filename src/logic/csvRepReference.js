@@ -120,29 +120,12 @@ export class CSVRepReference {
 }
 
 // Mapping of exercise names to CSV files
-export const CSV_EXERCISE_MAP = {
-  'Push-ups': 'Push-up_media_pose_pose_1766553282744.csv',
-  'Plank Up-Downs': 'Plank_up_down_media_pose_pose_1766553282744.csv',
-  'Pike Push ups': 'Pike_pushup_pose_1766553282743.csv',
-  'Shoulder Taps': 'Shoulder_taps2_pose_1766553282744.csv',
-  'Squats': 'Squat_pose_1766670463888.csv',
-  'Lunges': 'Lunge_pose_1766670463888.csv',
-  'Glute Bridges': 'GluteBridges_pose_1766670463888.csv',
-  'Calf Raises': 'CalfRaises_pose_1766670463888.csv',
-  'Crunches': 'Crunches_pose_1766670463888.csv',
-  'Plank': 'Plank_pose_1766670463888.csv',
-  'Russian Twists': 'RussianTwists_pose_1766670463887.csv',
-  'Leg Raises': 'LegRaises_pose_1766670463888.csv',
-  'Jumping Jacks': 'Jumping_jacks_pose_1766670463888.csv',
-  'High Knees': 'HighKnees_pose_1766670463888.csv',
-  'Burpees': 'Burpees_pose_1766670463888.csv',
-  'Mountain Climbers': 'MountainClimbers_pose_1766670463888.csv'
-};
+export const CSV_EXERCISE_MAP = {};
 
 export async function loadExerciseReference(exercise) {
   const csvFile = CSV_EXERCISE_MAP[exercise];
   if (!csvFile) {
-    console.warn(`No CSV reference found for exercise: ${exercise}`);
+    // Return null silently as we are expecting new data
     return null;
   }
 
