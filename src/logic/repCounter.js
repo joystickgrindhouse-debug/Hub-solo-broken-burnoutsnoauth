@@ -59,6 +59,7 @@ class RepCounter {
 
   process(keypoints) {
     if (!this.isInitialized || !this.config || !keypoints) return false;
+    this.lastProcessedKeypoints = keypoints;
 
     // Handle isometric holds (like Plank)
     if (this.config.type === 'hold') {
@@ -174,6 +175,35 @@ class RepCounter {
 
   getCount() {
     return this.repCount;
+  }
+
+  getFormIssues() {
+    if (!this.isInitialized || !this.config || !this.lastProcessedKeypoints) return [];
+    
+    const currentTargetState = this.config.rep_order[this.currentStateIndex];
+    const stateAngles = this.config.angles[currentTargetState];
+    if (!stateAngles) return [];
+
+    const issues = [];
+    for (const [joint, range] of Object.entries(stateAngles)) {
+      const angle = this.getJointAngle(this.lastProcessedKeypoints, joint);
+      if (angle !== null && (angle < range[0] || angle > range[1])) {
+        // Map joint names to indices for visualization
+        const mapping = {
+          'left_elbow': [11, 13, 15],
+          'right_elbow': [12, 14, 16],
+          'left_hip': [11, 23, 25],
+          'right_hip': [12, 24, 26],
+          'left_knee': [23, 25, 27],
+          'right_knee': [24, 26, 28],
+          'left_ankle': [25, 27, 29],
+          'right_ankle': [26, 28, 30]
+        };
+        const indices = mapping[joint] || [];
+        issues.push(...indices);
+      }
+    }
+    return [...new Set(issues)];
   }
 }
 

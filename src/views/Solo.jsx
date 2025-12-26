@@ -166,6 +166,18 @@ export default function Solo({ user, userProfile }) {
         ctx.moveTo(startX, startY);
         ctx.lineTo(endX, endY);
         ctx.stroke();
+
+        // Add corrective indicators (pulsing red for joints failing constraints)
+        if (quality === "poor") {
+          const jointIssues = repCounterRef.current?.getFormIssues?.() || [];
+          if (jointIssues.includes(i) || jointIssues.includes(j)) {
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "#ff2e2e";
+            ctx.strokeStyle = "#ff2e2e";
+            ctx.lineWidth = 6;
+            ctx.stroke();
+          }
+        }
       }
     });
 
