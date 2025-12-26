@@ -21,11 +21,16 @@ export async function detectPose(videoElement) {
   if (!detector) return null;
   
   try {
+    if (!videoElement || videoElement.readyState !== videoElement.HAVE_ENOUGH_DATA) {
+      return null;
+    }
+
     const poses = await detector.estimatePoses(videoElement, {
       flipHorizontal: false
     });
     
-    if (poses && poses.length > 0) {
+    if (poses && poses.length > 0 && poses[0].keypoints) {
+      console.log('Pose detected with', poses[0].keypoints.length, 'keypoints');
       return {
         keypoints: poses[0].keypoints,
         score: poses[0].score || 0.9

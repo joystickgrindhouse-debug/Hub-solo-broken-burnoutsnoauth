@@ -199,6 +199,18 @@ export default function Solo({ user, userProfile }) {
     try {
       const pose = await detectPose(videoRef.current);
 
+      // Draw detecting status even if no pose
+      if (canvasRef.current && canvasCtxRef.current) {
+        const ctx = canvasCtxRef.current;
+        if (!pose || !pose.keypoints) {
+          ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          ctx.fillStyle = "#ffff00";
+          ctx.font = "bold 24px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText("DETECTING...", canvasRef.current.width / 2, 40);
+        }
+      }
+
       if (pose && pose.keypoints) {
         const smoothed = smootherRef.current.smooth(pose.keypoints);
         
@@ -277,7 +289,9 @@ export default function Solo({ user, userProfile }) {
           const playVideo = async () => {
             try {
               await videoRef.current.play();
-              console.log("Video playing successfully");
+              console.log("Video playing successfully, starting pose detection...");
+              // Start frame processing after video is playing
+              animationFrameRef.current = requestAnimationFrame(processFrame);
             } catch (err) {
               console.error("Video play error:", err);
             }
@@ -285,7 +299,7 @@ export default function Solo({ user, userProfile }) {
 
           // Play when metadata is loaded
           videoRef.current.onloadedmetadata = () => {
-            console.log("Video metadata loaded");
+            console.log("Video metadata loaded, attempting to play");
             playVideo();
           };
 
@@ -295,11 +309,6 @@ export default function Solo({ user, userProfile }) {
           }
         }
       }, 100);
-      
-      // Start frame processing with a small delay
-      setTimeout(() => {
-        animationFrameRef.current = requestAnimationFrame(processFrame);
-      }, 500);
     } catch (err) {
       console.error("Camera error:", err);
       alert("Camera error: " + err.message);
