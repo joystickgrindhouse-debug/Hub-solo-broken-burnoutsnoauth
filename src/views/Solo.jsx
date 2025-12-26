@@ -14,7 +14,17 @@ export default function Solo({ user, userProfile }) {
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [toast, setToast] = useState("");
 
-  const repCounterRef = useRef(new RepCounter("Push-ups"));
+  const exercises = {
+    Arms: ["Push-ups", "Plank Up-Downs", "Pike Push ups", "Shoulder Taps"],
+    Legs: ["Squats", "Lunges", "Glute Bridges", "Calf Raises"],
+    Core: ["Crunches", "Plank", "Russian Twists", "Leg Raises"],
+    Cardio: ["Jumping Jacks", "High Knees", "Burpees", "Mountain Climbers"]
+  };
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 2000);
+  };
   const animationFrameRef = useRef(null);
   const lastVideoTimeRef = useRef(-1);
 
@@ -47,16 +57,82 @@ export default function Solo({ user, userProfile }) {
     animationFrameRef.current = requestAnimationFrame(processFrame);
   };
 
+  const drawCard = async () => {
+    const suits = ["♥", "♦", "♣", "♠"];
+    const groups = ["Arms", "Legs", "Core", "Cardio"];
+    const randGroup = groups[Math.floor(Math.random() * groups.length)];
+    const groupExercises = exercises[randGroup];
+    const exercise = groupExercises[Math.floor(Math.random() * groupExercises.length)];
+    const goal = Math.floor(Math.random() * 13) + 2;
+
+    setCurrentSuit(suits[Math.floor(Math.random() * 4)]);
+    setCurrentGroup(randGroup);
+    setCurrentExercise(exercise);
+    setRepGoal(goal);
+    setCurrentReps(0);
+
+    const counter = new RepCounter(exercise);
+    await counter.initialize();
+    repCounterRef.current = counter;
+
+    showToast(`New card: ${exercise}!`);
+    speakFeedback(`${exercise}. ${goal} reps.`);
+  };
+
   const startWorkout = async () => {
     try {
       await initializePoseLandmarker(canvasRef.current);
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       videoRef.current.srcObject = stream;
       setIsWorkoutActive(true);
+      drawCard();
       animationFrameRef.current = requestAnimationFrame(processFrame);
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const endSession = async () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks();
+      tracks.forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+
+    setIsWorkoutActive(false);
+
+    if (user && user.uid) {
+      try {
+        const { db } = await import("../firebase.js");
+        const { doc, updateDoc, getDoc, setDoc, increment } = await import("firebase/firestore");
+
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        const earnedDice = Math.floor(totalReps / 30);
+
+        if (userSnap.exists()) {
+          await updateDoc(userRef, {
+            totalReps: increment(totalReps),
+            diceBalance: increment(earnedDice)
+          });
+        } else {
+          await setDoc(userRef, {
+            userId: user.uid,
+            totalReps: totalReps,
+            diceBalance: earnedDice
+          });
+        }
+      } catch (error) {
+        console.error("Error saving stats:", error);
+      }
+    }
+
+    alert(`Session complete!\nTotal Reps: ${totalReps}\nDice Earned: ${Math.floor(totalReps / 30)}`);
   };
 
   const styles = {
@@ -153,6 +229,10 @@ export default function Solo({ user, userProfile }) {
         <canvas ref={canvasRef} width={640} height={480} style={styles.canvas} />
       </div>
 
+      <div style={{marginTop: '20px', color: '#ffd700', fontSize: '24px'}}>
+        {currentExercise && `ACTIVE PROTOCOL: ${currentExercise} (${currentReps}/${repGoal})`}
+      </div>
+
       <div style={styles.controls}>
         <div>
           <label>TARGET REPS: </label>
@@ -163,8 +243,10 @@ export default function Solo({ user, userProfile }) {
             style={styles.input}
           />
         </div>
-        {!isWorkoutActive && (
+        {!isWorkoutActive ? (
           <button onClick={startWorkout} style={styles.button}>INITIALIZE PROTOCOL</button>
+        ) : (
+          <button onClick={endSession} style={{...styles.button, borderColor: '#ff00ff', color: '#ff00ff'}}>TERMINATE SESSION</button>
         )}
       </div>
 
