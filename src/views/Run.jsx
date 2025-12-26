@@ -187,75 +187,77 @@ export default function Run({ user, userProfile }) {
   ]);
 
   return (
-    <div className="hero-background" style={styles.container}>
-      <h1 style={styles.title}>{ghostMode ? "GHOST RACE" : "RUN MODE"}</h1>
-      
-      {error && <div style={styles.error}>{error}</div>}
+    <div style={styles.background}>
+      <div style={styles.container}>
+        <h1 style={styles.title}>{ghostMode ? "GHOST RACE" : "RUN MODE"}</h1>
+        
+        {error && <div style={styles.error}>{error}</div>}
 
-      <div style={styles.statsContainer}>
-        <div style={styles.statBox}>
-          <div style={styles.statLabel}>DISTANCE</div>
-          <div style={styles.statValue}>{distance.toFixed(2)} <span style={{fontSize: '1rem'}}>mi</span></div>
-          {ghostMode && ghostData && (
-            <div style={{fontSize: '0.8rem', color: '#667eea'}}>Target: {ghostData.distance} mi</div>
-          )}
-        </div>
-        <div style={styles.statBox}>
-          <div style={styles.statLabel}>TIME</div>
-          <div style={styles.statValue}>{formatTime(duration)}</div>
-          {ghostMode && ghostData && (
-            <div style={{fontSize: '0.8rem', color: '#667eea'}}>Ghost: {formatTime(ghostData.duration)}</div>
-          )}
-        </div>
-        <div style={styles.statBox}>
-          <div style={styles.statLabel}>DICE</div>
-          <div style={styles.statValue}>🎲 {diceEarned}</div>
-        </div>
-      </div>
-
-      {!isActive ? (
-        <div style={{ width: '100%', maxWidth: '500px' }}>
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <div style={{ marginBottom: '1rem', color: '#fff' }}>
-              <label>
-                <input 
-                  type="checkbox" 
-                  checked={shareRoute} 
-                  onChange={(e) => setShareRoute(e.target.checked)}
-                /> Share Route
-              </label>
-            </div>
-            <button style={styles.button} onClick={() => startRun()}>START SOLO RUN</button>
+        <div style={styles.statsContainer}>
+          <div style={styles.statBox}>
+            <div style={styles.statLabel}>DISTANCE</div>
+            <div style={styles.statValue}>{distance.toFixed(2)} <span style={{fontSize: '1rem'}}>mi</span></div>
+            {ghostMode && ghostData && (
+              <div style={{fontSize: '0.8rem', color: '#667eea'}}>Target: {ghostData.distance} mi</div>
+            )}
           </div>
+          <div style={styles.statBox}>
+            <div style={styles.statLabel}>TIME</div>
+            <div style={styles.statValue}>{formatTime(duration)}</div>
+            {ghostMode && ghostData && (
+              <div style={{fontSize: '0.8rem', color: '#667eea'}}>Ghost: {formatTime(ghostData.duration)}</div>
+            )}
+          </div>
+          <div style={styles.statBox}>
+            <div style={styles.statLabel}>DICE</div>
+            <div style={styles.statValue}>🎲 {diceEarned}</div>
+          </div>
+        </div>
 
-          <h3 style={{color: '#ff3050', marginBottom: '10px', textAlign: 'center'}}>GHOST RACING</h3>
-          <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-            {recentRuns.map(run => (
-              <div key={run.id} style={styles.ghostCard}>
-                <div>
-                  <div style={{fontWeight: 'bold'}}>{run.name}</div>
-                  <div style={{fontSize: '0.8rem', opacity: 0.7}}>{run.distance} mi • {formatTime(run.duration)}</div>
-                </div>
-                <button 
-                  style={styles.ghostButton}
-                  onClick={() => startRun(run)}
-                >
-                  RACE
-                </button>
+        {!isActive ? (
+          <div style={{ width: '100%', maxWidth: '500px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <div style={{ marginBottom: '1rem', color: '#fff' }}>
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={shareRoute} 
+                    onChange={(e) => setShareRoute(e.target.checked)}
+                  /> Share Route
+                </label>
               </div>
-            ))}
+              <button style={styles.button} onClick={() => startRun()}>START SOLO RUN</button>
+            </div>
+
+            <h3 style={{color: '#ff3050', marginBottom: '10px', textAlign: 'center'}}>GHOST RACING</h3>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+              {recentRuns.map(run => (
+                <div key={run.id} style={styles.ghostCard}>
+                  <div>
+                    <div style={{fontWeight: 'bold'}}>{run.name}</div>
+                    <div style={{fontSize: '0.8rem', opacity: 0.7}}>{run.distance} mi • {formatTime(run.duration)}</div>
+                  </div>
+                  <button 
+                    style={styles.ghostButton}
+                    onClick={() => startRun(run)}
+                  >
+                    RACE
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      ) : (
-        <div style={styles.controls}>
-          {isPaused ? (
-            <button style={styles.button} onClick={resumeRun}>RESUME</button>
-          ) : (
-            <button style={styles.button} onClick={pauseRun}>PAUSE</button>
-          )}
-          <button style={{...styles.button, background: '#ff3050'}} onClick={endRun}>STOP</button>
-        </div>
-      )}
+        ) : (
+          <div style={styles.controls}>
+            {isPaused ? (
+              <button style={styles.button} onClick={resumeRun}>RESUME</button>
+            ) : (
+              <button style={styles.button} onClick={pauseRun}>PAUSE</button>
+            )}
+            <button style={{...styles.button, background: '#ff3050'}} onClick={endRun}>STOP</button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -324,5 +326,16 @@ const styles = {
     margin: "10px"
   },
   error: { color: "#ff3050", background: "rgba(255, 48, 80, 0.2)", padding: "10px", borderRadius: "8px" },
-  controls: { display: "flex", gap: "10px" }
+  controls: { display: "flex", gap: "10px" },
+  background: {
+    minHeight: "100vh",
+    width: "100%",
+    backgroundImage: 'linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url("/assets/images/run-bg.png")',
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundAttachment: "fixed",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center"
+  }
 };
