@@ -41,6 +41,13 @@ export default function Run({ user, userProfile }) {
     }, 1000);
 
     // Start tracking
+    const options = { 
+      enableHighAccuracy: true, 
+      timeout: 15000,
+      maximumAge: 0,
+      distanceFilter: 1 
+    };
+
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
         if (isPaused) return;
