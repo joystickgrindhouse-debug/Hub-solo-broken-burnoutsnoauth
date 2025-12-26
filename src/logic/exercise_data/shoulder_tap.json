@@ -1,0 +1,18 @@
+{
+  "exercise": "shoulder_taps",
+  "states": ["LEFT_TAP", "RIGHT_TAP"],
+  "rep_order": ["LEFT_TAP", "RIGHT_TAP"],
+  "angles": {
+    "LEFT_TAP": {
+      "right_elbow": [160, 180],
+      "left_elbow": [40, 80]
+    },
+    "RIGHT_TAP": {
+      "left_elbow": [160, 180],
+      "right_elbow": [40, 80]
+    }
+  },
+  "constraints": {
+    "hip_rotation_max": 25
+  }
+}
