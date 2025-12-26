@@ -10,8 +10,16 @@ export default defineConfig({
     allowedHosts: true,
     hmr: {
       clientPort: 443,
-      protocol: 'wss'
-    }
+      protocol: 'wss',
+      host: '0.0.0.0',
+      timeout: 30000
+    },
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    },
+    cors: true
   },
   preview: {
     host: '0.0.0.0',
