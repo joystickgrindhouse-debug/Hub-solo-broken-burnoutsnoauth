@@ -495,7 +495,9 @@ export default function Solo({ user, userProfile }) {
       height: "100%",
       objectFit: "cover",
       borderRadius: "5px",
-      zIndex: 1
+      zIndex: 1,
+      visibility: "visible",
+      opacity: 1
     },
     canvas: {
       position: "absolute",
