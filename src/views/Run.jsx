@@ -415,7 +415,7 @@ const styles = {
     position: "absolute",
     top: "-30px",
     fontSize: "2rem",
-    transform: "translateX(-50%)"
+    transform: "translateX(-50%) scaleX(-1)"
   },
   finishLine: {
     position: "absolute",
