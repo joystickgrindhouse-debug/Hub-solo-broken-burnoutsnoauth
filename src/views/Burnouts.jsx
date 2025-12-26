@@ -145,64 +145,52 @@ export default function Burnouts({ user, userProfile }) {
 
   const drawSkeleton = (keypoints, canvas, quality = "neutral") => {
     const ctx = canvasCtxRef.current;
-    if (!canvas || !ctx) {
-      console.warn("Canvas or context not available");
-      return;
-    }
+    if (!canvas || !ctx) return;
 
     const width = canvas.width;
     const height = canvas.height;
 
-    // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // Determine color based on form quality
-    const skeletonColor = quality === "good" ? "#00ff00" : quality === "poor" ? "#ff0000" : "#00ff00";
-
-    // Draw skeleton lines
-    ctx.strokeStyle = skeletonColor;
-    ctx.lineWidth = 4;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-
+    const color = quality === "good" ? "#00ff00" : quality === "poor" ? "#ff2e2e" : "#00ff00";
+    
     SKELETON_CONNECTIONS.forEach(([i, j]) => {
       const start = keypoints[i];
       const end = keypoints[j];
 
-      if (start && end && (start.score >= MIN_POSE_CONFIDENCE || start.score === undefined) && (end.score >= MIN_POSE_CONFIDENCE || end.score === undefined)) {
+      if (start && end && (start.score >= MIN_POSE_CONFIDENCE || start.score === undefined)) {
         ctx.beginPath();
         const startX = start.x <= 1.01 ? start.x * width : start.x;
         const startY = start.y <= 1.01 ? start.y * height : start.y;
         const endX = end.x <= 1.01 ? end.x * width : end.x;
         const endY = end.y <= 1.01 ? end.y * height : end.y;
 
+        const zDepth = (start.z || 0 + end.z || 0) / 2;
+        ctx.lineWidth = Math.max(1, 4 - (zDepth * 5));
+        ctx.strokeStyle = color;
+        ctx.shadowBlur = quality === "good" ? 15 : 5;
+        ctx.shadowColor = color;
+        
         ctx.moveTo(startX, startY);
         ctx.lineTo(endX, endY);
         ctx.stroke();
       }
     });
 
-    // Draw keypoint circles
-    ctx.fillStyle = skeletonColor;
     keypoints.forEach((kp) => {
       if (kp && (kp.score >= MIN_POSE_CONFIDENCE || kp.score === undefined)) {
         const x = kp.x <= 1.01 ? kp.x * width : kp.x;
         const y = kp.y <= 1.01 ? kp.y * height : kp.y;
+        
+        const r = Math.max(2, 6 - ((kp.z || 0) * 5));
         ctx.beginPath();
-        ctx.arc(x, y, 6, 0, 2 * Math.PI);
+        ctx.arc(x, y, r, 0, 2 * Math.PI);
+        ctx.fillStyle = color;
         ctx.fill();
       }
     });
 
-    // Draw form feedback text
-    ctx.fillStyle = skeletonColor;
-    ctx.font = "bold 24px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(
-      quality === "good" ? "✓ GOOD FORM" : quality === "poor" ? "✗ FIX FORM" : "DETECTING...",
-      width / 2,
-      40
-    );
+    ctx.shadowBlur = 0;
   };
 
   const processFrame = async () => {
@@ -734,12 +722,6 @@ export default function Burnouts({ user, userProfile }) {
               <div style={styles.videoContainer}>
                 <video ref={videoRef} style={styles.video} autoPlay playsInline muted />
                 <canvas ref={canvasRef} width={640} height={480} style={styles.canvas} />
-                {currentExercise && (
-                  <div style={styles.guideWindow}>
-                    <div style={styles.guideLabel}>FORM GUIDE</div>
-                    <ExerciseAvatar exercise={currentExercise} animationKey={currentExercise} />
-                  </div>
-                )}
               </div>
 
               <div style={styles.stats}>

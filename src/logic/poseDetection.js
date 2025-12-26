@@ -30,9 +30,9 @@ export async function detectPose(videoElement) {
     });
     
     if (poses && poses.length > 0 && poses[0].keypoints) {
-      console.log('Pose detected with', poses[0].keypoints.length, 'keypoints');
       return {
         keypoints: poses[0].keypoints,
+        keypoints3D: poses[0].keypoints3D,
         score: poses[0].score || 0.9
       };
     }
