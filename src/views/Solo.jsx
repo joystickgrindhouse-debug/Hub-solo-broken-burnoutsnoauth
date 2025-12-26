@@ -495,6 +495,29 @@ export default function Solo({ user, userProfile }) {
       borderRadius: "5px",
       overflow: "hidden"
     },
+    guideWindow: {
+      position: "absolute",
+      bottom: "10px",
+      right: "10px",
+      width: "120px",
+      height: "180px",
+      backgroundColor: "rgba(0, 0, 0, 0.8)",
+      border: "1px solid #00ff00",
+      borderRadius: "5px",
+      zIndex: 10,
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      boxShadow: "0 0 10px rgba(0, 255, 0, 0.5)"
+    },
+    guideLabel: {
+      fontSize: "10px",
+      color: "#00ff00",
+      textAlign: "center",
+      padding: "2px",
+      backgroundColor: "rgba(0, 255, 0, 0.1)",
+      fontWeight: "bold"
+    },
     video: {
       position: "absolute",
       top: 0,
@@ -625,6 +648,12 @@ export default function Solo({ user, userProfile }) {
               <div style={styles.videoContainer}>
                 <video ref={videoRef} style={styles.video} autoPlay playsInline muted />
                 <canvas ref={canvasRef} width={640} height={480} style={styles.canvas} />
+                {currentExercise && (
+                  <div style={styles.guideWindow}>
+                    <div style={styles.guideLabel}>FORM GUIDE</div>
+                    <ExerciseAvatar exercise={currentExercise} animationKey={currentExercise} />
+                  </div>
+                )}
               </div>
 
               <div style={styles.stats}>
