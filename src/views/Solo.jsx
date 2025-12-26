@@ -256,39 +256,6 @@ export default function Solo({ user, userProfile }) {
       });
       console.log("Camera stream obtained", stream);
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        
-        // Wait for video to load before playing
-        const playVideo = async () => {
-          try {
-            await videoRef.current.play();
-            console.log("Video playing successfully");
-          } catch (err) {
-            console.error("Video play error:", err);
-            // Try again with muted if autoplay failed
-            videoRef.current.muted = true;
-            try {
-              await videoRef.current.play();
-              console.log("Video playing after mute");
-            } catch (err2) {
-              console.error("Video play failed even with mute:", err2);
-            }
-          }
-        };
-
-        // Play when metadata is loaded
-        videoRef.current.onloadedmetadata = () => {
-          console.log("Video metadata loaded");
-          playVideo();
-        };
-
-        // Also try playing immediately in case metadata loads before this line
-        if (videoRef.current.readyState >= 1) {
-          playVideo();
-        }
-      }
-
       if ("wakeLock" in navigator) {
         try {
           wakeLockRef.current = await navigator.wakeLock.request("screen");
@@ -300,6 +267,34 @@ export default function Solo({ user, userProfile }) {
       smootherRef.current = new LandmarkSmoother(5);
       setIsWorkoutActive(true);
       drawCard();
+
+      // Set stream after DOM is ready (in next tick)
+      setTimeout(() => {
+        if (videoRef.current && stream) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.muted = true;
+          
+          const playVideo = async () => {
+            try {
+              await videoRef.current.play();
+              console.log("Video playing successfully");
+            } catch (err) {
+              console.error("Video play error:", err);
+            }
+          };
+
+          // Play when metadata is loaded
+          videoRef.current.onloadedmetadata = () => {
+            console.log("Video metadata loaded");
+            playVideo();
+          };
+
+          // Try playing immediately
+          if (videoRef.current.readyState >= 1) {
+            playVideo();
+          }
+        }
+      }, 100);
       
       // Start frame processing with a small delay
       setTimeout(() => {
