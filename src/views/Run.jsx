@@ -304,7 +304,7 @@ export default function Run({ user, userProfile }) {
               ) : (
                 <button style={styles.button} onClick={pauseRun}>PAUSE</button>
               )}
-              <button style={{...styles.button, background: '#ff3050'}} onClick={endRun}>STOP</button>
+              <button style={{...styles.button, background: '#ff3050', color: '#fff'}} onClick={endRun}>STOP</button>
             </div>
 
             <div style={styles.trackContainer}>
