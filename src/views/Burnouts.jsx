@@ -1,585 +1,90 @@
 import React, { useState, useEffect, useRef } from "react";
-import { initializePoseDetection, detectPose, SKELETON_CONNECTIONS, MIN_POSE_CONFIDENCE } from "../logic/poseDetection.js";
+import { initializePoseLandmarker, detectPose, drawResults } from "../logic/poseDetection.js";
 import { speakFeedback, speakNumber } from "../logic/audioFeedback.js";
 import RepCounter from "../logic/repCounter.js";
 import LandmarkSmoother from "../logic/smoothing.js";
-import ExerciseAvatar from "../components/ExerciseAvatar.jsx";
 
 export default function Burnouts({ user, userProfile }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const canvasCtxRef = useRef(null);
   const [totalReps, setTotalReps] = useState(0);
-  const [repGoal, setRepGoal] = useState(0);
+  const [repGoal, setRepGoal] = useState(10);
   const [currentReps, setCurrentReps] = useState(0);
   const [dice, setDice] = useState(0);
-  const [currentExercise, setCurrentExercise] = useState("");
-  const [currentCategory, setCurrentCategory] = useState("");
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [toast, setToast] = useState("");
   const [selectedBurnoutType, setSelectedBurnoutType] = useState(null);
-  const [formQuality, setFormQuality] = useState("neutral");
 
-  const repCounterRef = useRef(null);
-  const smootherRef = useRef(new LandmarkSmoother(5));
-  const detectorRef = useRef(null);
+  const repCounterRef = useRef(new RepCounter("Push-ups"));
   const animationFrameRef = useRef(null);
-  const wakeLockRef = useRef(null);
-
-  const exercises = {
-    Arms: ["Push-ups", "Plank Up-Downs", "Pike Push ups", "Shoulder Taps"],
-    Legs: ["Squats", "Lunges", "Glute Bridges", "Calf Raises"],
-    Core: ["Crunches", "Plank", "Russian Twists", "Leg Raises"],
-    Cardio: ["Jumping Jacks", "High Knees", "Burpees", "Mountain Climbers"]
-  };
-
-  const descriptions = {
-    "Push-ups": "Lower your chest to the ground. Keep your body straight.",
-    "Plank Up-Downs": "Move from elbow plank to push-up position.",
-    "Pike Push ups": "Lower your body using a chair or bench.",
-    "Shoulder Taps": "Tap opposite shoulders while in plank.",
-    "Squats": "Lower your hips, keep chest up.",
-    "Lunges": "Step forward and lower back knee.",
-    "Glute Bridges": "Lift hips high, squeeze glutes.",
-    "Calf Raises": "Raise up on your toes.",
-    "Crunches": "Lift shoulders toward ceiling.",
-    "Plank": "Hold still; engage abs.",
-    "Russian Twists": "Twist torso side to side.",
-    "Leg Raises": "Lift legs slowly, keep core tight.",
-    "Jumping Jacks": "Full arm extension and rhythm.",
-    "High Knees": "Bring knees to waist level quickly.",
-    "Burpees": "Drop, push-up, and jump explosively.",
-    "Mountain Climbers": "Alternate knees toward chest quickly."
-  };
-
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 2000);
-  };
-
-  const drawCard = async () => {
-    let categoriesToUse = [];
-
-    if (selectedBurnoutType === "Full Body") {
-      categoriesToUse = ["Arms", "Legs", "Core", "Cardio"];
-    } else if (selectedBurnoutType === "Arms") {
-      categoriesToUse = ["Arms"];
-    } else if (selectedBurnoutType === "Legs") {
-      categoriesToUse = ["Legs"];
-    } else if (selectedBurnoutType === "Core") {
-      categoriesToUse = ["Core"];
-    } else {
-      categoriesToUse = ["Arms", "Legs", "Core", "Cardio"];
-    }
-
-    const randCategory = categoriesToUse[Math.floor(Math.random() * categoriesToUse.length)];
-    const categoryExercises = exercises[randCategory];
-    const exercise = categoryExercises[Math.floor(Math.random() * categoryExercises.length)];
-    const goal = Math.floor(Math.random() * 13) + 2;
-
-    setCurrentCategory(randCategory);
-    setCurrentExercise(exercise);
-    setRepGoal(goal);
-    setCurrentReps(0);
-
-    // Initialize rep counter with new schema
-    const counter = new RepCounter(exercise);
-    await counter.initialize();
-    repCounterRef.current = counter;
-
-    showToast(`New exercise: ${exercise}!`);
-    speakFeedback(`${exercise}. ${goal} reps.`);
-  };
-
-  const analyzeFormQuality = (keypoints, exercise) => {
-    if (!keypoints || keypoints.length < 33) return "neutral";
-
-    const shoulders = [(keypoints[11]?.y || 0.5), (keypoints[12]?.y || 0.5)];
-    const elbows = [(keypoints[13]?.y || 0.5), (keypoints[14]?.y || 0.5)];
-    const hips = [(keypoints[23]?.y || 0.5), (keypoints[24]?.y || 0.5)];
-    const knees = [(keypoints[25]?.y || 0.5), (keypoints[26]?.y || 0.5)];
-    const wrists = [(keypoints[15]?.y || 0.5), (keypoints[16]?.y || 0.5)];
-
-    let isGoodForm = false;
-
-    switch(exercise) {
-      case "Push-ups":
-      case "Plank Up-Downs":
-        // Good form: elbows bent, body straight, shoulders over wrists
-        isGoodForm = elbows[0] > 0.3 && elbows[1] > 0.3 && 
-                     Math.abs(shoulders[0] - shoulders[1]) < 0.15 &&
-                     wrists[0] > 0.1 && wrists[1] > 0.1;
-        break;
-
-      case "Squats":
-        // Good form: knees bent, hips below shoulders
-        isGoodForm = knees[0] > 0.45 && knees[1] > 0.45 &&
-                     hips[0] > shoulders[0] * 0.8 && hips[1] > shoulders[1] * 0.8;
-        break;
-
-      case "Plank":
-        // Good form: shoulders above wrists, body straight
-        isGoodForm = Math.abs(shoulders[0] - shoulders[1]) < 0.1 &&
-                     elbows[0] > 0.25 && elbows[1] > 0.25;
-        break;
-
-      case "Glute Bridges":
-        // Good form: hips raised high
-        isGoodForm = hips[0] < 0.45 && hips[1] < 0.45;
-        break;
-
-      case "Jumping Jacks":
-      case "High Knees":
-        // Good form: arms extended, knees high
-        isGoodForm = wrists[0] < 0.3 && wrists[1] < 0.3 && 
-                     knees[0] < 0.5 && knees[1] < 0.5;
-        break;
-
-      default:
-        isGoodForm = true; // Default to good if no specific rules
-    }
-
-    return isGoodForm ? "good" : "poor";
-  };
-
-  const drawSkeleton = (keypoints, canvas, quality = "neutral") => {
-    const ctx = canvasCtxRef.current;
-    if (!canvas || !ctx) return;
-
-    const width = canvas.width;
-    const height = canvas.height;
-
-    ctx.clearRect(0, 0, width, height);
-
-    const color = quality === "good" ? "#00ff00" : quality === "poor" ? "#ff2e2e" : "#00ff00";
-    
-    SKELETON_CONNECTIONS.forEach(([i, j]) => {
-      const start = keypoints[i];
-      const end = keypoints[j];
-
-      if (start && end && (start.score >= MIN_POSE_CONFIDENCE || start.score === undefined)) {
-        ctx.beginPath();
-        const startX = start.x <= 1.01 ? start.x * width : start.x;
-        const startY = start.y <= 1.01 ? start.y * height : start.y;
-        const endX = end.x <= 1.01 ? end.x * width : end.x;
-        const endY = end.y <= 1.01 ? end.y * height : end.y;
-
-        const zDepth = (start.z || 0 + end.z || 0) / 2;
-        ctx.lineWidth = Math.max(1, 4 - (zDepth * 5));
-        ctx.strokeStyle = color;
-        ctx.shadowBlur = quality === "good" ? 15 : 5;
-        ctx.shadowColor = color;
-        
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
-        ctx.stroke();
-
-        // Corrective indicators for poor form
-        if (quality === "poor") {
-          const jointIssues = repCounterRef.current?.getFormIssues?.() || [];
-          if (jointIssues.includes(i) || jointIssues.includes(j)) {
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = "#ff2e2e";
-            ctx.strokeStyle = "#ff2e2e";
-            ctx.lineWidth = 6;
-            ctx.stroke();
-          }
-        }
-      }
-    });
-
-    keypoints.forEach((kp) => {
-      if (kp && (kp.score >= MIN_POSE_CONFIDENCE || kp.score === undefined)) {
-        const x = kp.x <= 1.01 ? kp.x * width : kp.x;
-        const y = kp.y <= 1.01 ? kp.y * height : kp.y;
-        
-        const r = Math.max(2, 6 - ((kp.z || 0) * 5));
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, 2 * Math.PI);
-        ctx.fillStyle = color;
-        ctx.fill();
-      }
-    });
-
-    ctx.shadowBlur = 0;
-  };
+  const lastVideoTimeRef = useRef(-1);
 
   const processFrame = async () => {
-    if (!videoRef.current || !detectorRef.current || !isWorkoutActive) {
-      if (isWorkoutActive) {
-        animationFrameRef.current = requestAnimationFrame(processFrame);
-      }
-      return;
-    }
+    if (!videoRef.current || !isWorkoutActive) return;
 
-    try {
-      if (videoRef.current.readyState < 2) {
-        animationFrameRef.current = requestAnimationFrame(processFrame);
-        return;
-      }
-      const pose = await detectPose(videoRef.current);
-      console.log("Pose result:", pose);
+    if (videoRef.current.currentTime !== lastVideoTimeRef.current) {
+      lastVideoTimeRef.current = videoRef.current.currentTime;
+      const startTimeMs = performance.now();
+      const results = await detectPose(videoRef.current, startTimeMs);
 
-      // Draw detecting status even if no pose
-      if (canvasRef.current && canvasCtxRef.current) {
-        const ctx = canvasCtxRef.current;
-        if (!pose || !pose.keypoints) {
-          ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-          ctx.fillStyle = "#ffff00";
-          ctx.font = "bold 24px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText("DETECTING...", canvasRef.current.width / 2, 40);
-        }
-      }
-
-      if (pose && pose.keypoints) {
-        const smoothed = smootherRef.current.smooth(pose.keypoints);
+      if (results && results.landmarks) {
+        drawResults(canvasRef.current, results);
         
-        // Analyze form quality
-        const quality = currentExercise ? analyzeFormQuality(smoothed, currentExercise) : "neutral";
-        setFormQuality(quality);
-        
-        // Draw skeleton with form feedback
-        if (canvasRef.current && canvasCtxRef.current) {
-          drawSkeleton(smoothed, canvasRef.current, quality);
-        }
+        const repDetected = repCounterRef.current.process(results.landmarks[0]);
+        if (repDetected) {
+          const newCount = repCounterRef.current.getCount();
+          setCurrentReps(newCount);
+          setTotalReps(prev => prev + 1);
+          speakNumber(newCount);
 
-        // Detect rep only if exercise is selected
-        if (currentExercise && repCounterRef.current) {
-          const repDetected = repCounterRef.current.process(smoothed);
-          if (repDetected) {
-            const newCount = repCounterRef.current.getCount();
-            setCurrentReps(newCount);
-            const newTotal = totalReps + 1;
-            setTotalReps(newTotal);
-            speakNumber(newCount);
-
-            if (newCount >= repGoal) {
-              showToast("Set complete! Draw next exercise.");
-            }
-
-            if (newTotal % 30 === 0) {
-              const newDice = dice + 1;
-              setDice(newDice);
-              showToast(`🎲 Dice earned! Total: ${newDice}`);
-              speakFeedback(`Dice earned! Total: ${newDice}`);
-            }
+          if (newCount >= repGoal) {
+            speakFeedback("Protocol complete!");
+            setToast("PROTOCOL COMPLETE! ⚡");
+            setTimeout(() => setToast(""), 3000);
           }
         }
       }
-    } catch (error) {
-      console.error("Frame processing error:", error);
     }
-
     animationFrameRef.current = requestAnimationFrame(processFrame);
   };
 
   const startWorkout = async () => {
-    if (!selectedBurnoutType) {
-      alert("Please select a burnout type first!");
-      return;
-    }
-
     try {
-      console.log("Starting burnout...");
-      detectorRef.current = await initializePoseDetection();
-      console.log("Detector initialized");
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "user",
-          width: { ideal: 640 },
-          height: { ideal: 480 }
-        }
-      });
-      console.log("Camera stream obtained", stream);
-
-      if ("wakeLock" in navigator) {
-        try {
-          wakeLockRef.current = await navigator.wakeLock.request("screen");
-        } catch (err) {
-          console.log("Wake Lock not available");
-        }
-      }
-
-      smootherRef.current = new LandmarkSmoother(5);
+      await initializePoseLandmarker(canvasRef.current);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      videoRef.current.srcObject = stream;
       setIsWorkoutActive(true);
-      drawCard();
-
-      // Set stream after DOM is ready (in next tick)
-      setTimeout(() => {
-        if (videoRef.current && stream) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.muted = true;
-          
-          const playVideo = async () => {
-            try {
-              await videoRef.current.play();
-              console.log("Video playing successfully, starting pose detection...");
-              // Start frame processing after video is playing
-              animationFrameRef.current = requestAnimationFrame(processFrame);
-            } catch (err) {
-              console.error("Video play error:", err);
-            }
-          };
-
-          // Play when metadata is loaded
-          videoRef.current.onloadedmetadata = () => {
-            console.log("Video metadata loaded, attempting to play");
-            playVideo();
-          };
-
-          // Try playing immediately
-          if (videoRef.current.readyState >= 1) {
-            playVideo();
-          }
-        }
-      }, 100);
+      animationFrameRef.current = requestAnimationFrame(processFrame);
     } catch (err) {
-      console.error("Camera error:", err);
-      alert("Camera error: " + err.message);
+      console.error(err);
     }
   };
-
-  const endSession = async () => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-
-    if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = videoRef.current.srcObject.getTracks();
-      tracks.forEach((track) => track.stop());
-      videoRef.current.srcObject = null;
-    }
-
-    if (wakeLockRef.current) {
-      try {
-        await wakeLockRef.current.release();
-      } catch (err) {
-        console.log("Wake lock release error");
-      }
-    }
-
-    setIsWorkoutActive(false);
-
-    if (user && user.uid) {
-      try {
-        const { db } = await import("../firebase.js");
-        const { doc, updateDoc, getDoc, setDoc, increment } = await import("firebase/firestore");
-
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-          await updateDoc(userRef, {
-            totalReps: increment(totalReps),
-            diceBalance: increment(dice)
-          });
-        } else {
-          await setDoc(userRef, {
-            userId: user.uid,
-            totalReps: totalReps,
-            diceBalance: dice
-          });
-        }
-      } catch (error) {
-        console.error("Error saving stats:", error);
-      }
-    }
-
-    alert(`Burnout complete!\nTotal Reps: ${totalReps}\nDice Earned: ${dice}`);
-  };
-
-  useEffect(() => {
-    if (canvasRef.current) {
-      canvasCtxRef.current = canvasRef.current.getContext("2d");
-    }
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      if (videoRef.current && videoRef.current.srcObject) {
-        const tracks = videoRef.current.srcObject.getTracks();
-        tracks.forEach((track) => track.stop());
-      }
-      if (wakeLockRef.current) {
-        wakeLockRef.current.release().catch(() => {});
-      }
-    };
-  }, []);
 
   const styles = {
     root: {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      padding: "20px",
       minHeight: "100vh",
-      backgroundColor: "#0a0a0a",
-      color: "#fff"
+      backgroundColor: "#050505",
+      color: "#00fff2",
+      fontFamily: "'Courier New', Courier, monospace",
+      padding: "20px"
     },
-    header: {
-      textAlign: "center",
-      marginBottom: "30px",
-      width: "100%"
-    },
-    title: {
-      fontSize: "48px",
+    cyberCounter: {
+      fontSize: "80px",
       fontWeight: "bold",
-      margin: "0 0 10px 0",
-      textShadow: "0 0 20px rgba(255, 46, 46, 0.8)"
+      textShadow: "0 0 20px #00fff2, 0 0 40px #00fff2",
+      margin: "20px 0",
+      color: "#00fff2"
     },
-    diceCounter: {
-      fontSize: "24px",
-      fontWeight: "bold",
-      color: "#ffd700"
-    },
-    selectionScreen: {
-      width: "100%",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: "30px"
-    },
-    selectionTitle: {
-      fontSize: "32px",
-      marginBottom: "20px"
-    },
-    selectionGrid: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-      gap: "20px",
-      width: "100%",
-      maxWidth: "800px"
-    },
-    selectionButton: {
-      padding: "20px",
-      backgroundColor: "#1a1a1a",
-      border: "2px solid #ff2e2e",
-      borderRadius: "10px",
-      cursor: "pointer",
-      color: "#fff",
-      fontSize: "16px",
-      transition: "all 0.3s"
-    },
-    selectionIcon: {
-      fontSize: "48px",
-      marginBottom: "10px"
-    },
-    selectionName: {
-      fontSize: "18px",
-      fontWeight: "bold",
-      marginBottom: "5px"
-    },
-    cardArea: {
-      width: "100%",
-      maxWidth: "600px",
-      display: "flex",
-      flexDirection: "column",
-      gap: "20px"
-    },
-    selectedTypeDisplay: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      padding: "15px",
-      backgroundColor: "#1a1a1a",
-      borderRadius: "5px"
-    },
-    selectedTypeText: {
-      fontSize: "16px"
-    },
-    changeButton: {
-      padding: "8px 15px",
-      backgroundColor: "#ff2e2e",
-      border: "none",
-      borderRadius: "5px",
-      color: "#fff",
-      cursor: "pointer",
-      fontSize: "14px"
-    },
-    playingCard: {
-      backgroundColor: "#1a1a1a",
-      border: "3px solid #ff2e2e",
-      borderRadius: "10px",
-      padding: "30px",
-      textAlign: "center",
+    container: {
       position: "relative",
-      minHeight: "300px",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center"
-    },
-    cardCorner: {
-      position: "absolute",
-      top: "10px",
-      left: "10px",
-      textAlign: "center",
-      fontSize: "14px"
-    },
-    cardCornerValue: {
-      fontSize: "24px",
-      fontWeight: "bold"
-    },
-    cardCenter: {
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: "15px"
-    },
-    cardSuitLarge: {
-      fontSize: "80px"
-    },
-    cardExerciseName: {
-      fontSize: "32px",
-      fontWeight: "bold",
-      color: "#ffd700"
-    },
-    cardProgressText: {
-      fontSize: "18px",
-      color: "#aaa"
-    },
-    workoutArea: {
-      width: "100%",
-      maxWidth: "640px",
-      display: "flex",
-      flexDirection: "column",
-      gap: "15px"
-    },
-    videoContainer: {
-      position: "relative",
-      width: "100%",
-      maxWidth: "640px",
+      width: "640px",
       height: "480px",
-      margin: "0 auto",
-      backgroundColor: "#000",
-      border: "2px solid #ff2e2e",
-      borderRadius: "5px",
-      overflow: "hidden"
-    },
-    guideWindow: {
-      position: "absolute",
-      bottom: "10px",
-      right: "10px",
-      width: "120px",
-      height: "180px",
-      backgroundColor: "rgba(0, 0, 0, 0.8)",
-      border: "1px solid #00ff00",
-      borderRadius: "5px",
-      zIndex: 10,
-      overflow: "hidden",
-      display: "flex",
-      flexDirection: "column",
-      boxShadow: "0 0 10px rgba(0, 255, 0, 0.5)"
-    },
-    guideLabel: {
-      fontSize: "10px",
-      color: "#00ff00",
-      textAlign: "center",
-      padding: "2px",
-      backgroundColor: "rgba(0, 255, 0, 0.1)",
-      fontWeight: "bold"
+      border: "4px solid #ff00ff",
+      boxShadow: "0 0 30px #ff00ff",
+      backgroundColor: "#000"
     },
     video: {
       position: "absolute",
@@ -588,10 +93,7 @@ export default function Burnouts({ user, userProfile }) {
       width: "100%",
       height: "100%",
       objectFit: "cover",
-      borderRadius: "5px",
-      zIndex: 1,
-      visibility: "visible",
-      opacity: 1
+      opacity: 0.3
     },
     canvas: {
       position: "absolute",
@@ -599,172 +101,52 @@ export default function Burnouts({ user, userProfile }) {
       left: 0,
       width: "100%",
       height: "100%",
-      borderRadius: "5px",
-      zIndex: 2
+      zIndex: 10
     },
-    stats: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: "10px"
-    },
-    statBox: {
-      backgroundColor: "#1a1a1a",
-      padding: "15px",
-      borderRadius: "5px",
-      border: "1px solid #ff2e2e",
-      textAlign: "center"
-    },
-    statValue: {
-      fontSize: "32px",
-      fontWeight: "bold",
-      color: "#ffd700"
-    },
-    statLabel: {
-      fontSize: "12px",
-      color: "#aaa",
-      marginTop: "5px"
-    },
-    buttons: {
+    selectionScreen: {
       display: "flex",
-      gap: "10px",
-      justifyContent: "center",
-      flexWrap: "wrap"
+      flexDirection: "column",
+      alignItems: "center",
+      gap: "20px",
+      marginTop: "50px"
     },
     button: {
-      padding: "12px 30px",
-      fontSize: "16px",
-      fontWeight: "bold",
-      border: "none",
-      borderRadius: "5px",
+      padding: "15px 40px",
+      fontSize: "20px",
+      backgroundColor: "transparent",
+      border: "2px solid #00fff2",
+      color: "#00fff2",
       cursor: "pointer",
-      transition: "all 0.3s"
-    },
-    startButton: {
-      backgroundColor: "#00ff00",
-      color: "#000"
-    },
-    endButton: {
-      backgroundColor: "#ff2e2e",
-      color: "#fff"
-    },
-    drawButton: {
-      backgroundColor: "#ffd700",
-      color: "#000"
-    },
-    toast: {
-      position: "fixed",
-      bottom: "20px",
-      left: "50%",
-      transform: "translateX(-50%)",
-      backgroundColor: "#ff2e2e",
-      color: "#fff",
-      padding: "15px 25px",
-      borderRadius: "5px",
-      zIndex: 1000,
-      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.5)"
+      textTransform: "uppercase",
+      letterSpacing: "2px",
+      boxShadow: "0 0 10px #00fff2"
     }
   };
 
   return (
     <div style={styles.root}>
-      <header style={styles.header}>
-        <h1 style={styles.title}>BURNOUTS</h1>
-        <div style={styles.diceCounter}>🎲 Dice: {dice}</div>
-      </header>
-
-      {!selectedBurnoutType && (
-        <section style={styles.selectionScreen}>
-          <h2 style={styles.selectionTitle}>Select Burnout Type</h2>
-          <div style={styles.selectionGrid}>
-            {["Arms", "Legs", "Core", "Full Body"].map((type) => (
-              <button
-                key={type}
-                onClick={() => setSelectedBurnoutType(type)}
-                style={styles.selectionButton}
-                onMouseOver={(e) => e.target.style.backgroundColor = "#ff2e2e"}
-                onMouseOut={(e) => e.target.style.backgroundColor = "#1a1a1a"}
-              >
-                <div style={styles.selectionIcon}>
-                  {type === "Arms" && "💪"}
-                  {type === "Legs" && "🦵"}
-                  {type === "Core" && "🔥"}
-                  {type === "Full Body" && "⚡"}
-                </div>
-                <div style={styles.selectionName}>{type}</div>
-              </button>
-            ))}
+      <h1 style={{ color: "#ff00ff", textShadow: "0 0 10px #ff00ff" }}>BURNOUT NEURAL OVERLOAD</h1>
+      
+      {!selectedBurnoutType ? (
+        <div style={styles.selectionScreen}>
+          <button style={styles.button} onClick={() => setSelectedBurnoutType("FULL BODY")}>INITIATE FULL BODY</button>
+          <button style={styles.button} onClick={() => setSelectedBurnoutType("UPPER")}>INITIATE UPPER BODY</button>
+          <button style={styles.button} onClick={() => setSelectedBurnoutType("LOWER")}>INITIATE LOWER BODY</button>
+        </div>
+      ) : (
+        <>
+          <div style={styles.cyberCounter}>{currentReps}</div>
+          <div style={styles.container}>
+            <video ref={videoRef} style={styles.video} autoPlay playsInline muted />
+            <canvas ref={canvasRef} width={640} height={480} style={styles.canvas} />
           </div>
-        </section>
-      )}
-
-      {selectedBurnoutType && (
-        <section style={styles.cardArea}>
-          <div style={styles.selectedTypeDisplay}>
-            <span style={styles.selectedTypeText}>Type: {selectedBurnoutType}</span>
-            <button onClick={() => setSelectedBurnoutType(null)} style={styles.changeButton}>
-              Change
-            </button>
-          </div>
-
-          <div style={styles.playingCard}>
-            <div style={styles.cardCorner}>
-              <div style={styles.cardCornerValue}>{repGoal || "?"}</div>
-            </div>
-            <div style={styles.cardCenter}>
-              <div style={styles.cardSuitLarge}>
-                {currentCategory === "Arms" && "💪"}
-                {currentCategory === "Legs" && "🦵"}
-                {currentCategory === "Core" && "🔥"}
-                {currentCategory === "Cardio" && "⚡"}
-                {!currentCategory && "♠"}
-              </div>
-              <div style={styles.cardExerciseName}>{currentExercise || "READY"}</div>
-              <div style={styles.cardProgressText}>
-                {currentExercise ? `${currentReps}/${repGoal}` : "Start to begin"}
-              </div>
-              {currentExercise && (
-                <div style={{ fontSize: "14px", color: "#aaa" }}>{descriptions[currentExercise]}</div>
-              )}
-            </div>
-          </div>
-
-          {isWorkoutActive && (
-            <div style={styles.workoutArea}>
-              <div style={styles.videoContainer}>
-                <video ref={videoRef} style={styles.video} autoPlay playsInline muted />
-                <canvas ref={canvasRef} width={640} height={480} style={styles.canvas} />
-              </div>
-
-              <div style={styles.stats}>
-                <div style={styles.statBox}>
-                  <div style={styles.statValue}>{currentReps}</div>
-                  <div style={styles.statLabel}>Set Reps</div>
-                </div>
-                <div style={styles.statBox}>
-                  <div style={styles.statValue}>{totalReps}</div>
-                  <div style={styles.statLabel}>Total Reps</div>
-                </div>
-              </div>
-
-              <div style={styles.buttons}>
-                <button onClick={endSession} style={{ ...styles.button, ...styles.endButton }}>
-                  End Session
-                </button>
-              </div>
-            </div>
-          )}
-
           {!isWorkoutActive && (
-            <div style={styles.buttons}>
-              <button onClick={startWorkout} style={{ ...styles.button, ...styles.startButton }}>
-                Start Burnout
-              </button>
-            </div>
+            <button onClick={startWorkout} style={{...styles.button, marginTop: "20px"}}>START OVERRIDE</button>
           )}
-        </section>
+        </>
       )}
 
-      {toast && <div style={styles.toast}>{toast}</div>}
+      {toast && <div style={{...styles.button, position: "fixed", top: "50%", color: "#ff00ff"}}>{toast}</div>}
     </div>
   );
 }

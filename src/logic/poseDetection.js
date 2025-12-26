@@ -23,6 +23,23 @@ export async function initializePoseLandmarker(canvasElement) {
   return poseLandmarker;
 }
 
+export const SKELETON_CONNECTIONS = [
+  // Face
+  [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6],
+  [9, 10],
+  // Torso
+  [11, 12],
+  [11, 23], [12, 24], [23, 24],
+  // Arms
+  [11, 13], [13, 15], [15, 17], [17, 19], [19, 21],
+  [12, 14], [14, 16], [16, 18], [18, 20], [20, 22],
+  // Legs
+  [23, 25], [25, 27], [27, 29], [29, 31],
+  [24, 26], [26, 28], [28, 30], [30, 32]
+];
+
+export const MIN_POSE_CONFIDENCE = 0.5;
+
 export async function detectPose(videoElement, timestamp) {
   if (!poseLandmarker) return null;
   
