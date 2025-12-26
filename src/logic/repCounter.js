@@ -107,7 +107,9 @@ class RepCounter {
       'left_hip': [11, 23, 25],
       'right_hip': [12, 24, 26],
       'left_knee': [23, 25, 27],
-      'right_knee': [24, 26, 28]
+      'right_knee': [24, 26, 28],
+      'front_knee': [23, 25, 27], // Default to left for logic
+      'back_knee': [24, 26, 28]   // Default to right for logic
     };
 
     const indices = mapping[joint];
