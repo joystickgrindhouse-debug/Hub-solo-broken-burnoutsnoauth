@@ -30,12 +30,16 @@ export default function Profile({ user, userProfile }) {
   const avatarURL = userProfile?.avatarURL || user?.photoURL || "";
   const nickname = userProfile?.nickname || user?.displayName || "User";
   const totalReps = userProfile?.totalReps || 0;
+  const totalMiles = userProfile?.totalMiles || 0;
   const diceBalance = userProfile?.diceBalance || 0;
 
   const defaultAchievements = [
     { id: 1, name: "First Steps", description: "Complete your first workout", unlocked: totalReps > 0, icon: "🏃" },
     { id: 2, name: "Century Club", description: "Complete 100 total reps", unlocked: totalReps >= 100, icon: "💯" },
     { id: 3, name: "Rep Master", description: "Complete 500 total reps", unlocked: totalReps >= 500, icon: "🏆" },
+    { id: 7, name: "First Blood", description: "Complete your first run", unlocked: totalMiles > 0, icon: "🏁" },
+    { id: 8, name: "Breaking Stride", description: "Run 1 mile total", unlocked: totalMiles >= 1, icon: "⚡" },
+    { id: 9, name: "Road Warrior", description: "Run 50 total miles", unlocked: totalMiles >= 50, icon: "🛣️" },
     { id: 4, name: "Dice Collector", description: "Earn 10 dice", unlocked: diceBalance >= 10, icon: "🎲" },
     { id: 5, name: "Streak Keeper", description: "Maintain a 7-day streak", unlocked: streaks.current >= 7, icon: "🔥" },
     { id: 6, name: "Elite Athlete", description: "Complete 1000 total reps", unlocked: totalReps >= 1000, icon: "⭐" }
@@ -227,6 +231,21 @@ export default function Profile({ user, userProfile }) {
               {totalReps}
             </div>
             <div style={{ color: "#fff", fontSize: "0.9rem" }}>Total Reps</div>
+          </div>
+
+          <div style={{
+            background: "rgba(255, 48, 80, 0.1)",
+            border: "2px solid #ff3050",
+            borderRadius: "12px",
+            padding: "1.5rem",
+            textAlign: "center",
+            boxShadow: "0 0 20px rgba(255, 48, 80, 0.3)"
+          }}>
+            <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🏃</div>
+            <div style={{ color: "#ff3050", fontSize: "2rem", fontWeight: "bold", textShadow: "0 0 10px rgba(255, 48, 80, 0.8)" }}>
+              {totalMiles.toFixed(1)}
+            </div>
+            <div style={{ color: "#fff", fontSize: "0.9rem" }}>Total Miles</div>
           </div>
 
           <div style={{
