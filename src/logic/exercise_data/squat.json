@@ -1,0 +1,18 @@
+{
+  "exercise": "squat",
+  "states": ["STANDING", "BOTTOM"],
+  "rep_order": ["STANDING", "BOTTOM", "STANDING"],
+  "angles": {
+    "STANDING": {
+      "left_knee": [160, 180],
+      "right_knee": [160, 180]
+    },
+    "BOTTOM": {
+      "left_knee": [70, 100],
+      "right_knee": [70, 100]
+    }
+  },
+  "constraints": {
+    "min_rep_time": 0.7
+  }
+}
