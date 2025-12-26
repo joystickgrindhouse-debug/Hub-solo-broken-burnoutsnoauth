@@ -1,0 +1,9 @@
+{
+  "exercise": "mountain_climber",
+  "states": ["LEFT_IN", "RIGHT_IN"],
+  "rep_order": ["LEFT_IN", "RIGHT_IN"],
+  "angles": {
+    "LEFT_IN": { "left_hip": [40, 70] },
+    "RIGHT_IN": { "right_hip": [40, 70] }
+  }
+}
