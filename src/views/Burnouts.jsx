@@ -1,16 +1,30 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { initializePoseDetection, detectPose, SKELETON_CONNECTIONS, MIN_POSE_CONFIDENCE } from "../logic/poseDetection.js";
 import { speakFeedback, speakNumber } from "../logic/audioFeedback.js";
+import { SmartRepCounter } from "../logic/smartRepCounter.js";
+import { loadExerciseReference } from "../logic/csvRepReference.js";
+import LandmarkSmoother from "../logic/smoothing.js";
 import ExerciseAvatar from "../components/ExerciseAvatar.jsx";
 
 export default function Burnouts({ user, userProfile }) {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const canvasCtxRef = useRef(null);
   const [totalReps, setTotalReps] = useState(0);
   const [repGoal, setRepGoal] = useState(0);
   const [currentReps, setCurrentReps] = useState(0);
   const [dice, setDice] = useState(0);
   const [currentExercise, setCurrentExercise] = useState("");
   const [currentCategory, setCurrentCategory] = useState("");
+  const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [toast, setToast] = useState("");
   const [selectedBurnoutType, setSelectedBurnoutType] = useState(null);
+
+  const repCounterRef = useRef(null);
+  const smootherRef = useRef(new LandmarkSmoother(5));
+  const detectorRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const wakeLockRef = useRef(null);
 
   const exercises = {
     Arms: ["Push-ups", "Plank Up-Downs", "Pike Push ups", "Shoulder Taps"],
@@ -43,7 +57,7 @@ export default function Burnouts({ user, userProfile }) {
     setTimeout(() => setToast(""), 2000);
   };
 
-  const drawCard = () => {
+  const drawCard = async () => {
     let categoriesToUse = [];
 
     if (selectedBurnoutType === "Full Body") {
@@ -68,38 +82,172 @@ export default function Burnouts({ user, userProfile }) {
     setRepGoal(goal);
     setCurrentReps(0);
 
+    // Load CSV reference and initialize smart rep counter
+    const reference = await loadExerciseReference(exercise);
+    const pattern = reference ? reference.getRepPattern() : null;
+    repCounterRef.current = new SmartRepCounter(exercise, pattern);
+
     showToast(`New exercise: ${exercise}!`);
     speakFeedback(`${exercise}. ${goal} reps.`);
   };
 
-  const addRep = () => {
-    const newReps = currentReps + 1;
-    setCurrentReps(newReps);
-    const newTotal = totalReps + 1;
-    setTotalReps(newTotal);
-    speakNumber(newReps);
+  const drawSkeleton = (keypoints, canvas) => {
+    const ctx = canvasCtxRef.current;
+    if (!canvas || !ctx) return;
 
-    if (newReps >= repGoal) {
-      showToast("Set complete! Draw next exercise.");
-    }
+    const width = canvas.width;
+    const height = canvas.height;
 
-    if (newTotal % 30 === 0) {
-      const newDice = dice + 1;
-      setDice(newDice);
-      showToast(`🎲 Dice earned! Total: ${newDice}`);
-      speakFeedback(`Dice earned! Total: ${newDice}`);
-    }
+    ctx.strokeStyle = "#00ff00";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+
+    SKELETON_CONNECTIONS.forEach(([i, j]) => {
+      const start = keypoints[i];
+      const end = keypoints[j];
+
+      if (start && end && start.score >= MIN_POSE_CONFIDENCE && end.score >= MIN_POSE_CONFIDENCE) {
+        ctx.beginPath();
+        ctx.moveTo(start.x * width, start.y * height);
+        ctx.lineTo(end.x * width, end.y * height);
+        ctx.stroke();
+      }
+    });
+
+    ctx.fillStyle = "#00ff00";
+    keypoints.forEach((kp) => {
+      if (kp && kp.score >= MIN_POSE_CONFIDENCE) {
+        ctx.beginPath();
+        ctx.arc(kp.x * width, kp.y * height, 4, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+    });
   };
 
-  const startWorkout = () => {
+  const processFrame = async () => {
+    if (!videoRef.current || !detectorRef.current || !isWorkoutActive) {
+      if (isWorkoutActive) {
+        animationFrameRef.current = requestAnimationFrame(processFrame);
+      }
+      return;
+    }
+
+    try {
+      const pose = await detectPose(videoRef.current);
+
+      if (pose && pose.keypoints && currentExercise && repCounterRef.current) {
+        const smoothed = smootherRef.current.smooth(pose.keypoints);
+        
+        // Draw skeleton
+        if (canvasRef.current && canvasCtxRef.current) {
+          canvasCtxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          drawSkeleton(smoothed, canvasRef.current);
+        }
+
+        // Detect rep
+        const repDetected = repCounterRef.current.detectRep(smoothed, currentExercise);
+        if (repDetected) {
+          const newCount = repCounterRef.current.getCount();
+          setCurrentReps(newCount);
+          const newTotal = totalReps + 1;
+          setTotalReps(newTotal);
+          speakNumber(newCount);
+
+          if (newCount >= repGoal) {
+            showToast("Set complete! Draw next exercise.");
+          }
+
+          if (newTotal % 30 === 0) {
+            const newDice = dice + 1;
+            setDice(newDice);
+            showToast(`🎲 Dice earned! Total: ${newDice}`);
+            speakFeedback(`Dice earned! Total: ${newDice}`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Frame processing error:", error);
+    }
+
+    animationFrameRef.current = requestAnimationFrame(processFrame);
+  };
+
+  const startWorkout = async () => {
     if (!selectedBurnoutType) {
       alert("Please select a burnout type first!");
       return;
     }
-    drawCard();
+
+    try {
+      console.log("Starting burnout...");
+      detectorRef.current = await initializePoseDetection();
+      console.log("Detector initialized");
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        }
+      });
+      console.log("Camera stream obtained");
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          console.log("Video metadata loaded");
+        };
+        
+        videoRef.current.play().then(() => {
+          console.log("Video playing");
+        }).catch(err => {
+          console.error("Play error:", err);
+        });
+      }
+
+      if ("wakeLock" in navigator) {
+        try {
+          wakeLockRef.current = await navigator.wakeLock.request("screen");
+        } catch (err) {
+          console.log("Wake Lock not available");
+        }
+      }
+
+      smootherRef.current = new LandmarkSmoother(5);
+      setIsWorkoutActive(true);
+      drawCard();
+      
+      // Start frame processing with a small delay
+      setTimeout(() => {
+        animationFrameRef.current = requestAnimationFrame(processFrame);
+      }, 500);
+    } catch (err) {
+      console.error("Camera error:", err);
+      alert("Camera error: " + err.message);
+    }
   };
 
   const endSession = async () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks();
+      tracks.forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+
+    if (wakeLockRef.current) {
+      try {
+        await wakeLockRef.current.release();
+      } catch (err) {
+        console.log("Wake lock release error");
+      }
+    }
+
+    setIsWorkoutActive(false);
+
     if (user && user.uid) {
       try {
         const { db } = await import("../firebase.js");
@@ -127,6 +275,25 @@ export default function Burnouts({ user, userProfile }) {
 
     alert(`Burnout complete!\nTotal Reps: ${totalReps}\nDice Earned: ${dice}`);
   };
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      canvasCtxRef.current = canvasRef.current.getContext("2d");
+    }
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (videoRef.current && videoRef.current.srcObject) {
+        const tracks = videoRef.current.srcObject.getTracks();
+        tracks.forEach((track) => track.stop());
+      }
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release().catch(() => {});
+      }
+    };
+  }, []);
 
   const styles = {
     root: {
@@ -241,9 +408,6 @@ export default function Burnouts({ user, userProfile }) {
       fontSize: "24px",
       fontWeight: "bold"
     },
-    cardCornerSuit: {
-      fontSize: "20px"
-    },
     cardCenter: {
       display: "flex",
       flexDirection: "column",
@@ -264,10 +428,40 @@ export default function Burnouts({ user, userProfile }) {
     },
     workoutArea: {
       width: "100%",
-      maxWidth: "600px",
+      maxWidth: "640px",
       display: "flex",
       flexDirection: "column",
       gap: "15px"
+    },
+    videoContainer: {
+      position: "relative",
+      width: "100%",
+      maxWidth: "640px",
+      height: "480px",
+      margin: "0 auto",
+      backgroundColor: "#000",
+      border: "2px solid #ff2e2e",
+      borderRadius: "5px",
+      overflow: "hidden"
+    },
+    video: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
+      borderRadius: "5px",
+      zIndex: 1
+    },
+    canvas: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      borderRadius: "5px",
+      zIndex: 2
     },
     stats: {
       display: "grid",
@@ -395,8 +589,13 @@ export default function Burnouts({ user, userProfile }) {
             </div>
           </div>
 
-          {currentExercise && (
+          {isWorkoutActive && (
             <div style={styles.workoutArea}>
+              <div style={styles.videoContainer}>
+                <video ref={videoRef} style={styles.video} autoPlay playsInline muted />
+                <canvas ref={canvasRef} width={640} height={480} style={styles.canvas} />
+              </div>
+
               <div style={styles.stats}>
                 <div style={styles.statBox}>
                   <div style={styles.statValue}>{currentReps}</div>
@@ -409,12 +608,6 @@ export default function Burnouts({ user, userProfile }) {
               </div>
 
               <div style={styles.buttons}>
-                <button onClick={addRep} style={{ ...styles.button, ...styles.startButton }}>
-                  +1 Rep
-                </button>
-                <button onClick={drawCard} style={{ ...styles.button, ...styles.drawButton }}>
-                  Next Exercise
-                </button>
                 <button onClick={endSession} style={{ ...styles.button, ...styles.endButton }}>
                   End Session
                 </button>
@@ -422,7 +615,7 @@ export default function Burnouts({ user, userProfile }) {
             </div>
           )}
 
-          {!currentExercise && (
+          {!isWorkoutActive && (
             <div style={styles.buttons}>
               <button onClick={startWorkout} style={{ ...styles.button, ...styles.startButton }}>
                 Start Burnout
