@@ -1,4 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
+import { MapContainer, TileLayer, Polyline, Marker, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix Leaflet icon issue
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
+
+// Component to auto-center map
+function MapAutoCenter({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) map.setView(center, map.getZoom());
+  }, [center, map]);
+  return null;
+}
 import { RunLogic } from "../logic/runLogic.js";
 import { UserService } from "../services/userService.js";
 import { LeaderboardService } from "../services/leaderboardService.js";
@@ -14,6 +34,7 @@ export default function Run({ user, userProfile }) {
   const [isVerified, setIsVerified] = useState(true);
   const [shareRoute, setShareRoute] = useState(false);
   const [route, setRoute] = useState([]);
+  const [currentPos, setCurrentPos] = useState(null);
 
   const timerRef = useRef(null);
   const watchIdRef = useRef(null);
@@ -84,6 +105,9 @@ export default function Run({ user, userProfile }) {
 
         const { latitude, longitude, accuracy } = pos.coords;
         if (accuracy > 100) return; // Increased accuracy threshold for city running
+
+        const newPos = { lat: latitude, lng: longitude };
+        setCurrentPos([latitude, longitude]);
 
         if (lastPos) {
           const d = RunLogic.calculateDistance(
@@ -239,6 +263,30 @@ export default function Run({ user, userProfile }) {
           </div>
         </div>
 
+        {isActive && (
+          <div style={styles.mapContainer}>
+            <MapContainer 
+              center={currentPos || [51.505, -0.09]} 
+              zoom={15} 
+              style={{ height: "100%", width: "100%", borderRadius: "12px" }}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              {currentPos && (
+                <>
+                  <Marker position={currentPos} />
+                  <MapAutoCenter center={currentPos} />
+                </>
+              )}
+              {route.length > 1 && (
+                <Polyline positions={route.map(p => [p.lat, p.lng])} color="#ff3050" weight={5} />
+              )}
+            </MapContainer>
+          </div>
+        )}
+
         {!isActive ? (
           <div style={{ width: '100%', maxWidth: '500px' }}>
             <div style={{ textAlign: 'center', marginBottom: '20px' }}>
@@ -352,6 +400,16 @@ const styles = {
   },
   error: { color: "#ff3050", background: "rgba(255, 48, 80, 0.2)", padding: "10px", borderRadius: "8px" },
   controls: { display: "flex", gap: "10px" },
+  mapContainer: {
+    width: "100%",
+    maxWidth: "500px",
+    height: "300px",
+    border: "2px solid #ff3050",
+    borderRadius: "14px",
+    overflow: "hidden",
+    boxShadow: "0 0 20px rgba(255, 48, 80, 0.4)",
+    marginTop: "20px"
+  },
   background: {
     minHeight: "100vh",
     width: "100%",
