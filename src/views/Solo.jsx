@@ -159,10 +159,10 @@ export default function Solo({ user, userProfile }) {
       const start = keypoints[i];
       const end = keypoints[j];
 
-      if (start && end && start.score >= MIN_POSE_CONFIDENCE && end.score >= MIN_POSE_CONFIDENCE) {
+      if (start && end && (start.score >= MIN_POSE_CONFIDENCE || !start.score) && (end.score >= MIN_POSE_CONFIDENCE || !end.score)) {
         ctx.beginPath();
-        ctx.moveTo(start.x * width, start.y * height);
-        ctx.lineTo(end.x * width, end.y * height);
+        ctx.moveTo(start.x * (start.x <= 1 ? width : 1), start.y * (start.y <= 1 ? height : 1));
+        ctx.lineTo(end.x * (end.x <= 1 ? width : 1), end.y * (end.y <= 1 ? height : 1));
         ctx.stroke();
       }
     });
@@ -170,9 +170,9 @@ export default function Solo({ user, userProfile }) {
     // Draw keypoint circles
     ctx.fillStyle = skeletonColor;
     keypoints.forEach((kp) => {
-      if (kp && kp.score >= MIN_POSE_CONFIDENCE) {
+      if (kp && (kp.score >= MIN_POSE_CONFIDENCE || !kp.score)) {
         ctx.beginPath();
-        ctx.arc(kp.x * width, kp.y * height, 6, 0, 2 * Math.PI);
+        ctx.arc(kp.x * (kp.x <= 1 ? width : 1), kp.y * (kp.y <= 1 ? height : 1), 6, 0, 2 * Math.PI);
         ctx.fill();
       }
     });
