@@ -60,6 +60,25 @@ class RepCounter {
   process(keypoints) {
     if (!this.isInitialized || !this.config || !keypoints) return false;
 
+    // Handle isometric holds (like Plank)
+    if (this.config.type === 'hold') {
+      const isMatching = this.checkStateMatch(keypoints, this.config.angles);
+      if (isMatching) {
+        const now = Date.now();
+        if (this.lastStateChangeTime === 0) this.lastStateChangeTime = now;
+        
+        // Count 1 "rep" every 1 second of holding for progression feedback
+        if (now - this.lastStateChangeTime >= 1000) {
+          this.repCount++;
+          this.lastStateChangeTime = now;
+          return true;
+        }
+      } else {
+        this.lastStateChangeTime = 0;
+      }
+      return false;
+    }
+
     const currentTargetState = this.config.rep_order[this.currentStateIndex];
     const stateAngles = this.config.angles[currentTargetState];
     

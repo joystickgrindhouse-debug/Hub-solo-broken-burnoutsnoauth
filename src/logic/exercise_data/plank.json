@@ -1,0 +1,10 @@
+{
+  "exercise": "plank",
+  "type": "hold",
+  "angles": {
+    "left_hip": [160, 180],
+    "right_hip": [160, 180],
+    "left_elbow": [80, 100],
+    "right_elbow": [80, 100]
+  }
+}
