@@ -10,10 +10,13 @@ export default function Burnouts({ user, userProfile }) {
   const [totalReps, setTotalReps] = useState(0);
   const [repGoal, setRepGoal] = useState(10);
   const [currentReps, setCurrentReps] = useState(0);
-  const [dice, setDice] = useState(0);
+  const [dice, setDice] = useState(userProfile?.diceBalance || 0);
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [toast, setToast] = useState("");
   const [selectedBurnoutType, setSelectedBurnoutType] = useState(null);
+  const [currentCategory, setCurrentCategory] = useState(null);
+  const [currentExercise, setCurrentExercise] = useState(null);
+  const repCounterRef = useRef(null);
 
   const exercises = {
     Arms: ["Push-ups", "Plank Up-Downs", "Pike Push ups", "Shoulder Taps"],
@@ -150,10 +153,91 @@ export default function Burnouts({ user, userProfile }) {
       flexDirection: "column",
       alignItems: "center",
       minHeight: "100vh",
-      backgroundColor: "#050505",
-      color: "#00fff2",
-      fontFamily: "'Courier New', Courier, monospace",
+      backgroundColor: "#0a0a0a",
+      color: "#ffffff",
+      fontFamily: "'Arial', sans-serif",
       padding: "20px"
+    },
+    header: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      width: "100%",
+      maxWidth: "1200px",
+      marginBottom: "40px",
+      padding: "20px 0"
+    },
+    title: {
+      fontSize: "32px",
+      fontWeight: "bold",
+      color: "#ff1493",
+      letterSpacing: "2px",
+      textShadow: "0 0 10px rgba(255, 20, 147, 0.5)"
+    },
+    userSection: {
+      display: "flex",
+      alignItems: "center",
+      gap: "20px"
+    },
+    diceDisplay: {
+      fontSize: "20px",
+      color: "#ffd700"
+    },
+    menuButton: {
+      padding: "10px 20px",
+      fontSize: "16px",
+      backgroundColor: "transparent",
+      border: "2px solid #ff1493",
+      color: "#ff1493",
+      cursor: "pointer",
+      textTransform: "uppercase",
+      letterSpacing: "1px",
+      borderRadius: "4px"
+    },
+    subtitle: {
+      fontSize: "24px",
+      fontWeight: "bold",
+      color: "#ffffff",
+      marginBottom: "15px"
+    },
+    cardGrid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(2, 1fr)",
+      gap: "30px",
+      marginTop: "40px",
+      maxWidth: "900px"
+    },
+    card: {
+      padding: "30px",
+      border: "3px solid #ff4500",
+      borderRadius: "8px",
+      backgroundColor: "#1a1a1a",
+      cursor: "pointer",
+      transition: "all 0.3s ease",
+      textAlign: "center",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: "15px",
+      minHeight: "250px",
+      justifyContent: "center"
+    },
+    cardHover: {
+      boxShadow: "0 0 20px rgba(255, 69, 0, 0.6)",
+      transform: "scale(1.05)"
+    },
+    cardEmoji: {
+      fontSize: "80px"
+    },
+    cardTitle: {
+      fontSize: "22px",
+      fontWeight: "bold",
+      color: "#ffffff",
+      marginBottom: "5px"
+    },
+    cardDescription: {
+      fontSize: "14px",
+      color: "#cccccc"
     },
     cyberCounter: {
       fontSize: "80px",
@@ -187,13 +271,6 @@ export default function Burnouts({ user, userProfile }) {
       height: "100%",
       zIndex: 10
     },
-    selectionScreen: {
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: "20px",
-      marginTop: "50px"
-    },
     button: {
       padding: "15px 40px",
       fontSize: "20px",
@@ -207,16 +284,50 @@ export default function Burnouts({ user, userProfile }) {
     }
   };
 
+  const burnoutTypes = [
+    { name: "ARMS", emoji: "💪", description: "Push-ups, Dips" },
+    { name: "LEGS", emoji: "🦵", description: "Squats, Lunges" },
+    { name: "CORE", emoji: "🔥", description: "Crunches, Planks" },
+    { name: "FULL BODY", emoji: "⚡", description: "All exercises" }
+  ];
+
   return (
     <div style={styles.root}>
-      <h1 style={{ color: "#ff00ff", textShadow: "0 0 10px #ff00ff" }}>BURNOUT NEURAL OVERLOAD</h1>
+      <div style={styles.header}>
+        <h1 style={styles.title}>RIVALIS HUB</h1>
+        <div style={styles.userSection}>
+          <div style={styles.diceDisplay}>🎲 Dice: {dice}</div>
+          <button style={styles.menuButton}>Menu</button>
+        </div>
+      </div>
       
       {!selectedBurnoutType ? (
-        <div style={styles.selectionScreen}>
-          <button style={styles.button} onClick={() => setSelectedBurnoutType("FULL BODY")}>INITIATE FULL BODY</button>
-          <button style={styles.button} onClick={() => setSelectedBurnoutType("UPPER")}>INITIATE UPPER BODY</button>
-          <button style={styles.button} onClick={() => setSelectedBurnoutType("LOWER")}>INITIATE LOWER BODY</button>
-        </div>
+        <>
+          <h2 style={{ fontSize: "36px", fontWeight: "bold", color: "#ffffff", marginBottom: "10px" }}>BURNOUTS MODE</h2>
+          <div style={styles.subtitle}>Select Your Burnout Type</div>
+          
+          <div style={styles.cardGrid}>
+            {burnoutTypes.map((type) => (
+              <div
+                key={type.name}
+                style={styles.card}
+                onClick={() => setSelectedBurnoutType(type.name)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = "0 0 20px rgba(255, 69, 0, 0.6)";
+                  e.currentTarget.style.transform = "scale(1.05)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.transform = "scale(1)";
+                }}
+              >
+                <div style={styles.cardEmoji}>{type.emoji}</div>
+                <div style={styles.cardTitle}>{type.name}</div>
+                <div style={styles.cardDescription}>{type.description}</div>
+              </div>
+            ))}
+          </div>
+        </>
       ) : (
         <>
           <div style={styles.cyberCounter}>{currentReps}</div>
