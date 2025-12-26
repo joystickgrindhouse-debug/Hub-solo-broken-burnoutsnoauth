@@ -241,7 +241,7 @@ export default function Solo({ user, userProfile }) {
 
         // Detect rep only if exercise is selected
         if (currentExercise && repCounterRef.current) {
-          const repDetected = repCounterRef.current.detectRep(smoothed, currentExercise);
+          const repDetected = repCounterRef.current.process(smoothed);
           if (repDetected) {
             const newCount = repCounterRef.current.getCount();
             setCurrentReps(newCount);
