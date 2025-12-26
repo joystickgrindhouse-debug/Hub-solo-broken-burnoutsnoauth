@@ -1,0 +1,21 @@
+{
+  "exercise": "push_up",
+  "states": ["TOP", "BOTTOM"],
+  "rep_order": ["TOP", "BOTTOM", "TOP"],
+  "angles": {
+    "TOP": {
+      "left_elbow": [160, 180],
+      "right_elbow": [160, 180],
+      "left_hip": [160, 180],
+      "right_hip": [160, 180]
+    },
+    "BOTTOM": {
+      "left_elbow": [70, 100],
+      "right_elbow": [70, 100]
+    }
+  },
+  "constraints": {
+    "min_rep_time": 0.6,
+    "hip_sag_max": 20
+  }
+}

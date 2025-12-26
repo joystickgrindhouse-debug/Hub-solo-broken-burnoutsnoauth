@@ -1,134 +1,135 @@
-// Rep counting state machine with exercise-specific logic
-import { getExerciseReference } from './exerciseReferences.js';
+import { calculateAngle } from './angleCalculations.js';
 
 class RepCounter {
-  constructor(exercise) {
-    this.exercise = exercise;
+  constructor(exerciseName) {
+    this.exerciseName = exerciseName;
     this.repCount = 0;
-    this.inProgress = false;
-    this.lastRepTime = 0;
-    this.repThreshold = 300; // Minimum ms between reps to prevent doubles
-    
-    // Default ranges for fallback detection
-    this.elbowRange = { min: 0.2, max: 0.8, mid: 0.5 };
-    this.kneeRange = { min: 0.3, max: 0.85, mid: 0.6 };
-    this.hipRange = { min: 0.3, max: 0.8, mid: 0.55 };
-    this.wristRange = { min: 0.1, max: 0.9, mid: 0.5 };
-    
-    // Load reference data asynchronously
-    this.initializeReferences(exercise);
+    this.history = [];
+    this.currentStateIndex = 0;
+    this.config = null;
+    this.lastStateChangeTime = Date.now();
+    this.isInitialized = false;
   }
-  
-  async initializeReferences(exercise) {
+
+  async initialize() {
     try {
-      const reference = await getExerciseReference(exercise);
-      if (reference && reference.analysis) {
-        const { elbowRange, kneeRange, hipRange, wristRange } = reference.analysis;
-        if (elbowRange) this.elbowRange = elbowRange;
-        if (kneeRange) this.kneeRange = kneeRange;
-        if (hipRange) this.hipRange = hipRange;
-        if (wristRange) this.wristRange = wristRange;
-      }
+      // Mapping for display names to file names
+      const nameMap = {
+        'Push-ups': 'push_up',
+        'Plank Up-Downs': 'plank_up_down',
+        'Pike Push ups': 'pike_pushup',
+        'Shoulder Taps': 'shoulder_tap',
+        'Squats': 'squat',
+        'Lunges': 'lunge',
+        'Glute Bridges': 'glute_bridge',
+        'Calf Raises': 'calf_raise',
+        'Crunches': 'crunch',
+        'Plank': 'plank',
+        'Russian Twists': 'russian_twist',
+        'Leg Raises': 'leg_raise',
+        'Jumping Jacks': 'jumping_jack',
+        'High Knees': 'high_knee',
+        'Burpees': 'burpee',
+        'Mountain Climbers': 'mountain_climber'
+      };
+
+      const fileName = nameMap[this.exerciseName] || this.exerciseName.toLowerCase().replace(/ /g, '_');
+      const response = await fetch(`/src/logic/exercise_data/${fileName}.json`);
+      if (!response.ok) throw new Error(`Failed to load config for ${this.exerciseName}`);
+      this.config = await response.json();
+      this.isInitialized = true;
+      console.log(`Initialized ${this.exerciseName} with new schema`);
     } catch (error) {
-      console.log(`Using default ranges for ${exercise}`);
+      console.error('Failed to initialize rep counter:', error);
+      // Fallback for safety
+      this.isInitialized = false;
     }
   }
 
   reset() {
-    this.repCount = 0;
-    this.inProgress = false;
-    this.lastRepTime = 0;
+    this.currentStateIndex = 0;
+    this.history = [];
+    this.lastStateChangeTime = Date.now();
   }
 
-  // Arm exercises: elbow Y position detection
-  processElbowBased(currentElbowY) {
-    const now = Date.now();
-    if (!currentElbowY || !this.elbowRange) return false;
+  // Compatibility method for existing views
+  detectRep(keypoints, exercise) {
+    return this.process(keypoints);
+  }
+
+  process(keypoints) {
+    if (!this.isInitialized || !this.config || !keypoints) return false;
+
+    const currentTargetState = this.config.rep_order[this.currentStateIndex];
+    const stateAngles = this.config.angles[currentTargetState];
     
-    const mid = this.elbowRange.mid;
-    const range = this.elbowRange.max - this.elbowRange.min;
-    const threshold = range * 0.2; // 20% of range for threshold
-    
-    // Up position (low Y = elbows bent)
-    if (currentElbowY < mid - threshold && !this.inProgress) {
-      this.inProgress = true;
+    if (this.checkStateMatch(keypoints, stateAngles)) {
+      const now = Date.now();
+      
+      // Advance state
+      this.currentStateIndex++;
+      this.lastStateChangeTime = now;
+
+      // Check if rep complete
+      if (this.currentStateIndex >= this.config.rep_order.length) {
+        const repDuration = (now - (this.history[0]?.time || now)) / 1000;
+        
+        if (repDuration >= (this.config.constraints?.min_rep_time || 0.5)) {
+          this.repCount++;
+          this.resetRepProgress();
+          return true;
+        } else {
+          this.resetRepProgress();
+        }
+      } else if (this.currentStateIndex === 1) {
+        // Started new rep
+        this.history = [{ state: currentTargetState, time: now }];
+      }
     }
-    // Down position (high Y = elbows extended) = rep complete
-    else if (currentElbowY > mid + threshold && this.inProgress && now - this.lastRepTime > this.repThreshold) {
-      this.inProgress = false;
-      this.repCount++;
-      this.lastRepTime = now;
-      return true;
-    }
-    
     return false;
   }
 
-  // Leg exercises: knee Y position detection  
-  processKneeBased(currentKneeY) {
-    const now = Date.now();
-    if (!currentKneeY || !this.kneeRange) return false;
-    
-    const mid = this.kneeRange.mid;
-    const range = this.kneeRange.max - this.kneeRange.min;
-    const threshold = range * 0.15;
-    
-    // Up (knees extended)
-    if (currentKneeY > mid + threshold && !this.inProgress) {
-      this.inProgress = true;
+  checkStateMatch(keypoints, requirements) {
+    if (!requirements) return true;
+
+    for (const [joint, range] of Object.entries(requirements)) {
+      const angle = this.getJointAngle(keypoints, joint);
+      if (angle === null) return false;
+      if (angle < range[0] || angle > range[1]) return false;
     }
-    // Down (knees bent) = rep complete
-    else if (currentKneeY < mid - threshold && this.inProgress && now - this.lastRepTime > this.repThreshold) {
-      this.inProgress = false;
-      this.repCount++;
-      this.lastRepTime = now;
-      return true;
-    }
-    
-    return false;
+    return true;
   }
 
-  // Wrist-based (shoulder taps, jumping jacks)
-  processWristBased(currentWristY, shoulderY) {
-    const now = Date.now();
-    if (!currentWristY || !shoulderY) return false;
-    
-    const isRaised = currentWristY < shoulderY - 0.05;
-    
-    if (isRaised && !this.inProgress) {
-      this.inProgress = true;
-    } else if (!isRaised && this.inProgress && now - this.lastRepTime > this.repThreshold) {
-      this.inProgress = false;
-      this.repCount++;
-      this.lastRepTime = now;
-      return true;
-    }
-    
-    return false;
+  getJointAngle(keypoints, joint) {
+    const mapping = {
+      'left_elbow': [11, 13, 15],
+      'right_elbow': [12, 14, 16],
+      'left_hip': [11, 23, 25],
+      'right_hip': [12, 24, 26],
+      'left_knee': [23, 25, 27],
+      'right_knee': [24, 26, 28]
+    };
+
+    const indices = mapping[joint];
+    if (!indices) return null;
+
+    const p1 = keypoints[indices[0]];
+    const p2 = keypoints[indices[1]];
+    const p3 = keypoints[indices[2]];
+
+    // Using confidence check
+    const minConf = 0.5;
+    if (!p1 || !p2 || !p3 || 
+        (p1.score !== undefined && p1.score < minConf) || 
+        (p2.score !== undefined && p2.score < minConf) || 
+        (p3.score !== undefined && p3.score < minConf)) return null;
+
+    return calculateAngle(p1, p2, p3);
   }
 
-  // Hip-based (glute bridges, leg raises)
-  processHipBased(currentHipY) {
-    const now = Date.now();
-    if (!currentHipY || !this.hipRange) return false;
-    
-    const mid = this.hipRange.mid;
-    const range = this.hipRange.max - this.hipRange.min;
-    const threshold = range * 0.1;
-    
-    // Hips down
-    if (currentHipY > mid + threshold && !this.inProgress) {
-      this.inProgress = true;
-    }
-    // Hips raised = rep complete
-    else if (currentHipY < mid - threshold && this.inProgress && now - this.lastRepTime > this.repThreshold) {
-      this.inProgress = false;
-      this.repCount++;
-      this.lastRepTime = now;
-      return true;
-    }
-    
-    return false;
+  resetRepProgress() {
+    this.currentStateIndex = 0;
+    this.history = [];
   }
 
   getCount() {

@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { initializePoseDetection, detectPose, SKELETON_CONNECTIONS, MIN_POSE_CONFIDENCE } from "../logic/poseDetection.js";
 import { speakFeedback, speakNumber } from "../logic/audioFeedback.js";
-import { SmartRepCounter } from "../logic/smartRepCounter.js";
-import { loadExerciseReference } from "../logic/csvRepReference.js";
+import RepCounter from "../logic/repCounter.js";
 import LandmarkSmoother from "../logic/smoothing.js";
 import ExerciseAvatar from "../components/ExerciseAvatar.jsx";
 
@@ -83,10 +82,10 @@ export default function Burnouts({ user, userProfile }) {
     setRepGoal(goal);
     setCurrentReps(0);
 
-    // Load CSV reference and initialize smart rep counter
-    const reference = await loadExerciseReference(exercise);
-    const pattern = reference ? reference.getRepPattern() : null;
-    repCounterRef.current = new SmartRepCounter(exercise, pattern);
+    // Initialize rep counter with new schema
+    const counter = new RepCounter(exercise);
+    await counter.initialize();
+    repCounterRef.current = counter;
 
     showToast(`New exercise: ${exercise}!`);
     speakFeedback(`${exercise}. ${goal} reps.`);
