@@ -45,15 +45,16 @@ export default function Run({ user, userProfile }) {
       enableHighAccuracy: true, 
       timeout: 15000,
       maximumAge: 0,
-      distanceFilter: 1 
+      distanceFilter: 0 
     };
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
+        console.log("GPS Position received:", pos.coords.latitude, pos.coords.longitude);
         if (isPaused) return;
 
         const { latitude, longitude, accuracy } = pos.coords;
-        if (accuracy > 50) return; // Skip poor accuracy
+        if (accuracy > 100) return; // Increased accuracy threshold for city running
 
         if (lastPos) {
           const d = RunLogic.calculateDistance(
@@ -61,10 +62,13 @@ export default function Run({ user, userProfile }) {
             latitude, longitude
           );
 
-          // Cheat detection
-          if (RunLogic.isRealisticSpeed(d, 1)) { // 1s interval roughly
+          console.log("Distance increment:", d);
+
+          // Cheat detection - increased threshold slightly for GPS jitter
+          if (RunLogic.isRealisticSpeed(d, 1)) { 
              setDistance(prev => {
                const newDist = prev + d;
+               console.log("New total distance:", newDist);
                const newDice = RunLogic.calculateDice(newDist);
                if (newDice > diceEarned) setDiceEarned(newDice);
                return newDist;
@@ -73,13 +77,17 @@ export default function Run({ user, userProfile }) {
                setRoute(prev => [...prev, { lat: latitude, lng: longitude }]);
              }
           } else {
+            console.warn("Suspicious speed detected:", d);
             setIsVerified(false);
           }
         }
         setLastPos({ lat: latitude, lng: longitude });
       },
-      (err) => setError(err.message),
-      { enableHighAccuracy: true, distanceFilter: 5 }
+      (err) => {
+        console.error("GPS Error:", err);
+        setError(err.message);
+      },
+      options
     );
   };
 

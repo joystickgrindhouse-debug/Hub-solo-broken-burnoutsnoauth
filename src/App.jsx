@@ -184,10 +184,10 @@ export default function App() {
               isNewSignup ? (
                 <AvatarCreator user={user} userProfile={userProfile} />
               ) : (
-                <Navigate to="/profile" replace />
+                <Profile user={user} userProfile={userProfile} />
               )
             ) : (
-              <Navigate to="/login" replace />
+              <Login />
             )
           } 
         />
