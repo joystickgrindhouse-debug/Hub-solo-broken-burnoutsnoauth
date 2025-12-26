@@ -19,11 +19,30 @@ export default function Run({ user, userProfile }) {
   const watchIdRef = useRef(null);
 
   useEffect(() => {
+    loadCompetitiveRuns();
     return () => {
       stopTracking();
       clearInterval(timerRef.current);
     };
   }, []);
+
+  const loadCompetitiveRuns = async () => {
+    try {
+      const result = await LeaderboardService.getTopScores("run", 10);
+      if (result.success) {
+        const globalGhosts = result.scores.map(score => ({
+          id: score.userId,
+          name: `Rival: ${score.userName}`,
+          distance: score.score / 100, // Assuming score is stored as miles * 100
+          duration: score.duration || 600, // Fallback if duration not stored
+          date: new Date(score.timestamp).toLocaleDateString()
+        }));
+        setRecentRuns(prev => [...prev, ...globalGhosts]);
+      }
+    } catch (err) {
+      console.error("Error loading competitive runs:", err);
+    }
+  };
 
   const [ghostMode, setGhostMode] = useState(false);
   const [ghostData, setGhostData] = useState(null);
@@ -159,7 +178,13 @@ export default function Run({ user, userProfile }) {
           lastRunDate: new Date().toISOString()
         });
 
-        await LeaderboardService.saveScore(user.uid, userProfile?.nickname || "Runner", "run", Math.floor(distance * 100));
+        await LeaderboardService.submitScore({ 
+          userId: user.uid, 
+          userName: userProfile?.nickname || "Runner", 
+          gameMode: "run", 
+          score: Math.floor(distance * 100),
+          duration: duration
+        });
       } catch (err) {
         console.error("Error saving run stats:", err);
       }

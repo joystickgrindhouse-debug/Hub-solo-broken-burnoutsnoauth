@@ -20,19 +20,15 @@ export const LeaderboardService = {
   /**
    * Submit a score to the leaderboard
    * @param {Object} scoreData - Score data to submit
-   * @param {string} scoreData.userId - User ID
-   * @param {string} scoreData.userName - User display name
-   * @param {string} scoreData.gameMode - Game mode (e.g., 'solo', 'burnouts', 'live')
-   * @param {number} scoreData.score - The score value
-   * @param {Object} scoreData.metadata - Additional data (e.g., time, level, etc.)
    */
-  async submitScore({ userId, userName, gameMode, score, metadata = {} }) {
+  async submitScore({ userId, userName, gameMode, score, duration = 0, metadata = {} }) {
     try {
       const scoreEntry = {
         userId,
         userName,
         gameMode,
         score,
+        duration,
         metadata,
         timestamp: Timestamp.now(),
         createdAt: new Date().toISOString()
