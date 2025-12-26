@@ -19,6 +19,7 @@ export default function Solo({ user, userProfile }) {
   const [currentGroup, setCurrentGroup] = useState("");
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [toast, setToast] = useState("");
+  const [formQuality, setFormQuality] = useState("neutral");
 
   const repCounterRef = useRef(null);
   const smootherRef = useRef(new LandmarkSmoother(5));
@@ -81,7 +82,58 @@ export default function Solo({ user, userProfile }) {
     speakFeedback(`${exercise}. ${goal} reps.`);
   };
 
-  const drawSkeleton = (keypoints, canvas) => {
+  const analyzeFormQuality = (keypoints, exercise) => {
+    if (!keypoints || keypoints.length < 33) return "neutral";
+
+    const shoulders = [(keypoints[11]?.y || 0.5), (keypoints[12]?.y || 0.5)];
+    const elbows = [(keypoints[13]?.y || 0.5), (keypoints[14]?.y || 0.5)];
+    const hips = [(keypoints[23]?.y || 0.5), (keypoints[24]?.y || 0.5)];
+    const knees = [(keypoints[25]?.y || 0.5), (keypoints[26]?.y || 0.5)];
+    const wrists = [(keypoints[15]?.y || 0.5), (keypoints[16]?.y || 0.5)];
+
+    let isGoodForm = false;
+
+    switch(exercise) {
+      case "Push-ups":
+      case "Plank Up-Downs":
+        // Good form: elbows bent, body straight, shoulders over wrists
+        isGoodForm = elbows[0] > 0.3 && elbows[1] > 0.3 && 
+                     Math.abs(shoulders[0] - shoulders[1]) < 0.15 &&
+                     wrists[0] > 0.1 && wrists[1] > 0.1;
+        break;
+
+      case "Squats":
+        // Good form: knees bent, hips below shoulders
+        isGoodForm = knees[0] > 0.45 && knees[1] > 0.45 &&
+                     hips[0] > shoulders[0] * 0.8 && hips[1] > shoulders[1] * 0.8;
+        break;
+
+      case "Plank":
+        // Good form: shoulders above wrists, body straight
+        isGoodForm = Math.abs(shoulders[0] - shoulders[1]) < 0.1 &&
+                     elbows[0] > 0.25 && elbows[1] > 0.25;
+        break;
+
+      case "Glute Bridges":
+        // Good form: hips raised high
+        isGoodForm = hips[0] < 0.45 && hips[1] < 0.45;
+        break;
+
+      case "Jumping Jacks":
+      case "High Knees":
+        // Good form: arms extended, knees high
+        isGoodForm = wrists[0] < 0.3 && wrists[1] < 0.3 && 
+                     knees[0] < 0.5 && knees[1] < 0.5;
+        break;
+
+      default:
+        isGoodForm = true; // Default to good if no specific rules
+    }
+
+    return isGoodForm ? "good" : "poor";
+  };
+
+  const drawSkeleton = (keypoints, canvas, quality = "neutral") => {
     const ctx = canvasCtxRef.current;
     if (!canvas || !ctx) {
       console.warn("Canvas or context not available");
@@ -94,9 +146,12 @@ export default function Solo({ user, userProfile }) {
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
+    // Determine color based on form quality
+    const skeletonColor = quality === "good" ? "#00ff00" : quality === "poor" ? "#ff0000" : "#00ff00";
+
     // Draw skeleton lines
-    ctx.strokeStyle = "#00ff00";
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = skeletonColor;
+    ctx.lineWidth = 4;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
@@ -113,14 +168,24 @@ export default function Solo({ user, userProfile }) {
     });
 
     // Draw keypoint circles
-    ctx.fillStyle = "#00ff00";
+    ctx.fillStyle = skeletonColor;
     keypoints.forEach((kp) => {
       if (kp && kp.score >= MIN_POSE_CONFIDENCE) {
         ctx.beginPath();
-        ctx.arc(kp.x * width, kp.y * height, 5, 0, 2 * Math.PI);
+        ctx.arc(kp.x * width, kp.y * height, 6, 0, 2 * Math.PI);
         ctx.fill();
       }
     });
+
+    // Draw form feedback text
+    ctx.fillStyle = skeletonColor;
+    ctx.font = "bold 24px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      quality === "good" ? "✓ GOOD FORM" : quality === "poor" ? "✗ FIX FORM" : "DETECTING...",
+      width / 2,
+      40
+    );
   };
 
   const processFrame = async () => {
@@ -134,33 +199,38 @@ export default function Solo({ user, userProfile }) {
     try {
       const pose = await detectPose(videoRef.current);
 
-      if (pose && pose.keypoints && currentExercise && repCounterRef.current) {
+      if (pose && pose.keypoints) {
         const smoothed = smootherRef.current.smooth(pose.keypoints);
         
-        // Draw skeleton
+        // Analyze form quality
+        const quality = currentExercise ? analyzeFormQuality(smoothed, currentExercise) : "neutral";
+        setFormQuality(quality);
+        
+        // Draw skeleton with form feedback
         if (canvasRef.current && canvasCtxRef.current) {
-          canvasCtxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-          drawSkeleton(smoothed, canvasRef.current);
+          drawSkeleton(smoothed, canvasRef.current, quality);
         }
 
-        // Detect rep
-        const repDetected = repCounterRef.current.detectRep(smoothed, currentExercise);
-        if (repDetected) {
-          const newCount = repCounterRef.current.getCount();
-          setCurrentReps(newCount);
-          const newTotal = totalReps + 1;
-          setTotalReps(newTotal);
-          speakNumber(newCount);
+        // Detect rep only if exercise is selected
+        if (currentExercise && repCounterRef.current) {
+          const repDetected = repCounterRef.current.detectRep(smoothed, currentExercise);
+          if (repDetected) {
+            const newCount = repCounterRef.current.getCount();
+            setCurrentReps(newCount);
+            const newTotal = totalReps + 1;
+            setTotalReps(newTotal);
+            speakNumber(newCount);
 
-          if (newCount >= repGoal) {
-            showToast("Card complete! Draw a new card.");
-          }
+            if (newCount >= repGoal) {
+              showToast("Card complete! Draw a new card.");
+            }
 
-          if (newTotal % 30 === 0) {
-            const newDice = dice + 1;
-            setDice(newDice);
-            showToast(`🎲 Dice earned! Total: ${newDice}`);
-            speakFeedback(`Dice earned! Total: ${newDice}`);
+            if (newTotal % 30 === 0) {
+              const newDice = dice + 1;
+              setDice(newDice);
+              showToast(`🎲 Dice earned! Total: ${newDice}`);
+              speakFeedback(`Dice earned! Total: ${newDice}`);
+            }
           }
         }
       }
