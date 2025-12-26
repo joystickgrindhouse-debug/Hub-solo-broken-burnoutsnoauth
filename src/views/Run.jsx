@@ -429,7 +429,8 @@ const styles = {
     backgroundImage: 'linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url("/assets/images/run-bg.png")',
     backgroundSize: "cover",
     backgroundPosition: "center",
-    backgroundAttachment: "fixed",
+    backgroundRepeat: "no-repeat",
+    backgroundAttachment: "scroll",
     display: "flex",
     flexDirection: "column",
     alignItems: "center"
