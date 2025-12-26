@@ -1,0 +1,10 @@
+{
+  "exercise": "burpee",
+  "states": ["STAND", "PLANK", "BOTTOM", "JUMP"],
+  "rep_order": ["STAND", "PLANK", "BOTTOM", "JUMP", "STAND"],
+  "angles": {
+    "PLANK": { "left_elbow": [160, 180], "right_elbow": [160, 180] },
+    "BOTTOM": { "left_elbow": [70, 100], "right_elbow": [70, 100] },
+    "JUMP": { "left_ankle": [30, 60], "right_ankle": [30, 60] }
+  }
+}
