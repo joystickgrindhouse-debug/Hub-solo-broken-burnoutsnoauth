@@ -113,7 +113,14 @@ export default function Solo({ user, userProfile }) {
       };
       
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      videoRef.current.srcObject = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current.play().catch(err => {
+            console.error("Video play error:", err);
+          });
+        };
+      }
       setIsWorkoutActive(true);
       await drawCard();
       animationFrameRef.current = requestAnimationFrame(processFrame);
