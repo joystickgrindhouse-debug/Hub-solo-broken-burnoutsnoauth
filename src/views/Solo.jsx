@@ -144,7 +144,11 @@ export default function Solo({ user, userProfile }) {
       
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       addDebugLog("✅ Camera stream obtained!");
-      addDebugLog(`📹 Stream tracks: ${stream.getTracks().map(t => `${t.kind}(${t.state})`).join(", ")}`);
+      const videoTracks = stream.getVideoTracks();
+      addDebugLog(`📹 Video tracks: ${videoTracks.length} track(s)`);
+      if (videoTracks.length > 0) {
+        addDebugLog(`📹 Track state: ${videoTracks[0].state}, enabled: ${videoTracks[0].enabled}`);
+      }
       
       if (!videoRef.current) {
         addDebugLog("❌ Video element ref is null!");
@@ -154,24 +158,27 @@ export default function Solo({ user, userProfile }) {
       addDebugLog("📺 Assigning stream to video element...");
       videoRef.current.srcObject = stream;
       
-      // Wait for video to load and play
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          addDebugLog("⚠️ Video metadata loading timeout");
-          reject(new Error("Video metadata load timeout"));
-        }, 5000);
-        
-        videoRef.current.onloadedmetadata = () => {
-          clearTimeout(timeout);
-          addDebugLog(`✅ Video metadata loaded, dimensions: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
+      // Wait for video to be ready - don't rely on metadata event which may not fire
+      addDebugLog("⏳ Waiting for video to load (3 seconds)...");
+      await new Promise((resolve) => {
+        setTimeout(() => {
+          addDebugLog("✅ Wait complete");
           resolve();
-        };
+        }, 3000);
       });
       
+      addDebugLog(`📊 Video dimensions: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
+      addDebugLog(`📊 Video readyState: ${videoRef.current.readyState}`);
+      
       addDebugLog("▶️ Attempting to play video...");
-      await videoRef.current.play();
-      addDebugLog("✅ Video is playing!");
-      addDebugLog(`📊 Video state - readyState: ${videoRef.current.readyState}, paused: ${videoRef.current.paused}`);
+      try {
+        await videoRef.current.play();
+        addDebugLog("✅ Video is playing!");
+        addDebugLog(`📊 Video paused: ${videoRef.current.paused}`);
+      } catch (playErr) {
+        addDebugLog(`⚠️ Play returned promise rejection: ${playErr.message}`);
+        addDebugLog("⚠️ But continuing anyway - video stream should still work");
+      }
       
       addDebugLog("🎯 Starting rep counting...");
       setIsWorkoutActive(true);
