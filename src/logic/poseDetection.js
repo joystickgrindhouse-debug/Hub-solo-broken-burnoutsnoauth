@@ -1,8 +1,7 @@
+import * as tf from '@tensorflow/tfjs';
+import * as poseDetection from '@tensorflow-models/pose-detection';
 
-import { PoseLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
-
-let poseLandmarker;
-let drawingUtils;
+let detector = null;
 
 export async function initializePoseLandmarker(canvasElement) {
   try {
@@ -12,69 +11,103 @@ export async function initializePoseLandmarker(canvasElement) {
       canvasElement.height = 480;
     }
 
-    const vision = await FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
+    // Use MoveNet which is faster and doesn't require WebGL
+    detector = await poseDetection.createDetector(
+      poseDetection.SupportedModels.MoveNet,
+      {
+        modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+      }
     );
-    poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
-      baseOptions: {
-        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task`,
-        delegate: "CPU"
-      },
-      runningMode: "VIDEO",
-      numPoses: 1
-    });
     
-    const ctx = canvasElement.getContext("2d");
-    drawingUtils = new DrawingUtils(ctx);
-    console.log("✅ Pose Landmarker initialized successfully");
-    
-    return poseLandmarker;
+    console.log("✅ Pose Detector initialized successfully");
+    return detector;
   } catch (err) {
-    console.error("❌ Failed to initialize Pose Landmarker:", err);
+    console.error("❌ Failed to initialize Pose Detector:", err);
     throw err;
   }
 }
 
 export const SKELETON_CONNECTIONS = [
-  // Face
-  [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6],
-  [9, 10],
-  // Torso
-  [11, 12],
-  [11, 23], [12, 24], [23, 24],
+  // Nose to eyes
+  [0, 1], [0, 2],
+  // Eyes to ears
+  [1, 3], [2, 4],
+  // Shoulders
+  [5, 6],
   // Arms
-  [11, 13], [13, 15], [15, 17], [17, 19], [19, 21],
-  [12, 14], [14, 16], [16, 18], [18, 20], [20, 22],
+  [5, 7], [7, 9],
+  [6, 8], [8, 10],
+  // Torso
+  [5, 11], [6, 12],
+  [11, 12],
   // Legs
-  [23, 25], [25, 27], [27, 29], [29, 31],
-  [24, 26], [26, 28], [28, 30], [30, 32]
+  [11, 13], [13, 15],
+  [12, 14], [14, 16]
 ];
 
 export const MIN_POSE_CONFIDENCE = 0.5;
 
 export async function detectPose(videoElement, timestamp) {
-  if (!poseLandmarker) return null;
+  if (!detector) return null;
   
-  const result = poseLandmarker.detectForVideo(videoElement, timestamp);
-  return result;
+  try {
+    const poses = await detector.estimatePoses(videoElement);
+    if (poses && poses.length > 0) {
+      // Convert to MediaPipe format for compatibility
+      return {
+        landmarks: [poses[0].keypoints]
+      };
+    }
+    return null;
+  } catch (err) {
+    console.warn("Pose detection error:", err);
+    return null;
+  }
 }
 
 export function drawResults(canvasElement, result) {
-  if (!drawingUtils || !result.landmarks) return;
+  if (!result || !result.landmarks) return;
   
   const ctx = canvasElement.getContext("2d");
+  if (!ctx) return;
+  
   ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
   
-  for (const landmarks of result.landmarks) {
-    // Draw skeleton connections in red
-    drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
-      color: "#e63946",
-      lineWidth: 5
-    });
-    // Draw landmarks (joints) in black
-    drawingUtils.drawLandmarks(landmarks, {
-      color: "#000000",
-      lineWidth: 3
-    });
+  const landmarks = result.landmarks[0];
+  
+  // Draw connections (skeleton)
+  for (const [start, end] of SKELETON_CONNECTIONS) {
+    if (landmarks[start] && landmarks[end]) {
+      const startLandmark = landmarks[start];
+      const endLandmark = landmarks[end];
+      
+      if (startLandmark.score > MIN_POSE_CONFIDENCE && endLandmark.score > MIN_POSE_CONFIDENCE) {
+        ctx.beginPath();
+        ctx.moveTo(startLandmark.x * canvasElement.width, startLandmark.y * canvasElement.height);
+        ctx.lineTo(endLandmark.x * canvasElement.width, endLandmark.y * canvasElement.height);
+        ctx.strokeStyle = "#e63946";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+    }
+  }
+  
+  // Draw keypoints (joints)
+  for (const landmark of landmarks) {
+    if (landmark.score > MIN_POSE_CONFIDENCE) {
+      ctx.beginPath();
+      ctx.arc(
+        landmark.x * canvasElement.width,
+        landmark.y * canvasElement.height,
+        5,
+        0,
+        2 * Math.PI
+      );
+      ctx.fillStyle = "#000000";
+      ctx.fill();
+      ctx.strokeStyle = "#e63946";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
   }
 }
