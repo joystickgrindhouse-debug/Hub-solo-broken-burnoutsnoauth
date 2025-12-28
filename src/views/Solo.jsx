@@ -20,6 +20,7 @@ export default function Solo({ user, userProfile }) {
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [toast, setToast] = useState("");
   const [sessionStats, setSessionStats] = useState(null);
+  const [cameraError, setCameraError] = useState(null);
 
   const exercises = {
     Arms: ["Push-ups", "Plank Up-Downs", "Pike Push ups", "Shoulder Taps"],
@@ -99,15 +100,41 @@ export default function Solo({ user, userProfile }) {
 
   const startWorkout = async () => {
     try {
+      setCameraError(null);
       await initializePoseLandmarker(canvasRef.current);
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      
+      const constraints = {
+        video: {
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          facingMode: 'user'
+        },
+        audio: false
+      };
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       videoRef.current.srcObject = stream;
       setIsWorkoutActive(true);
       await drawCard();
       animationFrameRef.current = requestAnimationFrame(processFrame);
     } catch (err) {
-      console.error(err);
-      showToast("Camera access denied");
+      console.error('Camera error:', err);
+      let errorMsg = "Camera access denied";
+      
+      if (err.name === 'NotAllowedError') {
+        errorMsg = "Please allow camera access in your browser settings";
+        setCameraError("Camera permission was denied. Please check your browser settings and try again.");
+      } else if (err.name === 'NotFoundError') {
+        errorMsg = "No camera device found";
+        setCameraError("No camera device detected on this device.");
+      } else if (err.name === 'NotReadableError') {
+        errorMsg = "Camera is already in use";
+        setCameraError("Camera is being used by another application. Please close other apps using the camera.");
+      } else {
+        setCameraError("Unable to access camera. Please try refreshing the page and checking your permissions.");
+      }
+      
+      showToast(errorMsg);
     }
   };
 
@@ -232,6 +259,41 @@ export default function Solo({ user, userProfile }) {
       </div>
 
       {toast && <div className="toast">{toast}</div>}
+
+      {cameraError && (
+        <div className="camera-error-modal">
+          <div className="error-content">
+            <h2>⚠️ CAMERA ACCESS REQUIRED</h2>
+            <p>{cameraError}</p>
+            <div className="error-steps">
+              <p><strong>How to enable camera:</strong></p>
+              <ol>
+                <li>Look for a camera permission popup at the top of your browser</li>
+                <li>Click "Allow" or "Allow Camera Access"</li>
+                <li>If you don't see it, check your browser settings</li>
+                <li>Click "Retry" below once you've granted permission</li>
+              </ol>
+            </div>
+            <div className="error-actions">
+              <button 
+                className="retry-button"
+                onClick={() => {
+                  setCameraError(null);
+                  startWorkout();
+                }}
+              >
+                RETRY CAMERA ACCESS
+              </button>
+              <button 
+                className="close-error-button"
+                onClick={() => setCameraError(null)}
+              >
+                CLOSE
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {sessionStats && (
         <div className="session-complete-modal">

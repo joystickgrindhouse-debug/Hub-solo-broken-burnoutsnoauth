@@ -266,6 +266,118 @@
   transform: translateY(-2px);
 }
 
+.camera-error-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+  backdrop-filter: blur(5px);
+}
+
+.error-content {
+  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+  border: 3px solid #e63946;
+  border-radius: 10px;
+  padding: 40px;
+  max-width: 500px;
+  text-align: center;
+  box-shadow: 0 0 50px rgba(230, 57, 70, 0.5);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.error-content h2 {
+  font-size: 28px;
+  color: #e63946;
+  text-shadow: 0 0 20px rgba(230, 57, 70, 0.6);
+  margin: 0 0 15px 0;
+  letter-spacing: 2px;
+}
+
+.error-content p {
+  color: #fff;
+  font-size: 16px;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.error-steps {
+  background: rgba(230, 57, 70, 0.1);
+  border: 2px solid #e63946;
+  border-radius: 5px;
+  padding: 20px;
+  margin: 20px 0;
+  text-align: left;
+}
+
+.error-steps p {
+  margin: 0 0 10px 0;
+  font-weight: bold;
+  color: #e63946;
+}
+
+.error-steps ol {
+  margin: 10px 0 0 20px;
+  color: #fff;
+  padding: 0;
+}
+
+.error-steps li {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.error-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.retry-button,
+.close-error-button {
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: bold;
+  border: 2px solid #e63946;
+  border-radius: 5px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  font-family: 'Courier New', monospace;
+}
+
+.retry-button {
+  color: #fff;
+  background: linear-gradient(135deg, #e63946 0%, #c4202c 100%);
+  box-shadow: 0 0 15px rgba(230, 57, 70, 0.5);
+}
+
+.retry-button:hover {
+  background: linear-gradient(135deg, #ff4757 0%, #e63946 100%);
+  box-shadow: 0 0 25px rgba(230, 57, 70, 0.8);
+  transform: translateY(-2px);
+}
+
+.close-error-button {
+  color: #999;
+  background: transparent;
+  border-color: #666;
+  box-shadow: none;
+}
+
+.close-error-button:hover {
+  color: #fff;
+  border-color: #999;
+  background: rgba(255, 255, 255, 0.05);
+}
+
 @media (max-width: 1200px) {
   .solo-content {
     grid-template-columns: 1fr;
