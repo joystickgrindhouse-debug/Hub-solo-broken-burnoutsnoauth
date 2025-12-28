@@ -54,13 +54,15 @@ export function drawResults(canvasElement, result) {
   ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
   
   for (const landmarks of result.landmarks) {
+    // Draw skeleton connections in red
     drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
-      color: "#00FF00",
-      lineWidth: 4
+      color: "#e63946",
+      lineWidth: 5
     });
+    // Draw landmarks (joints) in black
     drawingUtils.drawLandmarks(landmarks, {
-      color: "#FF0000",
-      lineWidth: 2
+      color: "#000000",
+      lineWidth: 3
     });
   }
 }

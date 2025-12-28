@@ -1,18 +1,25 @@
 import React, { useState, useEffect, useRef } from "react";
+import CardDeck from "../components/CardDeck";
 import { initializePoseLandmarker, detectPose, drawResults } from "../logic/poseDetection.js";
 import { speakFeedback, speakNumber } from "../logic/audioFeedback.js";
 import RepCounter from "../logic/repCounter.js";
-import LandmarkSmoother from "../logic/smoothing.js";
+import "./Solo.css";
 
 export default function Solo({ user, userProfile }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const repCounterRef = useRef(null);
   const [totalReps, setTotalReps] = useState(0);
   const [repGoal, setRepGoal] = useState(10);
   const [currentReps, setCurrentReps] = useState(0);
+  const [currentExercise, setCurrentExercise] = useState(null);
+  const [currentSuit, setCurrentSuit] = useState(null);
+  const [currentValue, setCurrentValue] = useState(null);
+  const [currentGroup, setCurrentGroup] = useState(null);
   const [dice, setDice] = useState(0);
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [toast, setToast] = useState("");
+  const [sessionStats, setSessionStats] = useState(null);
 
   const exercises = {
     Arms: ["Push-ups", "Plank Up-Downs", "Pike Push ups", "Shoulder Taps"],
@@ -25,6 +32,7 @@ export default function Solo({ user, userProfile }) {
     setToast(msg);
     setTimeout(() => setToast(""), 2000);
   };
+
   const animationFrameRef = useRef(null);
   const lastVideoTimeRef = useRef(-1);
 
@@ -48,8 +56,10 @@ export default function Solo({ user, userProfile }) {
 
           if (newCount >= repGoal) {
             speakFeedback("Target reached!");
-            setToast("TARGET REACHED! ⚡");
-            setTimeout(() => setToast(""), 3000);
+            showToast("TARGET REACHED! 💪");
+            setTimeout(() => {
+              drawCard();
+            }, 1500);
           }
         }
       }
@@ -58,16 +68,24 @@ export default function Solo({ user, userProfile }) {
   };
 
   const drawCard = async () => {
-    const suits = ["♥", "♦", "♣", "♠"];
     const groups = ["Arms", "Legs", "Core", "Cardio"];
+    const suitMap = {
+      Arms: "♥",
+      Legs: "♠",
+      Core: "♣",
+      Cardio: "♦"
+    };
+    
     const randGroup = groups[Math.floor(Math.random() * groups.length)];
     const groupExercises = exercises[randGroup];
     const exercise = groupExercises[Math.floor(Math.random() * groupExercises.length)];
     const goal = Math.floor(Math.random() * 13) + 2;
+    const value = goal > 10 ? (goal === 11 ? "J" : goal === 12 ? "Q" : "K") : goal;
 
-    setCurrentSuit(suits[Math.floor(Math.random() * 4)]);
+    setCurrentSuit(suitMap[randGroup]);
     setCurrentGroup(randGroup);
     setCurrentExercise(exercise);
+    setCurrentValue(value);
     setRepGoal(goal);
     setCurrentReps(0);
 
@@ -75,7 +93,7 @@ export default function Solo({ user, userProfile }) {
     await counter.initialize();
     repCounterRef.current = counter;
 
-    showToast(`New card: ${exercise}!`);
+    showToast(`🎴 ${exercise}! Get ${goal} reps!`);
     speakFeedback(`${exercise}. ${goal} reps.`);
   };
 
@@ -85,10 +103,11 @@ export default function Solo({ user, userProfile }) {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       videoRef.current.srcObject = stream;
       setIsWorkoutActive(true);
-      drawCard();
+      await drawCard();
       animationFrameRef.current = requestAnimationFrame(processFrame);
     } catch (err) {
       console.error(err);
+      showToast("Camera access denied");
     }
   };
 
@@ -105,6 +124,8 @@ export default function Solo({ user, userProfile }) {
 
     setIsWorkoutActive(false);
 
+    const earnedDice = Math.floor(totalReps / 30);
+
     if (user && user.uid) {
       try {
         const { db } = await import("../firebase.js");
@@ -112,8 +133,6 @@ export default function Solo({ user, userProfile }) {
 
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
-
-        const earnedDice = Math.floor(totalReps / 30);
 
         if (userSnap.exists()) {
           await updateDoc(userRef, {
@@ -132,125 +151,111 @@ export default function Solo({ user, userProfile }) {
       }
     }
 
-    alert(`Session complete!\nTotal Reps: ${totalReps}\nDice Earned: ${Math.floor(totalReps / 30)}`);
-  };
+    setSessionStats({
+      totalReps,
+      diceEarned: earnedDice
+    });
 
-  const styles = {
-    root: {
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      minHeight: "100vh",
-      backgroundColor: "#050505",
-      color: "#00fff2",
-      fontFamily: "'Courier New', Courier, monospace",
-      padding: "20px"
-    },
-    cyberCounter: {
-      fontSize: "80px",
-      fontWeight: "bold",
-      textShadow: "0 0 20px #00fff2, 0 0 40px #00fff2",
-      margin: "20px 0",
-      color: "#00fff2"
-    },
-    container: {
-      position: "relative",
-      width: "640px",
-      height: "480px",
-      border: "4px solid #ff00ff",
-      boxShadow: "0 0 30px #ff00ff",
-      backgroundColor: "#000"
-    },
-    video: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      objectFit: "cover",
-      opacity: 0.3
-    },
-    canvas: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      zIndex: 10
-    },
-    controls: {
-      marginTop: "30px",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: "15px"
-    },
-    input: {
-      backgroundColor: "#111",
-      border: "1px solid #00fff2",
-      color: "#00fff2",
-      padding: "10px",
-      fontSize: "18px",
-      textAlign: "center",
-      width: "100px"
-    },
-    button: {
-      padding: "15px 40px",
-      fontSize: "20px",
-      backgroundColor: "transparent",
-      border: "2px solid #00fff2",
-      color: "#00fff2",
-      cursor: "pointer",
-      textTransform: "uppercase",
-      letterSpacing: "2px",
-      boxShadow: "0 0 10px #00fff2"
-    },
-    toast: {
-      position: "fixed",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
-      fontSize: "60px",
-      fontWeight: "bold",
-      color: "#ff00ff",
-      textShadow: "0 0 30px #ff00ff",
-      zIndex: 100
-    }
+    setDice(prev => prev + earnedDice);
+    setCurrentExercise(null);
+    setCurrentSuit(null);
+    setCurrentGroup(null);
+    setCurrentValue(null);
+    setTotalReps(0);
+    setCurrentReps(0);
   };
 
   return (
-    <div style={styles.root}>
-      <h1 style={{ color: "#ff00ff", textShadow: "0 0 10px #ff00ff" }}>NEURAL WORKOUT INTERFACE</h1>
-      
-      <div style={styles.cyberCounter}>{currentReps}</div>
-      
-      <div style={styles.container}>
-        <video ref={videoRef} style={styles.video} autoPlay playsInline muted />
-        <canvas ref={canvasRef} width={640} height={480} style={styles.canvas} />
+    <div className="solo-container">
+      <div className="solo-header">
+        <h1>RIVAL SOLO</h1>
+        <div className="header-stats">
+          <div className="stat-box">
+            <span className="stat-label">TOTAL REPS</span>
+            <span className="stat-value">{totalReps}</span>
+          </div>
+          <div className="stat-box">
+            <span className="stat-label">🎲 DICE</span>
+            <span className="stat-value">{dice}</span>
+          </div>
+        </div>
       </div>
 
-      <div style={{marginTop: '20px', color: '#ffd700', fontSize: '24px'}}>
-        {currentExercise && `ACTIVE PROTOCOL: ${currentExercise} (${currentReps}/${repGoal})`}
-      </div>
+      <div className="solo-content">
+        <div className="video-section">
+          <div className="video-container">
+            <video 
+              ref={videoRef} 
+              className="pose-video"
+              autoPlay 
+              playsInline 
+              muted 
+            />
+            <canvas 
+              ref={canvasRef} 
+              className="skeleton-overlay"
+              width={640} 
+              height={480} 
+            />
+          </div>
+          
+          <div className="controls">
+            {!isWorkoutActive ? (
+              <button 
+                onClick={startWorkout} 
+                className="start-button"
+              >
+                START WORKOUT
+              </button>
+            ) : (
+              <button 
+                onClick={endSession} 
+                className="end-button"
+              >
+                END SESSION
+              </button>
+            )}
+          </div>
+        </div>
 
-      <div style={styles.controls}>
-        <div>
-          <label>TARGET REPS: </label>
-          <input 
-            type="number" 
-            value={repGoal} 
-            onChange={(e) => setRepGoal(parseInt(e.target.value))} 
-            style={styles.input}
+        <div className="deck-section">
+          <CardDeck 
+            currentExercise={currentExercise}
+            currentSuit={currentSuit}
+            currentValue={currentValue}
+            currentGroup={currentGroup}
+            currentReps={currentReps}
+            repGoal={repGoal}
+            onDrawCard={drawCard}
           />
         </div>
-        {!isWorkoutActive ? (
-          <button onClick={startWorkout} style={styles.button}>INITIALIZE PROTOCOL</button>
-        ) : (
-          <button onClick={endSession} style={{...styles.button, borderColor: '#ff00ff', color: '#ff00ff'}}>TERMINATE SESSION</button>
-        )}
       </div>
 
-      {toast && <div style={styles.toast}>{toast}</div>}
+      {toast && <div className="toast">{toast}</div>}
+      
+      {sessionStats && (
+        <div className="session-complete-modal">
+          <div className="modal-content">
+            <h2>SESSION COMPLETE!</h2>
+            <div className="stats-grid">
+              <div className="stat-item">
+                <span className="label">Total Reps</span>
+                <span className="value">{sessionStats.totalReps}</span>
+              </div>
+              <div className="stat-item">
+                <span className="label">Dice Earned</span>
+                <span className="value">🎲 {sessionStats.diceEarned}</span>
+              </div>
+            </div>
+            <button 
+              className="close-modal-button"
+              onClick={() => setSessionStats(null)}
+            >
+              CONTINUE
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

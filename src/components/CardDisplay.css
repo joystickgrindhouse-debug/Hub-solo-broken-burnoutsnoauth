@@ -1,0 +1,127 @@
+.playing-card {
+  width: 250px;
+  height: 350px;
+  background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%);
+  border: 3px solid var(--card-color);
+  border-radius: 12px;
+  position: relative;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--card-color);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Arial', sans-serif;
+  overflow: hidden;
+}
+
+.card-pattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(230, 57, 70, 0.03) 10px,
+    rgba(230, 57, 70, 0.03) 20px
+  );
+  pointer-events: none;
+}
+
+.card-corner {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+.top-left {
+  top: 10px;
+  left: 10px;
+}
+
+.bottom-right {
+  bottom: 10px;
+  right: 10px;
+  transform: rotate(180deg);
+}
+
+.corner-symbol {
+  font-size: 32px;
+  color: var(--card-color);
+  line-height: 1;
+  margin: 2px 0;
+}
+
+.corner-value {
+  font-size: 24px;
+  color: var(--card-color);
+  line-height: 1;
+  margin: 2px 0;
+}
+
+.card-center {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+.exercise-name {
+  font-size: 26px;
+  font-weight: bold;
+  color: #000;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  max-width: 220px;
+  line-height: 1.2;
+}
+
+.card-divider {
+  width: 80px;
+  height: 2px;
+  background: var(--card-color);
+}
+
+.rep-info {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-family: 'Courier New', monospace;
+}
+
+.rep-count {
+  font-size: 32px;
+  font-weight: bold;
+  color: #e63946;
+}
+
+.rep-slash {
+  font-size: 24px;
+  color: #666;
+}
+
+.rep-goal {
+  font-size: 28px;
+  font-weight: bold;
+  color: #000;
+}
+
+.muscle-group {
+  font-size: 14px;
+  color: var(--card-color);
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 10px;
+}
