@@ -5,22 +5,34 @@ let poseLandmarker;
 let drawingUtils;
 
 export async function initializePoseLandmarker(canvasElement) {
-  const vision = await FilesetResolver.forVisionTasks(
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
-  );
-  poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
-    baseOptions: {
-      modelAssetPath: `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task`,
-      delegate: "GPU"
-    },
-    runningMode: "VIDEO",
-    numPoses: 1
-  });
-  
-  const ctx = canvasElement.getContext("2d");
-  drawingUtils = new DrawingUtils(ctx);
-  
-  return poseLandmarker;
+  try {
+    // Set canvas to reasonable initial size
+    if (canvasElement && !canvasElement.width) {
+      canvasElement.width = 640;
+      canvasElement.height = 480;
+    }
+
+    const vision = await FilesetResolver.forVisionTasks(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
+    );
+    poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task`,
+        delegate: "CPU"
+      },
+      runningMode: "VIDEO",
+      numPoses: 1
+    });
+    
+    const ctx = canvasElement.getContext("2d");
+    drawingUtils = new DrawingUtils(ctx);
+    console.log("✅ Pose Landmarker initialized successfully");
+    
+    return poseLandmarker;
+  } catch (err) {
+    console.error("❌ Failed to initialize Pose Landmarker:", err);
+    throw err;
+  }
 }
 
 export const SKELETON_CONNECTIONS = [

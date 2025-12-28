@@ -108,8 +108,15 @@ export default function Solo({ user, userProfile }) {
   const startWorkout = async () => {
     try {
       setCameraError(null);
-      await initializePoseLandmarker(canvasRef.current);
+      console.log("🚀 Starting workout...");
       
+      // Initialize pose detection first
+      console.log("📍 Initializing pose detection...");
+      await initializePoseLandmarker(canvasRef.current);
+      console.log("✅ Pose detection initialized");
+      
+      // Request camera access
+      console.log("📷 Requesting camera access...");
       const constraints = {
         video: {
           width: { ideal: 640 },
@@ -120,28 +127,36 @@ export default function Solo({ user, userProfile }) {
       };
       
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log("✅ Camera stream obtained:", stream.getTracks());
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        console.log("✅ Stream assigned to video element");
         
-        // Wait a moment for the video to be ready, then play
-        setTimeout(() => {
-          if (videoRef.current) {
-            videoRef.current.play().then(() => {
-              console.log('Video playing successfully');
-            }).catch(err => {
-              console.error("Video play error:", err);
-              setCameraError("Could not play video stream. Please try refreshing.");
-            });
-          }
-        }, 100);
+        // Make sure video is playing
+        videoRef.current.onloadedmetadata = () => {
+          console.log("✅ Video metadata loaded, starting playback");
+          videoRef.current.play().catch(err => {
+            console.error("❌ Play error:", err);
+          });
+        };
+        
+        // Fallback: try playing immediately
+        try {
+          await videoRef.current.play();
+          console.log("✅ Video playback started");
+        } catch (err) {
+          console.warn("⚠️ Initial play failed, will retry on metadata loaded:", err);
+        }
       }
       
+      console.log("🎯 Starting rep counting...");
       setIsWorkoutActive(true);
       await drawCard();
       animationFrameRef.current = requestAnimationFrame(processFrame);
+      console.log("✅ Workout started successfully");
     } catch (err) {
-      console.error('Camera error:', err);
+      console.error('❌ Workout startup error:', err);
       let errorMsg = "Camera access denied";
       
       if (err.name === 'NotAllowedError') {
