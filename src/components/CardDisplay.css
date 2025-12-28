@@ -1,11 +1,11 @@
 .playing-card {
-  width: 250px;
-  height: 350px;
+  width: 160px;
+  height: 220px;
   background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%);
-  border: 3px solid var(--card-color);
-  border-radius: 12px;
+  border: 2px solid var(--card-color);
+  border-radius: 8px;
   position: relative;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--card-color);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -42,28 +42,28 @@
 }
 
 .top-left {
-  top: 10px;
-  left: 10px;
+  top: 6px;
+  left: 6px;
 }
 
 .bottom-right {
-  bottom: 10px;
-  right: 10px;
+  bottom: 6px;
+  right: 6px;
   transform: rotate(180deg);
 }
 
 .corner-symbol {
-  font-size: 32px;
+  font-size: 18px;
   color: var(--card-color);
   line-height: 1;
-  margin: 2px 0;
+  margin: 1px 0;
 }
 
 .corner-value {
-  font-size: 24px;
+  font-size: 14px;
   color: var(--card-color);
   line-height: 1;
-  margin: 2px 0;
+  margin: 1px 0;
 }
 
 .card-center {
@@ -78,50 +78,51 @@
 }
 
 .exercise-name {
-  font-size: 26px;
+  font-size: 14px;
   font-weight: bold;
   color: #000;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  max-width: 220px;
-  line-height: 1.2;
+  letter-spacing: 0.5px;
+  max-width: 140px;
+  line-height: 1.1;
+  text-align: center;
 }
 
 .card-divider {
-  width: 80px;
-  height: 2px;
+  width: 50px;
+  height: 1px;
   background: var(--card-color);
 }
 
 .rep-info {
   display: flex;
   align-items: baseline;
-  gap: 5px;
+  gap: 2px;
   font-family: 'Courier New', monospace;
 }
 
 .rep-count {
-  font-size: 32px;
+  font-size: 18px;
   font-weight: bold;
   color: #e63946;
 }
 
 .rep-slash {
-  font-size: 24px;
+  font-size: 14px;
   color: #666;
 }
 
 .rep-goal {
-  font-size: 28px;
+  font-size: 16px;
   font-weight: bold;
   color: #000;
 }
 
 .muscle-group {
-  font-size: 14px;
+  font-size: 9px;
   color: var(--card-color);
   font-weight: bold;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  margin-top: 10px;
+  margin-top: 4px;
 }
