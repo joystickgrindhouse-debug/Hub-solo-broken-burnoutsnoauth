@@ -110,13 +110,22 @@ export default function Solo({ user, userProfile }) {
       setCameraError(null);
       console.log("🚀 Starting workout...");
       
+      // Check if camera API is even available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error("❌ Camera API not available in this browser/environment");
+        setCameraError("Camera API is not available in this environment. This may be a browser security restriction.");
+        return;
+      }
+      
+      console.log("✅ Camera API is available");
+      
       // Initialize pose detection first
       console.log("📍 Initializing pose detection...");
       await initializePoseLandmarker(canvasRef.current);
       console.log("✅ Pose detection initialized");
       
       // Request camera access
-      console.log("📷 Requesting camera access...");
+      console.log("📷 Requesting camera access with constraints...");
       const constraints = {
         video: {
           width: { ideal: 640 },
@@ -126,50 +135,65 @@ export default function Solo({ user, userProfile }) {
         audio: false
       };
       
+      console.log("📋 Constraints:", JSON.stringify(constraints));
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log("✅ Camera stream obtained:", stream.getTracks());
+      console.log("✅ Camera stream obtained!");
+      console.log("📹 Stream tracks:", stream.getTracks().map(t => `${t.kind}(${t.state})`));
       
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        console.log("✅ Stream assigned to video element");
-        
-        // Make sure video is playing
-        videoRef.current.onloadedmetadata = () => {
-          console.log("✅ Video metadata loaded, starting playback");
-          videoRef.current.play().catch(err => {
-            console.error("❌ Play error:", err);
-          });
-        };
-        
-        // Fallback: try playing immediately
-        try {
-          await videoRef.current.play();
-          console.log("✅ Video playback started");
-        } catch (err) {
-          console.warn("⚠️ Initial play failed, will retry on metadata loaded:", err);
-        }
+      if (!videoRef.current) {
+        console.error("❌ Video element ref is null!");
+        return;
       }
       
-      console.log("🎯 Starting rep counting...");
+      console.log("📺 Assigning stream to video element...");
+      videoRef.current.srcObject = stream;
+      
+      // Wait for video to load and play
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          console.warn("⚠️ Video metadata loading timeout");
+          reject(new Error("Video metadata load timeout"));
+        }, 5000);
+        
+        videoRef.current.onloadedmetadata = () => {
+          clearTimeout(timeout);
+          console.log("✅ Video metadata loaded, video dimensions:", videoRef.current.videoWidth, "x", videoRef.current.videoHeight);
+          resolve();
+        };
+      });
+      
+      console.log("▶️ Attempting to play video...");
+      await videoRef.current.play();
+      console.log("✅ Video is playing!");
+      console.log("📊 Video state - readyState:", videoRef.current.readyState, "paused:", videoRef.current.paused);
+      
+      console.log("🎯 Activating workout mode and starting rep counting...");
       setIsWorkoutActive(true);
       await drawCard();
       animationFrameRef.current = requestAnimationFrame(processFrame);
-      console.log("✅ Workout started successfully");
+      console.log("✅ Workout started successfully!");
     } catch (err) {
       console.error('❌ Workout startup error:', err);
-      let errorMsg = "Camera access denied";
+      console.error("Error name:", err.name);
+      console.error("Error message:", err.message);
+      
+      let errorMsg = "Unable to start workout";
       
       if (err.name === 'NotAllowedError') {
-        errorMsg = "Please allow camera access in your browser settings";
+        errorMsg = "Camera access was denied. Please allow when prompted.";
         setCameraError("Camera permission was denied. Please check your browser settings and try again.");
       } else if (err.name === 'NotFoundError') {
-        errorMsg = "No camera device found";
-        setCameraError("No camera device detected on this device.");
+        errorMsg = "No camera device found on this device";
+        setCameraError("No camera device detected. This device may not have a camera.");
       } else if (err.name === 'NotReadableError') {
-        errorMsg = "Camera is already in use";
-        setCameraError("Camera is being used by another application. Please close other apps using the camera.");
+        errorMsg = "Camera is already in use by another application";
+        setCameraError("Camera is being used elsewhere. Please close other apps using the camera.");
+      } else if (err.message.includes("metadata")) {
+        errorMsg = "Camera stream failed to load. Try again.";
+        setCameraError("Camera stream failed to initialize. Please check your camera and try again.");
       } else {
-        setCameraError("Unable to access camera. Please try refreshing the page and checking your permissions.");
+        errorMsg = err.message || "Camera access failed";
+        setCameraError(`Error: ${err.message}. Please try refreshing the page.`);
       }
       
       showToast(errorMsg);
