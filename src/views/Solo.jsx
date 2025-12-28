@@ -115,100 +115,48 @@ export default function Solo({ user, userProfile }) {
     try {
       setCameraError(null);
       setDebugLogs([]);
-      addDebugLog("🚀 Starting workout...");
       
-      // Check if camera API is even available
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        addDebugLog("❌ Camera API not available in this browser/environment");
-        setCameraError("❌ CAMERA API NOT AVAILABLE\n\nThis browser/environment does not support camera access. This is a security restriction.");
-        return;
-      }
-      
-      addDebugLog("✅ Camera API is available");
-      
-      // Initialize pose detection first
-      addDebugLog("📍 Initializing pose detection...");
-      await initializePoseLandmarker(canvasRef.current);
-      addDebugLog("✅ Pose detection initialized");
-      
-      // Request camera access
-      addDebugLog("📷 Requesting camera access with constraints...");
+      // STEP 1: Get camera stream first (simplest, most critical)
       const constraints = {
-        video: {
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          facingMode: 'user'
-        },
+        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
         audio: false
       };
       
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      addDebugLog("✅ Camera stream obtained!");
-      const videoTracks = stream.getVideoTracks();
-      addDebugLog(`📹 Video tracks: ${videoTracks.length} track(s)`);
-      if (videoTracks.length > 0) {
-        addDebugLog(`📹 Track state: ${videoTracks[0].state}, enabled: ${videoTracks[0].enabled}`);
-      }
       
+      // STEP 2: Assign to video element and ensure it plays
       if (!videoRef.current) {
-        addDebugLog("❌ Video element ref is null!");
+        setCameraError("❌ Video element not ready");
         return;
       }
       
-      addDebugLog("📺 Assigning stream to video element...");
       videoRef.current.srcObject = stream;
+      videoRef.current.play().catch(e => console.warn("Play warning:", e));
       
-      // Wait for video to be ready - don't rely on metadata event which may not fire
-      addDebugLog("⏳ Waiting for video to load (3 seconds)...");
-      await new Promise((resolve) => {
-        setTimeout(() => {
-          addDebugLog("✅ Wait complete");
-          resolve();
-        }, 3000);
-      });
-      
-      addDebugLog(`📊 Video dimensions: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
-      addDebugLog(`📊 Video readyState: ${videoRef.current.readyState}`);
-      
-      addDebugLog("▶️ Attempting to play video...");
+      // STEP 3: Initialize pose detection
       try {
-        await videoRef.current.play();
-        addDebugLog("✅ Video is playing!");
-        addDebugLog(`📊 Video paused: ${videoRef.current.paused}`);
-      } catch (playErr) {
-        addDebugLog(`⚠️ Play returned promise rejection: ${playErr.message}`);
-        addDebugLog("⚠️ But continuing anyway - video stream should still work");
+        await initializePoseLandmarker(canvasRef.current);
+      } catch (e) {
+        console.warn("Pose detection init failed, continuing without it:", e);
       }
       
-      addDebugLog("🎯 Starting rep counting...");
+      // STEP 4: Start workout
       setIsWorkoutActive(true);
       await drawCard();
       animationFrameRef.current = requestAnimationFrame(processFrame);
-      addDebugLog("✅ Workout started successfully!");
-    } catch (err) {
-      addDebugLog(`❌ Error: ${err.message}`);
-      addDebugLog(`Error type: ${err.name}`);
       
-      let errorMsg = "Unable to start workout";
+    } catch (err) {
+      console.error("Startup error:", err);
       
       if (err.name === 'NotAllowedError') {
-        errorMsg = "❌ CAMERA PERMISSION DENIED\n\nPlease allow camera access when your browser asks, then click START WORKOUT again.";
-        setCameraError(errorMsg);
+        setCameraError("❌ CAMERA PERMISSION DENIED\n\nPlease allow camera access and try again.");
       } else if (err.name === 'NotFoundError') {
-        errorMsg = "❌ NO CAMERA DETECTED\n\nThis device does not have a camera.";
-        setCameraError(errorMsg);
+        setCameraError("❌ NO CAMERA DETECTED\n\nThis device does not have a camera.");
       } else if (err.name === 'NotReadableError') {
-        errorMsg = "❌ CAMERA IS BUSY\n\nYour camera is being used by another app. Close other apps and try again.";
-        setCameraError(errorMsg);
-      } else if (err.message.includes("metadata")) {
-        errorMsg = "❌ CAMERA STREAM FAILED\n\nThe video stream did not load. Check your camera and try again.";
-        setCameraError(errorMsg);
+        setCameraError("❌ CAMERA IS BUSY\n\nClose other apps using the camera.");
       } else {
-        errorMsg = `❌ ERROR: ${err.message}`;
-        setCameraError(errorMsg);
+        setCameraError(`❌ ERROR: ${err.message}`);
       }
-      
-      showToast(errorMsg);
     }
   };
 
