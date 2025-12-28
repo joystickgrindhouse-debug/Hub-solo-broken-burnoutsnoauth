@@ -113,14 +113,23 @@ export default function Solo({ user, userProfile }) {
       };
       
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current.play().catch(err => {
-            console.error("Video play error:", err);
-          });
-        };
+        
+        // Wait a moment for the video to be ready, then play
+        setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.play().then(() => {
+              console.log('Video playing successfully');
+            }).catch(err => {
+              console.error("Video play error:", err);
+              setCameraError("Could not play video stream. Please try refreshing.");
+            });
+          }
+        }, 100);
       }
+      
       setIsWorkoutActive(true);
       await drawCard();
       animationFrameRef.current = requestAnimationFrame(processFrame);
