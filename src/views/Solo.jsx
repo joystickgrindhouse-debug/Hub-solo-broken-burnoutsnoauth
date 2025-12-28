@@ -38,7 +38,14 @@ export default function Solo({ user, userProfile }) {
   const lastVideoTimeRef = useRef(-1);
 
   const processFrame = async () => {
-    if (!videoRef.current || !isWorkoutActive) return;
+    if (!videoRef.current || !canvasRef.current || !isWorkoutActive) return;
+
+    // Update canvas size to match video container
+    const container = canvasRef.current.parentElement;
+    if (container && (canvasRef.current.width !== container.offsetWidth || canvasRef.current.height !== container.offsetHeight)) {
+      canvasRef.current.width = container.offsetWidth;
+      canvasRef.current.height = container.offsetHeight;
+    }
 
     if (videoRef.current.currentTime !== lastVideoTimeRef.current) {
       lastVideoTimeRef.current = videoRef.current.currentTime;
@@ -233,12 +240,12 @@ export default function Solo({ user, userProfile }) {
               autoPlay 
               playsInline 
               muted 
+              style={{ display: 'block', width: '100%', height: '100%' }}
             />
             <canvas 
               ref={canvasRef} 
               className="skeleton-overlay"
-              width={640} 
-              height={480} 
+              style={{ display: 'block', width: '100%', height: '100%' }}
             />
           </div>
           
