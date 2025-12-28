@@ -66,14 +66,28 @@ export async function detectPose(videoElement, timestamp) {
 }
 
 export function drawResults(canvasElement, result) {
-  if (!result || !result.landmarks) return;
+  if (!result || !result.landmarks || !result.landmarks[0]) {
+    console.warn("No landmarks to draw");
+    return;
+  }
   
   const ctx = canvasElement.getContext("2d");
-  if (!ctx) return;
+  if (!ctx) {
+    console.warn("Cannot get 2D context");
+    return;
+  }
+  
+  const landmarks = result.landmarks[0];
+  
+  if (!canvasElement.width || !canvasElement.height) {
+    console.warn("Canvas has no dimensions");
+    return;
+  }
   
   ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
   
-  const landmarks = result.landmarks[0];
+  let connectionCount = 0;
+  let keypointCount = 0;
   
   // Draw connections (skeleton)
   for (const [start, end] of SKELETON_CONNECTIONS) {
@@ -81,33 +95,43 @@ export function drawResults(canvasElement, result) {
       const startLandmark = landmarks[start];
       const endLandmark = landmarks[end];
       
-      if (startLandmark.score > MIN_POSE_CONFIDENCE && endLandmark.score > MIN_POSE_CONFIDENCE) {
+      const startScore = startLandmark.score || 0;
+      const endScore = endLandmark.score || 0;
+      
+      if (startScore > MIN_POSE_CONFIDENCE && endScore > MIN_POSE_CONFIDENCE) {
         ctx.beginPath();
         ctx.moveTo(startLandmark.x * canvasElement.width, startLandmark.y * canvasElement.height);
         ctx.lineTo(endLandmark.x * canvasElement.width, endLandmark.y * canvasElement.height);
         ctx.strokeStyle = "#e63946";
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 4;
         ctx.stroke();
+        connectionCount++;
       }
     }
   }
   
   // Draw keypoints (joints)
-  for (const landmark of landmarks) {
-    if (landmark.score > MIN_POSE_CONFIDENCE) {
+  for (let i = 0; i < landmarks.length; i++) {
+    const landmark = landmarks[i];
+    const score = landmark.score || 0;
+    
+    if (score > MIN_POSE_CONFIDENCE) {
+      const x = landmark.x * canvasElement.width;
+      const y = landmark.y * canvasElement.height;
+      
+      // Draw circle for joint
       ctx.beginPath();
-      ctx.arc(
-        landmark.x * canvasElement.width,
-        landmark.y * canvasElement.height,
-        5,
-        0,
-        2 * Math.PI
-      );
+      ctx.arc(x, y, 6, 0, 2 * Math.PI);
       ctx.fillStyle = "#000000";
       ctx.fill();
       ctx.strokeStyle = "#e63946";
       ctx.lineWidth = 2;
       ctx.stroke();
+      keypointCount++;
     }
+  }
+  
+  if (connectionCount > 0 || keypointCount > 0) {
+    console.log(`Drew ${connectionCount} connections and ${keypointCount} keypoints`);
   }
 }

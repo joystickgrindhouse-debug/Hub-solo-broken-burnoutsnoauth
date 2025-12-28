@@ -53,31 +53,36 @@ export default function Solo({ user, userProfile }) {
       canvasRef.current.height = container.offsetHeight;
     }
 
-    if (videoRef.current.currentTime !== lastVideoTimeRef.current) {
-      lastVideoTimeRef.current = videoRef.current.currentTime;
+    // Continuously detect pose (don't check currentTime)
+    try {
       const startTimeMs = performance.now();
       const results = await detectPose(videoRef.current, startTimeMs);
 
-      if (results && results.landmarks) {
+      if (results && results.landmarks && results.landmarks[0]) {
         drawResults(canvasRef.current, results);
         
-        const repDetected = repCounterRef.current.process(results.landmarks[0]);
-        if (repDetected) {
-          const newCount = repCounterRef.current.getCount();
-          setCurrentReps(newCount);
-          setTotalReps(prev => prev + 1);
-          speakNumber(newCount);
+        if (repCounterRef.current) {
+          const repDetected = repCounterRef.current.process(results.landmarks[0]);
+          if (repDetected) {
+            const newCount = repCounterRef.current.getCount();
+            setCurrentReps(newCount);
+            setTotalReps(prev => prev + 1);
+            speakNumber(newCount);
 
-          if (newCount >= repGoal) {
-            speakFeedback("Target reached!");
-            showToast("TARGET REACHED! 💪");
-            setTimeout(() => {
-              drawCard();
-            }, 1500);
+            if (newCount >= repGoal) {
+              speakFeedback("Target reached!");
+              showToast("TARGET REACHED! 💪");
+              setTimeout(() => {
+                drawCard();
+              }, 1500);
+            }
           }
         }
       }
+    } catch (err) {
+      console.warn("Frame processing error:", err);
     }
+    
     animationFrameRef.current = requestAnimationFrame(processFrame);
   };
 
