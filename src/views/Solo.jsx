@@ -249,6 +249,26 @@ export default function Solo({ user, userProfile }) {
       <div className="solo-content">
         <div className="video-section">
           <div className="video-container">
+            {!isWorkoutActive && (
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#000',
+                color: '#e63946',
+                fontSize: '14px',
+                textAlign: 'center',
+                padding: '20px',
+                zIndex: 1
+              }}>
+                📷 Click START to begin
+              </div>
+            )}
             <video 
               ref={videoRef} 
               className="pose-video"
