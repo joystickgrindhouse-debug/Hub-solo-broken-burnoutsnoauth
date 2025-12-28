@@ -21,6 +21,7 @@ export default function Solo({ user, userProfile }) {
   const [toast, setToast] = useState("");
   const [sessionStats, setSessionStats] = useState(null);
   const [cameraError, setCameraError] = useState(null);
+  const [debugLogs, setDebugLogs] = useState([]);
 
   const exercises = {
     Arms: ["Push-ups", "Plank Up-Downs", "Pike Push ups", "Shoulder Taps"],
@@ -32,6 +33,11 @@ export default function Solo({ user, userProfile }) {
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(""), 2000);
+  };
+
+  const addDebugLog = (msg) => {
+    console.log(msg);
+    setDebugLogs(prev => [...prev, { time: new Date().toLocaleTimeString(), msg }]);
   };
 
   const animationFrameRef = useRef(null);
@@ -108,24 +114,25 @@ export default function Solo({ user, userProfile }) {
   const startWorkout = async () => {
     try {
       setCameraError(null);
-      console.log("🚀 Starting workout...");
+      setDebugLogs([]);
+      addDebugLog("🚀 Starting workout...");
       
       // Check if camera API is even available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.error("❌ Camera API not available in this browser/environment");
-        setCameraError("Camera API is not available in this environment. This may be a browser security restriction.");
+        addDebugLog("❌ Camera API not available in this browser/environment");
+        setCameraError("❌ CAMERA API NOT AVAILABLE\n\nThis browser/environment does not support camera access. This is a security restriction.");
         return;
       }
       
-      console.log("✅ Camera API is available");
+      addDebugLog("✅ Camera API is available");
       
       // Initialize pose detection first
-      console.log("📍 Initializing pose detection...");
+      addDebugLog("📍 Initializing pose detection...");
       await initializePoseLandmarker(canvasRef.current);
-      console.log("✅ Pose detection initialized");
+      addDebugLog("✅ Pose detection initialized");
       
       // Request camera access
-      console.log("📷 Requesting camera access with constraints...");
+      addDebugLog("📷 Requesting camera access with constraints...");
       const constraints = {
         video: {
           width: { ideal: 640 },
@@ -135,65 +142,63 @@ export default function Solo({ user, userProfile }) {
         audio: false
       };
       
-      console.log("📋 Constraints:", JSON.stringify(constraints));
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log("✅ Camera stream obtained!");
-      console.log("📹 Stream tracks:", stream.getTracks().map(t => `${t.kind}(${t.state})`));
+      addDebugLog("✅ Camera stream obtained!");
+      addDebugLog(`📹 Stream tracks: ${stream.getTracks().map(t => `${t.kind}(${t.state})`).join(", ")}`);
       
       if (!videoRef.current) {
-        console.error("❌ Video element ref is null!");
+        addDebugLog("❌ Video element ref is null!");
         return;
       }
       
-      console.log("📺 Assigning stream to video element...");
+      addDebugLog("📺 Assigning stream to video element...");
       videoRef.current.srcObject = stream;
       
       // Wait for video to load and play
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
-          console.warn("⚠️ Video metadata loading timeout");
+          addDebugLog("⚠️ Video metadata loading timeout");
           reject(new Error("Video metadata load timeout"));
         }, 5000);
         
         videoRef.current.onloadedmetadata = () => {
           clearTimeout(timeout);
-          console.log("✅ Video metadata loaded, video dimensions:", videoRef.current.videoWidth, "x", videoRef.current.videoHeight);
+          addDebugLog(`✅ Video metadata loaded, dimensions: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
           resolve();
         };
       });
       
-      console.log("▶️ Attempting to play video...");
+      addDebugLog("▶️ Attempting to play video...");
       await videoRef.current.play();
-      console.log("✅ Video is playing!");
-      console.log("📊 Video state - readyState:", videoRef.current.readyState, "paused:", videoRef.current.paused);
+      addDebugLog("✅ Video is playing!");
+      addDebugLog(`📊 Video state - readyState: ${videoRef.current.readyState}, paused: ${videoRef.current.paused}`);
       
-      console.log("🎯 Activating workout mode and starting rep counting...");
+      addDebugLog("🎯 Starting rep counting...");
       setIsWorkoutActive(true);
       await drawCard();
       animationFrameRef.current = requestAnimationFrame(processFrame);
-      console.log("✅ Workout started successfully!");
+      addDebugLog("✅ Workout started successfully!");
     } catch (err) {
-      console.error('❌ Workout startup error:', err);
-      console.error("Error name:", err.name);
-      console.error("Error message:", err.message);
+      addDebugLog(`❌ Error: ${err.message}`);
+      addDebugLog(`Error type: ${err.name}`);
       
       let errorMsg = "Unable to start workout";
       
       if (err.name === 'NotAllowedError') {
-        errorMsg = "Camera access was denied. Please allow when prompted.";
-        setCameraError("Camera permission was denied. Please check your browser settings and try again.");
+        errorMsg = "❌ CAMERA PERMISSION DENIED\n\nPlease allow camera access when your browser asks, then click START WORKOUT again.";
+        setCameraError(errorMsg);
       } else if (err.name === 'NotFoundError') {
-        errorMsg = "No camera device found on this device";
-        setCameraError("No camera device detected. This device may not have a camera.");
+        errorMsg = "❌ NO CAMERA DETECTED\n\nThis device does not have a camera.";
+        setCameraError(errorMsg);
       } else if (err.name === 'NotReadableError') {
-        errorMsg = "Camera is already in use by another application";
-        setCameraError("Camera is being used elsewhere. Please close other apps using the camera.");
+        errorMsg = "❌ CAMERA IS BUSY\n\nYour camera is being used by another app. Close other apps and try again.";
+        setCameraError(errorMsg);
       } else if (err.message.includes("metadata")) {
-        errorMsg = "Camera stream failed to load. Try again.";
-        setCameraError("Camera stream failed to initialize. Please check your camera and try again.");
+        errorMsg = "❌ CAMERA STREAM FAILED\n\nThe video stream did not load. Check your camera and try again.";
+        setCameraError(errorMsg);
       } else {
-        errorMsg = err.message || "Camera access failed";
-        setCameraError(`Error: ${err.message}. Please try refreshing the page.`);
+        errorMsg = `❌ ERROR: ${err.message}`;
+        setCameraError(errorMsg);
       }
       
       showToast(errorMsg);
@@ -345,17 +350,31 @@ export default function Solo({ user, userProfile }) {
       {cameraError && (
         <div className="camera-error-modal">
           <div className="error-content">
-            <h2>⚠️ CAMERA ACCESS REQUIRED</h2>
-            <p>{cameraError}</p>
-            <div className="error-steps">
-              <p><strong>How to enable camera:</strong></p>
-              <ol>
-                <li>Look for a camera permission popup at the top of your browser</li>
-                <li>Click "Allow" or "Allow Camera Access"</li>
-                <li>If you don't see it, check your browser settings</li>
-                <li>Click "Retry" below once you've granted permission</li>
-              </ol>
-            </div>
+            <h2>⚠️ STARTUP ERROR</h2>
+            <p style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '13px', marginBottom: '20px' }}>
+              {cameraError}
+            </p>
+            
+            {debugLogs.length > 0 && (
+              <div style={{
+                background: '#000',
+                color: '#e63946',
+                padding: '10px',
+                borderRadius: '4px',
+                marginBottom: '15px',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                fontSize: '11px',
+                fontFamily: 'monospace',
+                border: '1px solid #e63946'
+              }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Debug Log:</div>
+                {debugLogs.map((log, i) => (
+                  <div key={i}>[{log.time}] {log.msg}</div>
+                ))}
+              </div>
+            )}
+            
             <div className="error-actions">
               <button 
                 className="retry-button"
@@ -364,7 +383,7 @@ export default function Solo({ user, userProfile }) {
                   startWorkout();
                 }}
               >
-                RETRY CAMERA ACCESS
+                RETRY
               </button>
               <button 
                 className="close-error-button"
