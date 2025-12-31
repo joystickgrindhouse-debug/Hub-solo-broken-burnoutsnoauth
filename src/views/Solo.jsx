@@ -1,16 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Solo({ user, userProfile }) {
-  return (
-    <iframe 
-      src="/solo.html" 
-      style={{
-        width: "100%",
-        height: "100vh",
-        border: "none",
-        display: "block"
-      }}
-      title="Solo Mode"
-    />
-  );
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirect to the standalone solo app
+    window.location.href = "/solo/";
+  }, []);
+
+  return <div>Redirecting to Solo Mode...</div>;
 }
