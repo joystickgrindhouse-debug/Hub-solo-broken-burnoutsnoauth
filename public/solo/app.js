@@ -479,122 +479,47 @@ class ExerciseEngine {
     }
 }
 
-const engine = new ExerciseEngine();
-const pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
 
-pose.setOptions({
-    modelComplexity: CONFIG.modelComplexity,
-    smoothLandmarks: true,
-    minDetectionConfidence: CONFIG.minDetectionConfidence,
-    minTrackingConfidence: CONFIG.minTrackingConfidence
-});
-
-pose.onResults(onResults);
-
-const camera = new Camera(videoElement, {
-    onFrame: async () => {
-        if (STATE.isCameraRunning) {
-            await pose.send({image: videoElement});
-        }
-    },
-    width: 640,
-    height: 480
-});
-
-startBtn.addEventListener('click', () => {
-    if (!STATE.isCameraRunning) startCamera();
-    else stopCamera();
-});
-
-function startCamera() {
-    loadingOverlay.classList.remove('hidden');
-    
-    // Auto-enable Solo Mode
-    STATE.isSoloMode = true;
-    soloStats.classList.remove('hidden');
-    exerciseCard.classList.remove('hidden');
-    standardStats.classList.add('hidden');
-    STATE.totalReps = 0;
-    startTimer();
-    drawNewCard();
-
-    camera.start().then(() => {
-        STATE.isCameraRunning = true;
-        loadingOverlay.classList.add('hidden');
-        cameraStatus.innerText = "📷 LIVE";
-        cameraStatus.classList.add('active');
-        startBtn.innerText = "STOP SESSION";
-    }).catch(err => {
-        console.error(err);
-        loadingOverlay.innerHTML = "<p>Camera Error</p>";
-    });
-}
-
-function stopCamera() {
-    STATE.isCameraRunning = false;
-    STATE.isSoloMode = false;
-    soloStats.classList.add('hidden');
-    exerciseCard.classList.add('hidden');
-    standardStats.classList.remove('hidden');
-    stopTimer();
-    
-    cameraStatus.innerText = "📷 OFF";
-    cameraStatus.classList.remove('active');
-    startBtn.innerText = "RUN SESSION";
-    engine.reset();
-}
-
-function onResults(results) {
-    if (!results.image) return; 
-    
-    canvasElement.width = videoElement.videoWidth || 640;
-    canvasElement.height = videoElement.videoHeight || 480;
-    
-    canvasCtx.save();
-    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-    canvasCtx.translate(canvasElement.width, 0);
-    canvasCtx.scale(-1, 1);
-    
-    canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-    
-    if (results.poseLandmarks) {
-        const connections = [
-            [11, 12], [11, 13], [13, 15], [12, 14], [14, 16], 
-            [11, 23], [12, 24], [23, 24], 
-            [23, 25], [25, 27], [24, 26], [26, 28], 
-            [27, 31], [28, 32], [27, 29], [28, 30] 
-        ];
-
-        canvasCtx.strokeStyle = '#ff0000';
-        canvasCtx.lineWidth = 4;
-        canvasCtx.lineCap = 'round';
-        canvasCtx.lineJoin = 'round';
-        canvasCtx.shadowBlur = 10;
-        canvasCtx.shadowColor = 'rgba(255, 0, 0, 0.8)';
-        
-        connections.forEach(([i, j]) => {
-            const p1 = results.poseLandmarks[i];
-            const p2 = results.poseLandmarks[j];
-            if (p1 && p2 && p1.visibility > 0.1 && p2.visibility > 0.1) {
-                canvasCtx.beginPath();
-                canvasCtx.moveTo(p1.x * canvasElement.width, p1.y * canvasElement.height);
-                canvasCtx.lineTo(p2.x * canvasElement.width, p2.y * canvasElement.height);
-                canvasCtx.stroke();
-            }
-        });
-        
-        drawLandmarks(canvasCtx, results.poseLandmarks, {
-            color: '#ffffff', 
-            fillColor: '#ff0000',
-            lineWidth: 1,
-            radius: 3
-        });
-
-        engine.process(results.poseLandmarks);
+// Wait for MediaPipe to load before initializing
+function initializeApp() {
+    if (typeof Pose === 'undefined' || !window.Pose) {
+        setTimeout(initializeApp, 100);
+        return;
     }
-    
-    canvasCtx.restore();
+
+    const pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
+
+    pose.setOptions({
+        modelComplexity: CONFIG.modelComplexity,
+        smoothLandmarks: true,
+        minDetectionConfidence: CONFIG.minDetectionConfidence,
+        minTrackingConfidence: CONFIG.minTrackingConfidence
+    });
+
+    pose.onResults(onResults);
+
+    const camera = new Camera(videoElement, {
+        onFrame: async () => {
+            if (STATE.isCameraRunning) {
+                await pose.send({image: videoElement});
+            }
+        },
+        width: 640,
+        height: 480
+    });
+
+    startBtn.addEventListener('click', () => {
+        if (!STATE.isCameraRunning) startCamera();
+        else stopCamera();
+    });
+
+    loadingOverlay.classList.add('hidden');
+    console.log("AI Rep Counter Pro Ready");
 }
 
-loadingOverlay.classList.add('hidden');
-console.log("AI Rep Counter Pro Ready");
+// Start initialization
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    initializeApp();
+}
