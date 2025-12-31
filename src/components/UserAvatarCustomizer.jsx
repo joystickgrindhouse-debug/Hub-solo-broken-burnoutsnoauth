@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../firebase";
+import { auth, storage } from "../firebase";
 import { updateProfile } from "firebase/auth";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { UserService } from "../services/userService";
 import { NicknameService } from "../services/nicknameService";
 
@@ -199,6 +200,46 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
     setIsDicebearAvatar(true);
   };
 
+  const handleFileUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      alert("Please upload a valid image (JPG, PNG, GIF, or WebP)");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image must be less than 5MB");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      // Create a reference to the file in Firebase Storage
+      const timestamp = Date.now();
+      const fileRef = ref(storage, `avatars/${user.uid}/${timestamp}-${file.name}`);
+      
+      // Upload the file
+      await uploadBytes(fileRef, file);
+      
+      // Get the download URL
+      const downloadURL = await getDownloadURL(fileRef);
+      
+      // Update the avatar URL and mark as non-DiceBear
+      setAvatarURL(downloadURL);
+      setIsDicebearAvatar(false);
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      alert("Failed to upload image: " + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.previewSection}>
@@ -212,9 +253,22 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
             />
           )}
         </div>
-        <button onClick={randomizeSeed} style={styles.randomButton}>
-          🎲 Randomize
-        </button>
+        <div style={styles.buttonGroup}>
+          <button onClick={randomizeSeed} style={styles.randomButton}>
+            🎲 Randomize
+          </button>
+          <label style={styles.uploadLabel}>
+            📸 Upload Photo
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              disabled={saving}
+              style={styles.fileInput}
+            />
+          </label>
+        </div>
+        <p style={styles.uploadHint}>Upload your own photo or selfie (JPG, PNG, GIF, WebP - max 5MB)</p>
       </div>
 
       <div style={styles.customizeSection}>
@@ -375,6 +429,13 @@ const styles = {
     borderRadius: "50%",
     background: "#fff",
   },
+  buttonGroup: {
+    display: "flex",
+    gap: "10px",
+    justifyContent: "center",
+    alignItems: "center",
+    flexWrap: "wrap",
+  },
   randomButton: {
     padding: "10px 20px",
     fontSize: "14px",
@@ -386,6 +447,28 @@ const styles = {
     cursor: "pointer",
     transition: "transform 0.2s, box-shadow 0.2s",
     boxShadow: "0 4px 15px rgba(255, 48, 80, 0.4)",
+  },
+  uploadLabel: {
+    padding: "10px 20px",
+    fontSize: "14px",
+    fontWeight: "600",
+    border: "none",
+    borderRadius: "8px",
+    background: "linear-gradient(135deg, #ff3050 0%, #cc0033 100%)",
+    color: "#fff",
+    cursor: "pointer",
+    transition: "transform 0.2s, box-shadow 0.2s",
+    boxShadow: "0 4px 15px rgba(255, 48, 80, 0.4)",
+    display: "block",
+  },
+  fileInput: {
+    display: "none",
+  },
+  uploadHint: {
+    fontSize: "12px",
+    color: "rgba(255, 255, 255, 0.5)",
+    marginTop: "10px",
+    marginBottom: 0,
   },
   stylesGrid: {
     display: "grid",
