@@ -243,25 +243,53 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
   }, []);
 
   const handleFileUpload = (event) => {
+    console.log("=== FILE UPLOAD EVENT TRIGGERED ===");
     const file = event.target.files?.[0];
-    if (!file) return;
+    
+    if (!file) {
+      console.log("No file selected in the event");
+      return;
+    }
+    
+    console.log("File details:", {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
 
     // Validate file type
     const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!validTypes.includes(file.type)) {
+      console.error("Invalid file type:", file.type);
       alert("Please upload a valid image (JPG, PNG, GIF, or WebP)");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
+      console.error("File too large:", file.size);
       alert("Image must be less than 5MB");
       return;
     }
 
-    const reader = new FileReader();
-    reader.addEventListener('load', () => setImageToCrop(reader.result));
-    reader.readAsDataURL(file);
+    try {
+      const reader = new FileReader();
+      reader.onload = () => {
+        console.log("FileReader loaded successfully");
+        setImageToCrop(reader.result);
+      };
+      reader.onerror = (error) => {
+        console.error("FileReader error:", error);
+        alert("Failed to read image file.");
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Error during file reading setup:", err);
+      alert("An unexpected error occurred while preparing the image.");
+    } finally {
+      // Important: reset the input so change event fires again if same file is picked
+      if (event.target) event.target.value = "";
+    }
   };
 
   const handleCropSave = async () => {
