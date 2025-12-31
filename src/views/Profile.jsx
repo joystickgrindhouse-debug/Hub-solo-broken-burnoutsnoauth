@@ -216,22 +216,45 @@ export default function Profile({ user, userProfile }) {
             gap: "1rem"
           }}>
             {isEditingAvatar ? (
-              <div style={{ textAlign: "center", width: "200px" }}>
-                {currentAvatar && (
-                  <img 
-                    src={currentAvatar} 
-                    alt="Avatar Preview" 
-                    style={{ 
-                      width: "120px", 
-                      height: "120px", 
-                      borderRadius: "50%", 
-                      background: "#fff",
-                      border: "4px solid #ff3050",
-                      boxShadow: "0 0 20px rgba(255, 48, 80, 0.6)",
-                      marginBottom: "1rem"
-                    }}
-                  />
-                )}
+              <div style={{ textAlign: "center", width: "100%", maxWidth: "300px" }}>
+                <div style={{ 
+                  position: "relative",
+                  width: "150px",
+                  height: "150px",
+                  margin: "0 auto 1.5rem"
+                }}>
+                  {currentAvatar ? (
+                    <img 
+                      src={currentAvatar} 
+                      key={currentAvatar}
+                      alt="Avatar Preview" 
+                      style={{ 
+                        width: "100%", 
+                        height: "100%", 
+                        borderRadius: "50%", 
+                        background: "#fff",
+                        border: "4px solid #ff3050",
+                        boxShadow: "0 0 25px rgba(255, 48, 80, 0.8)",
+                        objectFit: "cover",
+                        display: "block"
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "50%",
+                      background: "rgba(255, 48, 80, 0.1)",
+                      border: "4px dashed #ff3050",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#ff3050"
+                    }}>
+                      No Image
+                    </div>
+                  )}
+                </div>
                 <div style={{ marginBottom: "1rem" }}>
                   <label style={{
                     display: "inline-block",
