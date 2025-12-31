@@ -251,23 +251,55 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
       return;
     }
 
+    console.log("File details:", {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
+
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      console.error("Invalid file type:", file.type);
+      alert("Please upload a valid image (JPG, PNG, GIF, or WebP)");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      console.error("File too large:", file.size);
+      alert("Image must be less than 5MB");
+      return;
+    }
+
+    // Reset crop state before showing modal
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    
     setSaving(true);
     console.log("Reading file with FileReader...");
     
     const reader = new FileReader();
-    reader.onload = () => {
-      console.log("File read successful, showing cropper");
-      setImageToCrop(reader.result);
+    reader.onload = (e) => {
+      console.log("File read successful, result length:", e.target.result?.length);
+      setImageToCrop(e.target.result);
       setSaving(false);
     };
     reader.onerror = (error) => {
       console.error("FileReader error:", error);
-      alert("Failed to read image file.");
+      alert("Failed to read image file. Please try a different photo.");
       setSaving(false);
     };
-    reader.readAsDataURL(file);
     
-    // Reset input
+    try {
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Error calling readAsDataURL:", err);
+      alert("Could not process this image.");
+      setSaving(false);
+    }
+    
+    // Reset input so it can be used again
     event.target.value = "";
   };
 
