@@ -247,59 +247,40 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
     const file = event.target.files?.[0];
     
     if (!file) {
-      console.log("No file selected");
+      console.log("No file selected in event");
       return;
     }
 
-    console.log("File details:", {
-      name: file.name,
-      type: file.type,
-      size: file.size
-    });
+    console.log("File detected:", file.name, file.type, file.size);
 
     // Validate file type
     const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!validTypes.includes(file.type)) {
-      console.error("Invalid file type:", file.type);
+      console.error("Invalid type:", file.type);
       alert("Please upload a valid image (JPG, PNG, GIF, or WebP)");
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      console.error("File too large:", file.size);
-      alert("Image must be less than 5MB");
-      return;
-    }
-
-    // Reset crop state before showing modal
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
-    
-    // setSaving(true); // REMOVED: This might be causing UI hang
-    console.log("Reading file with FileReader...");
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      console.log("File read successful, result length:", e.target.result?.length);
-      setImageToCrop(e.target.result);
-      // setSaving(false);
-    };
-    reader.onerror = (error) => {
-      console.error("FileReader error:", error);
-      alert("Failed to read image file. Please try a different photo.");
-      // setSaving(false);
-    };
-    
     try {
-      reader.readAsDataURL(file);
+      // Use URL.createObjectURL for faster, more reliable local preview
+      const objectUrl = URL.createObjectURL(file);
+      console.log("Created Object URL:", objectUrl);
+      
+      // Reset cropping state
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      
+      // Update state to show cropper
+      setImageToCrop(objectUrl);
+      setIsDicebearAvatar(false);
+      
+      console.log("imageToCrop state set to objectUrl, modal should appear");
     } catch (err) {
-      console.error("Error calling readAsDataURL:", err);
-      alert("Could not process this image.");
-      // setSaving(false);
+      console.error("Error creating object URL:", err);
+      alert("Failed to process image. Please try another one.");
     }
     
-    // Reset input so it can be used again
+    // Clear input so same file can be selected again
     event.target.value = "";
   };
 
