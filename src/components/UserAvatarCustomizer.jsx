@@ -201,76 +201,78 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
   };
 
   const handleFileUpload = async (event) => {
+    console.log("=== FILE UPLOAD EVENT TRIGGERED ===");
     const file = event.target.files?.[0];
-    if (!file || !user) return;
+    
+    if (!file) {
+      console.log("No file selected in the event");
+      return;
+    }
+    
+    console.log("File details:", {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
 
     // Validate file type
     const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!validTypes.includes(file.type)) {
+      console.error("Invalid file type:", file.type);
       alert("Please upload a valid image (JPG, PNG, GIF, or WebP)");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
+      console.error("File too large:", file.size);
       alert("Image must be less than 5MB");
       return;
     }
 
     try {
       setSaving(true);
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      // Validate file type
-      const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-      if (!validTypes.includes(file.type)) {
-        alert("Please upload a valid image (JPG, PNG, GIF, or WebP)");
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert("Image must be less than 5MB");
-        return;
-      }
-
-      // Create a reference to the file in Firebase Storage
-      const timestamp = Date.now();
+      
       const uid = user?.uid || auth.currentUser?.uid;
+      console.log("Using UID for upload:", uid);
+      
       if (!uid) {
+        console.error("No UID found for upload");
         alert("User session not found. Please log in again.");
         return;
       }
       
+      const timestamp = Date.now();
       const fileExtension = file.name.split('.').pop();
       const fileName = `${timestamp}.${fileExtension}`;
       const fileRef = ref(storage, `avatars/${uid}/${fileName}`);
       
-      console.log("Starting upload to:", fileRef.fullPath);
+      console.log("Starting upload to Firebase Storage:", fileRef.fullPath);
       
-      // Upload with metadata
       const metadata = {
         contentType: file.type,
       };
 
-      await uploadBytes(fileRef, file, metadata);
+      const uploadResult = await uploadBytes(fileRef, file, metadata);
+      console.log("Upload bytes result:", uploadResult);
       
       const downloadURL = await getDownloadURL(fileRef);
-      console.log("Upload successful, download URL:", downloadURL);
+      console.log("Download URL generated:", downloadURL);
       
       setAvatarURL(downloadURL);
       setIsDicebearAvatar(false);
-      alert("Selfie uploaded successfully! Click 'Save Avatar' to finalize.");
+      alert("Selfie uploaded successfully! Click 'Save Avatar' at the bottom to finalize your profile.");
     } catch (error) {
-      console.error("Error uploading avatar:", error);
+      console.error("UPLOAD ERROR DETAILS:", error);
       let errorMessage = error.message;
       if (error.code === 'storage/unauthorized') {
-        errorMessage = "Permission denied. Firebase Storage rules might be blocking the upload.";
+        errorMessage = "Permission denied. Firebase Storage rules might be blocking the upload. Please check Firebase Console Rules.";
       }
       alert("Failed to upload image: " + errorMessage);
     } finally {
       setSaving(false);
+      // Important: reset the input so change event fires again if same file is picked
+      if (event.target) event.target.value = "";
     }
   };
 
