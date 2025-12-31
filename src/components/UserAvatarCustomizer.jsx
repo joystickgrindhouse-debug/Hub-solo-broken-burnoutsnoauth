@@ -242,7 +242,7 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     console.log("=== FILE UPLOAD EVENT TRIGGERED ===");
     const file = event.target.files?.[0];
     
@@ -273,21 +273,46 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
     }
 
     try {
-      const reader = new FileReader();
-      reader.onload = () => {
-        console.log("FileReader loaded successfully");
-        setImageToCrop(reader.result);
+      setSaving(true);
+      
+      const uid = user?.uid || auth.currentUser?.uid;
+      console.log("Using UID for upload:", uid);
+      
+      if (!uid) {
+        console.error("No UID found for upload");
+        alert("User session not found. Please log in again.");
+        return;
+      }
+      
+      const timestamp = Date.now();
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `${timestamp}.${fileExtension}`;
+      const fileRef = ref(storage, `avatars/${uid}/${fileName}`);
+      
+      console.log("Starting initial upload to Firebase Storage:", fileRef.fullPath);
+      
+      const metadata = {
+        contentType: file.type,
       };
-      reader.onerror = (error) => {
-        console.error("FileReader error:", error);
-        alert("Failed to read image file.");
-      };
-      reader.readAsDataURL(file);
-    } catch (err) {
-      console.error("Error during file reading setup:", err);
-      alert("An unexpected error occurred while preparing the image.");
+
+      // Upload raw file first
+      await uploadBytes(fileRef, file, metadata);
+      const rawDownloadURL = await getDownloadURL(fileRef);
+      console.log("Raw file uploaded, starting crop interface:", rawDownloadURL);
+      
+      // Now trigger the crop interface using the uploaded file's URL
+      setImageToCrop(rawDownloadURL);
+      setIsDicebearAvatar(false);
+    } catch (error) {
+      console.error("UPLOAD ERROR DETAILS:", error);
+      let errorMessage = error.message;
+      if (error.code === 'storage/unauthorized') {
+        errorMessage = "Permission denied. Firebase Storage rules might be blocking the upload. Please check Firebase Console Rules.";
+      }
+      alert("Failed to upload image: " + errorMessage);
     } finally {
-      // Important: reset the input so change event fires again if same file is picked
+      setSaving(false);
+      // Reset input
       if (event.target) event.target.value = "";
     }
   };
