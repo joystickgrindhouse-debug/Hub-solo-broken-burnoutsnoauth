@@ -1,10 +1,42 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import Cropper from 'react-easy-crop';
 import { useNavigate } from "react-router-dom";
 import { auth, storage } from "../firebase";
 import { updateProfile } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { UserService } from "../services/userService";
 import { NicknameService } from "../services/nicknameService";
+
+// Helper for cropping
+const getCroppedImg = async (imageSrc, pixelCrop) => {
+  const image = new Image();
+  image.src = imageSrc;
+  await new Promise((resolve) => (image.onload = resolve));
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  );
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      resolve(blob);
+    }, 'image/jpeg');
+  });
+};
 
 const avatarStyles = [
   { id: "adventurer", name: "Adventurer", desc: "Illustrated characters" },
@@ -55,6 +87,12 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
   const [isDicebearAvatar, setIsDicebearAvatar] = useState(true);
   const [initialized, setInitialized] = useState(false);
   const [nicknameError, setNicknameError] = useState("");
+
+  // Cropping state
+  const [imageToCrop, setImageToCrop] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
   useEffect(() => {
     const currentUser = propUser || auth.currentUser;
@@ -200,84 +238,101 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
     setIsDicebearAvatar(true);
   };
 
-  const handleFileUpload = async (event) => {
-    console.log("=== FILE UPLOAD EVENT TRIGGERED ===");
+  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const handleFileUpload = (event) => {
     const file = event.target.files?.[0];
-    
-    if (!file) {
-      console.log("No file selected in the event");
-      return;
-    }
-    
-    console.log("File details:", {
-      name: file.name,
-      type: file.type,
-      size: file.size
-    });
+    if (!file) return;
 
     // Validate file type
     const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!validTypes.includes(file.type)) {
-      console.error("Invalid file type:", file.type);
       alert("Please upload a valid image (JPG, PNG, GIF, or WebP)");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      console.error("File too large:", file.size);
       alert("Image must be less than 5MB");
       return;
     }
 
+    const reader = new FileReader();
+    reader.addEventListener('load', () => setImageToCrop(reader.result));
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropSave = async () => {
     try {
       setSaving(true);
-      
+      const croppedBlob = await getCroppedImg(imageToCrop, croppedAreaPixels);
       const uid = user?.uid || auth.currentUser?.uid;
-      console.log("Using UID for upload:", uid);
       
       if (!uid) {
-        console.error("No UID found for upload");
         alert("User session not found. Please log in again.");
         return;
       }
-      
+
       const timestamp = Date.now();
-      const fileExtension = file.name.split('.').pop();
-      const fileName = `${timestamp}.${fileExtension}`;
+      const fileName = `${timestamp}.jpg`;
       const fileRef = ref(storage, `avatars/${uid}/${fileName}`);
       
-      console.log("Starting upload to Firebase Storage:", fileRef.fullPath);
-      
-      const metadata = {
-        contentType: file.type,
-      };
-
-      const uploadResult = await uploadBytes(fileRef, file, metadata);
-      console.log("Upload bytes result:", uploadResult);
-      
+      const metadata = { contentType: 'image/jpeg' };
+      await uploadBytes(fileRef, croppedBlob, metadata);
       const downloadURL = await getDownloadURL(fileRef);
-      console.log("Download URL generated:", downloadURL);
       
       setAvatarURL(downloadURL);
       setIsDicebearAvatar(false);
-      alert("Selfie uploaded successfully! Click 'Save Avatar' at the bottom to finalize your profile.");
-    } catch (error) {
-      console.error("UPLOAD ERROR DETAILS:", error);
-      let errorMessage = error.message;
-      if (error.code === 'storage/unauthorized') {
-        errorMessage = "Permission denied. Firebase Storage rules might be blocking the upload. Please check Firebase Console Rules.";
-      }
-      alert("Failed to upload image: " + errorMessage);
+      setImageToCrop(null);
+      alert("Selfie cropped and uploaded successfully!");
+    } catch (e) {
+      console.error(e);
+      alert("Failed to crop and upload image.");
     } finally {
       setSaving(false);
-      // Important: reset the input so change event fires again if same file is picked
-      if (event.target) event.target.value = "";
     }
   };
 
   return (
     <div style={styles.container}>
+      {imageToCrop && (
+        <div style={styles.cropperModal}>
+          <div style={styles.cropperContainer}>
+            <Cropper
+              image={imageToCrop}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+              cropShape="round"
+              showGrid={false}
+            />
+          </div>
+          <div style={styles.cropperControls}>
+            <input
+              type="range"
+              value={zoom}
+              min={1}
+              max={3}
+              step={0.1}
+              aria-labelledby="Zoom"
+              onChange={(e) => setZoom(e.target.value)}
+              style={styles.zoomRange}
+            />
+            <div style={styles.cropperButtons}>
+              <button onClick={() => setImageToCrop(null)} style={styles.cancelButton}>Cancel</button>
+              <button onClick={handleCropSave} style={styles.confirmButton} disabled={saving}>
+                {saving ? "Processing..." : "Crop & Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={styles.previewSection}>
         <h3 style={styles.heading}>Avatar Preview</h3>
         <div style={styles.avatarWrapper}>
@@ -389,6 +444,56 @@ const styles = {
     margin: "0 auto",
     width: "100%",
     boxSizing: "border-box",
+  },
+  cropperModal: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    zIndex: 1000,
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  cropperContainer: {
+    position: 'relative',
+    flex: 1,
+    width: '100%',
+  },
+  cropperControls: {
+    padding: '20px',
+    backgroundColor: '#111',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '15px',
+    alignItems: 'center',
+  },
+  zoomRange: {
+    width: '80%',
+    accentColor: '#ff3050',
+  },
+  cropperButtons: {
+    display: 'flex',
+    gap: '20px',
+  },
+  cancelButton: {
+    padding: '10px 20px',
+    borderRadius: '8px',
+    border: '1px solid #ff3050',
+    background: 'transparent',
+    color: '#ff3050',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+  },
+  confirmButton: {
+    padding: '10px 20px',
+    borderRadius: '8px',
+    border: 'none',
+    background: '#ff3050',
+    color: '#fff',
+    cursor: 'pointer',
+    fontWeight: 'bold',
   },
   previewSection: {
     width: "100%",
