@@ -219,23 +219,46 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
 
     try {
       setSaving(true);
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      // Validate file type
+      const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+      if (!validTypes.includes(file.type)) {
+        alert("Please upload a valid image (JPG, PNG, GIF, or WebP)");
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Image must be less than 5MB");
+        return;
+      }
+
       // Create a reference to the file in Firebase Storage
       const timestamp = Date.now();
-      // Ensure user.uid is available
       const uid = user?.uid || auth.currentUser?.uid;
-      if (!uid) throw new Error("User session not found. Please log in again.");
+      if (!uid) {
+        alert("User session not found. Please log in again.");
+        return;
+      }
       
-      const fileRef = ref(storage, `avatars/${uid}/${timestamp}-${file.name}`);
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `${timestamp}.${fileExtension}`;
+      const fileRef = ref(storage, `avatars/${uid}/${fileName}`);
       
-      // Upload the file
       console.log("Starting upload to:", fileRef.fullPath);
-      await uploadBytes(fileRef, file);
       
-      // Get the download URL
+      // Upload with metadata
+      const metadata = {
+        contentType: file.type,
+      };
+
+      await uploadBytes(fileRef, file, metadata);
+      
       const downloadURL = await getDownloadURL(fileRef);
       console.log("Upload successful, download URL:", downloadURL);
       
-      // Update the avatar URL and mark as non-DiceBear
       setAvatarURL(downloadURL);
       setIsDicebearAvatar(false);
       alert("Selfie uploaded successfully! Click 'Save Avatar' to finalize.");
@@ -243,7 +266,7 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
       console.error("Error uploading avatar:", error);
       let errorMessage = error.message;
       if (error.code === 'storage/unauthorized') {
-        errorMessage = "Permission denied. Please ensure you are logged in.";
+        errorMessage = "Permission denied. Firebase Storage rules might be blocking the upload.";
       }
       alert("Failed to upload image: " + errorMessage);
     } finally {
