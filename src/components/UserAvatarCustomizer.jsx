@@ -247,72 +247,31 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
     const file = event.target.files?.[0];
     
     if (!file) {
-      console.log("No file selected in the event");
-      return;
-    }
-    
-    console.log("File details:", {
-      name: file.name,
-      type: file.type,
-      size: file.size
-    });
-
-    // Validate file type
-    const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-    if (!validTypes.includes(file.type)) {
-      console.error("Invalid file type:", file.type);
-      alert("Please upload a valid image (JPG, PNG, GIF, or WebP)");
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      console.error("File too large:", file.size);
-      alert("Image must be less than 5MB");
+      console.log("No file selected");
       return;
     }
 
     try {
       setSaving(true);
+      console.log("Reading file with FileReader...");
       
-      const uid = user?.uid || auth.currentUser?.uid;
-      console.log("Using UID for upload:", uid);
+      const reader = new FileReader();
+      const readerPromise = new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+      });
       
-      if (!uid) {
-        console.error("No UID found for upload");
-        alert("User session not found. Please log in again.");
-        return;
-      }
+      reader.readAsDataURL(file);
+      const dataUrl = await readerPromise;
       
-      const timestamp = Date.now();
-      const fileExtension = file.name.split('.').pop();
-      const fileName = `${timestamp}.${fileExtension}`;
-      const fileRef = ref(storage, `avatars/${uid}/${fileName}`);
-      
-      console.log("Starting initial upload to Firebase Storage:", fileRef.fullPath);
-      
-      const metadata = {
-        contentType: file.type,
-      };
-
-      // Upload raw file first
-      await uploadBytes(fileRef, file, metadata);
-      const rawDownloadURL = await getDownloadURL(fileRef);
-      console.log("Raw file uploaded, starting crop interface:", rawDownloadURL);
-      
-      // Now trigger the crop interface using the uploaded file's URL
-      setImageToCrop(rawDownloadURL);
+      console.log("File read successful, showing cropper");
+      setImageToCrop(dataUrl);
       setIsDicebearAvatar(false);
     } catch (error) {
-      console.error("UPLOAD ERROR DETAILS:", error);
-      let errorMessage = error.message;
-      if (error.code === 'storage/unauthorized') {
-        errorMessage = "Permission denied. Firebase Storage rules might be blocking the upload. Please check Firebase Console Rules.";
-      }
-      alert("Failed to upload image: " + errorMessage);
+      console.error("File selection error:", error);
+      alert("Failed to read image: " + error.message);
     } finally {
       setSaving(false);
-      // Reset input
       if (event.target) event.target.value = "";
     }
   };
