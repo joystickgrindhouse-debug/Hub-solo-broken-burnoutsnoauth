@@ -149,14 +149,22 @@ export default function Profile({ user, userProfile }) {
       console.log("File uploaded, download URL:", downloadURL);
       
       // Now set the permanent download URL
+      console.log("Setting permanent download URL:", downloadURL);
       setCurrentAvatar(downloadURL);
       
       console.log("Updating user profile in Firestore...");
       const updateResult = await UserService.updateUserProfile(user.uid, { avatarURL: downloadURL });
+      console.log("Firestore update result:", updateResult);
       
       if (updateResult.success) {
+        // Double-check update by fetching profile again if necessary, 
+        // but for now, we'll trust the success and update Auth
+        await updateProfile(user, { photoURL: downloadURL });
+        
         alert("Photo uploaded and profile updated!");
         setIsEditingAvatar(false);
+        // Force a page refresh to ensure all components see the new image
+        window.location.reload();
       } else {
         throw new Error(updateResult.error || "Failed to update profile");
       }
