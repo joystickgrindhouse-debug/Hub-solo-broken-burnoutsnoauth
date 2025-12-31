@@ -40,10 +40,10 @@ export default function Profile({ user, userProfile }) {
   const [bio, setBio] = useState(userProfile?.bio || "");
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingAvatar, setIsEditingAvatar] = useState(false);
-  const [currentAvatar, setCurrentAvatar] = useState(userProfile?.avatarURL || user?.photoURL || "");
-  const [selectedStyle, setSelectedStyle] = useState("adventurer");
+  const [currentAvatar, setCurrentAvatar] = useState("");
+  const [selectedStyle, setSelectedStyle] = useState("");
   const [seed, setSeed] = useState("");
-  const [isDicebearAvatar, setIsDicebearAvatar] = useState(true);
+  const [isDicebearAvatar, setIsDicebearAvatar] = useState(false);
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [streaks, setStreaks] = useState({ current: 0, longest: 0 });
   const [achievements, setAchievements] = useState([]);
@@ -56,22 +56,19 @@ export default function Profile({ user, userProfile }) {
         longest: userProfile.longestStreak || 0
       });
       setAchievements(userProfile.achievements || []);
-      
-      const avatarURL = userProfile.avatarURL || user?.photoURL || "";
-      setCurrentAvatar(avatarURL);
-      
-      const parsed = parseDicebearURL(avatarURL);
-      if (parsed && parsed.style && parsed.seed) {
-        setSelectedStyle(parsed.style);
-        setSeed(parsed.seed);
-        setIsDicebearAvatar(true);
-      } else {
-        const initialSeed = user?.email?.split('@')[0] || Math.random().toString(36).substring(7);
-        setSeed(initialSeed);
-        setIsDicebearAvatar(false);
-      }
     }
-  }, [userProfile, user]);
+  }, [userProfile]);
+
+  // When opening edit mode, reset the preview states to blank
+  useEffect(() => {
+    if (isEditingAvatar) {
+      setCurrentAvatar("");
+      setSelectedStyle("");
+      setIsDicebearAvatar(false);
+      // Generate a seed ready for when they pick a style, but don't show the avatar yet
+      setSeed(user?.email?.split('@')[0] || Math.random().toString(36).substring(7));
+    }
+  }, [isEditingAvatar, user]);
 
   const saveBio = async () => {
     if (!user) return;
