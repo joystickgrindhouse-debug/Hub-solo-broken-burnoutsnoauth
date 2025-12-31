@@ -91,18 +91,29 @@ export default function Profile({ user, userProfile }) {
         ? `https://api.dicebear.com/7.x/${selectedStyle}/svg?seed=${seed}`
         : currentAvatar;
       
+      console.log("Saving Avatar URL to Firebase Auth and Firestore:", avatarURL);
+      
+      // Update Firebase Auth
       await updateProfile(user, { photoURL: avatarURL });
+      
+      // Update Firestore
       const result = await UserService.updateUserProfile(user.uid, { avatarURL });
       
       if (result.success) {
+        console.log("Avatar save successful");
         setCurrentAvatar(avatarURL);
         setIsEditingAvatar(false);
+        alert("Avatar saved successfully!");
+      } else {
+        throw new Error(result.error || "Firestore update failed");
       }
     } catch (error) {
       console.error("Error saving avatar:", error);
       alert("Failed to save avatar: " + error.message);
     } finally {
       setIsSavingAvatar(false);
+      // Ensure we clear any potential UI hang by explicitly forcing a state update
+      setTimeout(() => setIsSavingAvatar(false), 100);
     }
   };
 
@@ -126,24 +137,34 @@ export default function Profile({ user, userProfile }) {
       const timestamp = Date.now();
       const fileRef = ref(storage, `avatars/${user.uid}/${timestamp}-${file.name}`);
       
-      // Add explicit metadata
       const metadata = { contentType: file.type };
       
+      console.log("Uploading file to Firebase Storage...");
       await uploadBytes(fileRef, file, metadata);
-      const downloadURL = await getDownloadURL(fileRef);
       
+      const downloadURL = await getDownloadURL(fileRef);
+      console.log("File uploaded, download URL:", downloadURL);
+      
+      // Update local state first for immediate UI feedback
       setCurrentAvatar(downloadURL);
       setIsDicebearAvatar(false);
       
-      // Update the user profile immediately for consistency
-      await UserService.updateUserProfile(user.uid, { avatarURL: downloadURL });
+      console.log("Updating user profile in Firestore...");
+      const updateResult = await UserService.updateUserProfile(user.uid, { avatarURL: downloadURL });
+      
+      if (updateResult.success) {
+        alert("Photo uploaded and profile updated!");
+      }
       
     } catch (error) {
-      console.error("Error uploading avatar:", error);
-      alert("Failed to upload image: " + error.message);
+      console.error("Critical upload error:", error);
+      alert("Upload failed: " + error.message);
     } finally {
-      setIsSavingAvatar(false);
-      event.target.value = ""; // Reset input
+      // Small delay to ensure state transitions complete
+      setTimeout(() => {
+        setIsSavingAvatar(false);
+        if (event.target) event.target.value = "";
+      }, 500);
     }
   };
 
