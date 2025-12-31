@@ -285,14 +285,21 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
   };
 
   const handleCropSave = async () => {
+    if (!croppedAreaPixels || !imageToCrop) {
+      console.error("Missing crop data or image");
+      return;
+    }
+    
     try {
       setSaving(true);
       console.log("Saving crop, croppedAreaPixels:", croppedAreaPixels);
+      
       const croppedBlob = await getCroppedImg(imageToCrop, croppedAreaPixels);
       const uid = user?.uid || auth.currentUser?.uid;
       
       if (!uid) {
         alert("User session not found. Please log in again.");
+        setSaving(false);
         return;
       }
 
@@ -302,6 +309,7 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
       
       const metadata = { contentType: 'image/jpeg' };
       console.log("Uploading blob to:", fileRef.fullPath);
+      
       await uploadBytes(fileRef, croppedBlob, metadata);
       const downloadURL = await getDownloadURL(fileRef);
       console.log("New avatar URL:", downloadURL);

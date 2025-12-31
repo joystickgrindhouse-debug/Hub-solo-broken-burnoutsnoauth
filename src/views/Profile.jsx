@@ -125,16 +125,25 @@ export default function Profile({ user, userProfile }) {
       setIsSavingAvatar(true);
       const timestamp = Date.now();
       const fileRef = ref(storage, `avatars/${user.uid}/${timestamp}-${file.name}`);
-      await uploadBytes(fileRef, file);
+      
+      // Add explicit metadata
+      const metadata = { contentType: file.type };
+      
+      await uploadBytes(fileRef, file, metadata);
       const downloadURL = await getDownloadURL(fileRef);
       
       setCurrentAvatar(downloadURL);
       setIsDicebearAvatar(false);
+      
+      // Update the user profile immediately for consistency
+      await UserService.updateUserProfile(user.uid, { avatarURL: downloadURL });
+      
     } catch (error) {
       console.error("Error uploading avatar:", error);
       alert("Failed to upload image: " + error.message);
     } finally {
       setIsSavingAvatar(false);
+      event.target.value = ""; // Reset input
     }
   };
 
