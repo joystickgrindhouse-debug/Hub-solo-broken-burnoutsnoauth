@@ -1,9 +1,50 @@
 import React, { useState, useEffect } from "react";
 import { UserService } from "../services/userService.js";
+import { storage } from "../firebase.js";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { updateProfile } from "firebase/auth";
+
+const avatarStyles = [
+  { id: "adventurer", name: "Adventurer" },
+  { id: "avataaars", name: "Avataaars" },
+  { id: "bottts", name: "Robots" },
+  { id: "lorelei", name: "Lorelei" },
+  { id: "micah", name: "Micah" },
+  { id: "miniavs", name: "Miniavs" },
+  { id: "notionists", name: "Notionists" },
+  { id: "open-peeps", name: "Open Peeps" },
+  { id: "personas", name: "Personas" },
+  { id: "pixel-art", name: "Pixel Art" },
+];
+
+const parseDicebearURL = (url) => {
+  if (!url || !url.includes('dicebear.com')) {
+    return null;
+  }
+  try {
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split('/').filter(Boolean);
+    const seed = urlObj.searchParams.get('seed');
+    if (!seed) return null;
+    const versionIndex = pathParts.findIndex(part => part.includes('.x'));
+    if (versionIndex === -1) return null;
+    const style = pathParts[versionIndex + 1];
+    if (!style) return null;
+    return { style, seed };
+  } catch (e) {
+    return null;
+  }
+};
 
 export default function Profile({ user, userProfile }) {
   const [bio, setBio] = useState(userProfile?.bio || "");
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingAvatar, setIsEditingAvatar] = useState(false);
+  const [currentAvatar, setCurrentAvatar] = useState(userProfile?.avatarURL || user?.photoURL || "");
+  const [selectedStyle, setSelectedStyle] = useState("adventurer");
+  const [seed, setSeed] = useState("");
+  const [isDicebearAvatar, setIsDicebearAvatar] = useState(true);
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [streaks, setStreaks] = useState({ current: 0, longest: 0 });
   const [achievements, setAchievements] = useState([]);
 
@@ -15,8 +56,22 @@ export default function Profile({ user, userProfile }) {
         longest: userProfile.longestStreak || 0
       });
       setAchievements(userProfile.achievements || []);
+      
+      const avatarURL = userProfile.avatarURL || user?.photoURL || "";
+      setCurrentAvatar(avatarURL);
+      
+      const parsed = parseDicebearURL(avatarURL);
+      if (parsed && parsed.style && parsed.seed) {
+        setSelectedStyle(parsed.style);
+        setSeed(parsed.seed);
+        setIsDicebearAvatar(true);
+      } else {
+        const initialSeed = user?.email?.split('@')[0] || Math.random().toString(36).substring(7);
+        setSeed(initialSeed);
+        setIsDicebearAvatar(false);
+      }
     }
-  }, [userProfile]);
+  }, [userProfile, user]);
 
   const saveBio = async () => {
     if (!user) return;
@@ -24,6 +79,62 @@ export default function Profile({ user, userProfile }) {
     const result = await UserService.updateUserProfile(user.uid, { bio });
     if (result.success) {
       setIsEditing(false);
+    }
+  };
+
+  const saveAvatar = async () => {
+    if (!user) return;
+    setIsSavingAvatar(true);
+    
+    try {
+      const avatarURL = isDicebearAvatar 
+        ? `https://api.dicebear.com/7.x/${selectedStyle}/svg?seed=${seed}`
+        : currentAvatar;
+      
+      await updateProfile(user, { photoURL: avatarURL });
+      const result = await UserService.updateUserProfile(user.uid, { avatarURL });
+      
+      if (result.success) {
+        setCurrentAvatar(avatarURL);
+        setIsEditingAvatar(false);
+      }
+    } catch (error) {
+      console.error("Error saving avatar:", error);
+      alert("Failed to save avatar: " + error.message);
+    } finally {
+      setIsSavingAvatar(false);
+    }
+  };
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      alert("Please upload a valid image (JPG, PNG, GIF, or WebP)");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image must be less than 5MB");
+      return;
+    }
+
+    try {
+      setIsSavingAvatar(true);
+      const timestamp = Date.now();
+      const fileRef = ref(storage, `avatars/${user.uid}/${timestamp}-${file.name}`);
+      await uploadBytes(fileRef, file);
+      const downloadURL = await getDownloadURL(fileRef);
+      
+      setCurrentAvatar(downloadURL);
+      setIsDicebearAvatar(false);
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      alert("Failed to upload image: " + error.message);
+    } finally {
+      setIsSavingAvatar(false);
     }
   };
 
@@ -69,27 +180,148 @@ export default function Profile({ user, userProfile }) {
             alignItems: "center",
             gap: "1rem"
           }}>
-            {avatarURL && (
-              <img 
-                src={avatarURL} 
-                alt={nickname} 
-                style={{ 
-                  width: "120px", 
-                  height: "120px", 
-                  borderRadius: "50%", 
-                  background: "#fff",
-                  border: "4px solid #ff3050",
-                  boxShadow: "0 0 20px rgba(255, 48, 80, 0.6)"
-                }}
-              />
+            {isEditingAvatar ? (
+              <div style={{ textAlign: "center", width: "200px" }}>
+                {currentAvatar && (
+                  <img 
+                    src={currentAvatar} 
+                    alt="Avatar Preview" 
+                    style={{ 
+                      width: "120px", 
+                      height: "120px", 
+                      borderRadius: "50%", 
+                      background: "#fff",
+                      border: "4px solid #ff3050",
+                      boxShadow: "0 0 20px rgba(255, 48, 80, 0.6)",
+                      marginBottom: "1rem"
+                    }}
+                  />
+                )}
+                <div style={{ marginBottom: "1rem" }}>
+                  <label style={{
+                    display: "inline-block",
+                    padding: "8px 16px",
+                    background: "linear-gradient(135deg, #ff3050 0%, #cc0033 100%)",
+                    color: "#fff",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    marginBottom: "1rem"
+                  }}>
+                    📸 Upload Photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      disabled={isSavingAvatar}
+                      style={{ display: "none" }}
+                    />
+                  </label>
+                </div>
+                <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.6)", marginBottom: "1rem" }}>
+                  Or choose a style:
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px", marginBottom: "1rem", maxHeight: "150px", overflowY: "auto" }}>
+                  {avatarStyles.map((style) => (
+                    <button
+                      key={style.id}
+                      onClick={() => {
+                        setSelectedStyle(style.id);
+                        setIsDicebearAvatar(true);
+                        setCurrentAvatar(`https://api.dicebear.com/7.x/${style.id}/svg?seed=${seed}`);
+                      }}
+                      style={{
+                        padding: "8px",
+                        background: selectedStyle === style.id && isDicebearAvatar ? "#ff3050" : "rgba(255, 48, 80, 0.2)",
+                        border: "2px solid #ff3050",
+                        borderRadius: "6px",
+                        color: "#fff",
+                        fontSize: "12px",
+                        cursor: "pointer",
+                        fontWeight: "600"
+                      }}
+                    >
+                      {style.name}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <button
+                    onClick={saveAvatar}
+                    disabled={isSavingAvatar}
+                    style={{
+                      flex: 1,
+                      padding: "8px",
+                      background: "#ff3050",
+                      border: "2px solid #ff3050",
+                      borderRadius: "6px",
+                      color: "#fff",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                      opacity: isSavingAvatar ? 0.6 : 1
+                    }}
+                  >
+                    {isSavingAvatar ? "Saving..." : "Save"}
+                  </button>
+                  <button
+                    onClick={() => setIsEditingAvatar(false)}
+                    disabled={isSavingAvatar}
+                    style={{
+                      flex: 1,
+                      padding: "8px",
+                      background: "#000000",
+                      border: "2px solid #ff3050",
+                      borderRadius: "6px",
+                      color: "#ff3050",
+                      fontWeight: "bold",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {avatarURL && (
+                  <img 
+                    src={avatarURL} 
+                    alt={nickname} 
+                    style={{ 
+                      width: "120px", 
+                      height: "120px", 
+                      borderRadius: "50%", 
+                      background: "#fff",
+                      border: "4px solid #ff3050",
+                      boxShadow: "0 0 20px rgba(255, 48, 80, 0.6)"
+                    }}
+                  />
+                )}
+                <h2 style={{ 
+                  color: "#ff3050",
+                  textShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
+                  margin: 0
+                }}>
+                  {nickname}
+                </h2>
+                <button
+                  onClick={() => setIsEditingAvatar(true)}
+                  style={{
+                    padding: "6px 12px",
+                    background: "#000000",
+                    border: "2px solid #ff3050",
+                    borderRadius: "6px",
+                    color: "#ff3050",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                    fontSize: "12px"
+                  }}
+                >
+                  Edit Avatar
+                </button>
+              </>
             )}
-            <h2 style={{ 
-              color: "#ff3050",
-              textShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
-              margin: 0
-            }}>
-              {nickname}
-            </h2>
           </div>
 
           <div style={{ flex: 1, minWidth: "300px" }}>
