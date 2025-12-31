@@ -14,6 +14,8 @@ import Achievements from "./views/Achievements.jsx";
 import GlobalChat from "./views/GlobalChat.jsx";
 import DMChat from "./views/DMChat.jsx";
 import Leaderboard from "./views/Leaderboard.jsx";
+import Solo from "./views/Solo.jsx";
+import Burnouts from "./views/Burnouts.jsx";
 import Live from "./views/Live.jsx";
 import Run from "./views/Run.jsx";
 import Gameboard from "./views/Gameboard.jsx";
@@ -153,6 +155,11 @@ export default function App() {
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
         
         {/* Public routes */}
+        <Route 
+          path="/burnouts" 
+          element={<Burnouts user={user} userProfile={userProfile} />} 
+        />
+        
         {/* Protected routes */}
         <Route 
           path="/dashboard" 
@@ -182,6 +189,14 @@ export default function App() {
             ) : (
               <Login />
             )
+          } 
+        />
+        <Route 
+          path="/solo" 
+          element={
+            <ProtectedRoute user={user} userProfile={userProfile}>
+              <Solo user={user} userProfile={userProfile} />
+            </ProtectedRoute>
           } 
         />
         <Route 

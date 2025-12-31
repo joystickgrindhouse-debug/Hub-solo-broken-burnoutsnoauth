@@ -1,0 +1,35 @@
+.solo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+  color: #fff;
+}
+
+.solo-title {
+  font-size: 3rem;
+  font-family: 'Press Start 2P', cursive;
+  color: #ff3050;
+  margin-bottom: 2rem;
+  text-shadow: 0 0 20px rgba(255, 48, 80, 0.8);
+}
+
+.solo-button {
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  background: #ff3050;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 0 20px rgba(255, 48, 80, 0.5);
+}
+
+.solo-button:hover {
+  background: #ff1a3c;
+  box-shadow: 0 0 30px rgba(255, 48, 80, 0.8);
+}
