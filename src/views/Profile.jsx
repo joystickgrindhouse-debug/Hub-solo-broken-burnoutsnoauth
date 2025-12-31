@@ -132,8 +132,14 @@ export default function Profile({ user, userProfile }) {
     try {
       setIsSavingAvatar(true);
       const timestamp = Date.now();
-      const fileRef = ref(storage, `avatars/${user.uid}/${timestamp}-${file.name}`);
       
+      // Use the object URL for immediate display
+      const objectUrl = URL.createObjectURL(file);
+      console.log("Local Object URL created for immediate preview:", objectUrl);
+      setCurrentAvatar(objectUrl);
+      setIsDicebearAvatar(false);
+
+      const fileRef = ref(storage, `avatars/${user.uid}/${timestamp}-${file.name}`);
       const metadata = { contentType: file.type };
       
       console.log("Uploading file to Firebase Storage...");
@@ -142,22 +148,18 @@ export default function Profile({ user, userProfile }) {
       const downloadURL = await getDownloadURL(fileRef);
       console.log("File uploaded, download URL:", downloadURL);
       
-      // Update local state first for immediate UI feedback
+      // Now set the permanent download URL
       setCurrentAvatar(downloadURL);
-      setIsDicebearAvatar(false);
       
       console.log("Updating user profile in Firestore...");
-      // CRITICAL FIX: Ensure we use the correct service method and handle results
       const updateResult = await UserService.updateUserProfile(user.uid, { avatarURL: downloadURL });
       
       if (updateResult.success) {
         alert("Photo uploaded and profile updated!");
-        // Force the edit mode off after success
         setIsEditingAvatar(false);
       } else {
         throw new Error(updateResult.error || "Failed to update profile");
       }
-      
     } catch (error) {
       console.error("Critical upload error:", error);
       alert("Upload failed: " + error.message);
