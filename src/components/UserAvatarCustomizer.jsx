@@ -242,7 +242,7 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
-  const handleFileUpload = async (event) => {
+  const handleFileUpload = (event) => {
     console.log("=== FILE UPLOAD EVENT TRIGGERED ===");
     const file = event.target.files?.[0];
     
@@ -251,29 +251,24 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
       return;
     }
 
-    try {
-      setSaving(true);
-      console.log("Reading file with FileReader...");
-      
-      const reader = new FileReader();
-      const readerPromise = new Promise((resolve, reject) => {
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-      });
-      
-      reader.readAsDataURL(file);
-      const dataUrl = await readerPromise;
-      
+    setSaving(true);
+    console.log("Reading file with FileReader...");
+    
+    const reader = new FileReader();
+    reader.onload = () => {
       console.log("File read successful, showing cropper");
-      setImageToCrop(dataUrl);
-      setIsDicebearAvatar(false);
-    } catch (error) {
-      console.error("File selection error:", error);
-      alert("Failed to read image: " + error.message);
-    } finally {
+      setImageToCrop(reader.result);
       setSaving(false);
-      if (event.target) event.target.value = "";
-    }
+    };
+    reader.onerror = (error) => {
+      console.error("FileReader error:", error);
+      alert("Failed to read image file.");
+      setSaving(false);
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset input
+    event.target.value = "";
   };
 
   const handleCropSave = async () => {
