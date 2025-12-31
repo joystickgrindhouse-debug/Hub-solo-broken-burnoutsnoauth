@@ -295,6 +295,7 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
   const handleCropSave = async () => {
     try {
       setSaving(true);
+      console.log("Saving crop, croppedAreaPixels:", croppedAreaPixels);
       const croppedBlob = await getCroppedImg(imageToCrop, croppedAreaPixels);
       const uid = user?.uid || auth.currentUser?.uid;
       
@@ -308,16 +309,18 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
       const fileRef = ref(storage, `avatars/${uid}/${fileName}`);
       
       const metadata = { contentType: 'image/jpeg' };
+      console.log("Uploading blob to:", fileRef.fullPath);
       await uploadBytes(fileRef, croppedBlob, metadata);
       const downloadURL = await getDownloadURL(fileRef);
+      console.log("New avatar URL:", downloadURL);
       
       setAvatarURL(downloadURL);
       setIsDicebearAvatar(false);
       setImageToCrop(null);
-      alert("Selfie cropped and uploaded successfully!");
+      alert("Selfie cropped and uploaded successfully! Remember to click 'Save Avatar' at the bottom to finalize.");
     } catch (e) {
-      console.error(e);
-      alert("Failed to crop and upload image.");
+      console.error("Crop save error:", e);
+      alert("Failed to crop and upload image: " + e.message);
     } finally {
       setSaving(false);
     }
