@@ -150,21 +150,26 @@ export default function Profile({ user, userProfile }) {
       setIsDicebearAvatar(false);
       
       console.log("Updating user profile in Firestore...");
+      // CRITICAL FIX: Ensure we use the correct service method and handle results
       const updateResult = await UserService.updateUserProfile(user.uid, { avatarURL: downloadURL });
       
       if (updateResult.success) {
         alert("Photo uploaded and profile updated!");
+        // Force the edit mode off after success
+        setIsEditingAvatar(false);
+      } else {
+        throw new Error(updateResult.error || "Failed to update profile");
       }
       
     } catch (error) {
       console.error("Critical upload error:", error);
       alert("Upload failed: " + error.message);
     } finally {
-      // Small delay to ensure state transitions complete
-      setTimeout(() => {
-        setIsSavingAvatar(false);
-        if (event.target) event.target.value = "";
-      }, 500);
+      // Small delay to ensure state transitions complete and UI unlocks
+      setIsSavingAvatar(false);
+      if (event.target) event.target.value = "";
+      // Triple safety check to unlock UI
+      setTimeout(() => setIsSavingAvatar(false), 200);
     }
   };
 
