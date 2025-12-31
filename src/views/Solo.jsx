@@ -1,26 +1,47 @@
-import React, { useEffect } from "react";
-import { auth } from "../firebase.js";
+import React, { useState, useEffect } from "react";
 import LoadingScreen from "../components/LoadingScreen.jsx";
+import { auth } from "../firebase.js";
 
-export default function Solo({ user, userProfile }) {
+export default function Solo({ user }) {
+  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(null);
+  const externalAppUrl = "https://solomode.netlify.app/";
+
   useEffect(() => {
-    if (user) {
-      // Get the auth token and redirect to the external Solo app
-      user.getIdToken().then((token) => {
-        // Build the external app URL with authentication parameters
-        const externalAppUrl = new URL("https://solomode.netlify.app/");
-        externalAppUrl.searchParams.set("token", token);
-        externalAppUrl.searchParams.set("userId", user.uid);
-        externalAppUrl.searchParams.set("userEmail", user.email);
-        
-        // Redirect to the external app
-        window.location.href = externalAppUrl.toString();
-      }).catch((error) => {
+    const getAuthToken = async () => {
+      try {
+        if (auth.currentUser) {
+          const idToken = await auth.currentUser.getIdToken(true);
+          setToken(idToken);
+        }
+      } catch (error) {
         console.error("Error getting auth token:", error);
-      });
-    }
-  }, [user]);
+      }
+    };
+    getAuthToken();
+  }, []);
 
-  // Show loading screen while redirecting
-  return <LoadingScreen />;
+  const handleLoad = () => {
+    setLoading(false);
+  };
+
+  const iframeSrc = token 
+    ? `${externalAppUrl}?token=${token}&userId=${user?.uid || ""}&userEmail=${user?.email || ""}`
+    : externalAppUrl;
+
+  return (
+    <div style={{ width: "100%", height: "calc(100vh - 64px)", position: "relative", overflow: "hidden" }}>
+      {loading && <LoadingScreen />}
+      <iframe
+        src={iframeSrc}
+        title="Solo Mode"
+        width="100%"
+        height="100%"
+        frameBorder="0"
+        onLoad={handleLoad}
+        allow="camera; microphone; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        style={{ border: "none" }}
+      />
+    </div>
+  );
 }
