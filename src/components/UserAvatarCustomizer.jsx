@@ -276,19 +276,19 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     
-    setSaving(true);
+    // setSaving(true); // REMOVED: This might be causing UI hang
     console.log("Reading file with FileReader...");
     
     const reader = new FileReader();
     reader.onload = (e) => {
       console.log("File read successful, result length:", e.target.result?.length);
       setImageToCrop(e.target.result);
-      setSaving(false);
+      // setSaving(false);
     };
     reader.onerror = (error) => {
       console.error("FileReader error:", error);
       alert("Failed to read image file. Please try a different photo.");
-      setSaving(false);
+      // setSaving(false);
     };
     
     try {
@@ -296,7 +296,7 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
     } catch (err) {
       console.error("Error calling readAsDataURL:", err);
       alert("Could not process this image.");
-      setSaving(false);
+      // setSaving(false);
     }
     
     // Reset input so it can be used again
