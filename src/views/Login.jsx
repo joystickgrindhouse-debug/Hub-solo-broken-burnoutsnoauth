@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { auth } from "../firebase.js";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { generateAvatarForUser } from "../avatarService.js";
 import { UserService } from "../services/userService.js";
 
 const styles = {
+  // ... existing styles ...
   rivalisTitle: {
     fontFamily: "'Press Start 2P', cursive",
     fontSize: "clamp(1.5rem, 6vw, 2.5rem)",
@@ -37,6 +38,16 @@ const styles = {
     lineHeight: "1.8",
     whiteSpace: "pre-line",
     textAlign: "center"
+  },
+  forgotPassword: {
+    background: "none",
+    border: "none",
+    color: "rgba(255, 48, 80, 0.7)",
+    fontSize: "0.7rem",
+    marginTop: "0.5rem",
+    cursor: "pointer",
+    textDecoration: "underline",
+    fontFamily: "'Press Start 2P', cursive",
   }
 };
 
@@ -45,10 +56,12 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [isSignup, setIsSignup] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setMessage("");
     try {
       if (isSignup) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -67,6 +80,20 @@ export default function Login() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError("Please enter your email first.");
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setMessage("Password reset email sent!");
+      setError("");
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   return (
     <div className="hero-background">
       <div className="overlay-card">
@@ -77,7 +104,13 @@ export default function Login() {
           <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
           <button type="submit">{isSignup ? "Sign Up" : "Login"}</button>
         </form>
-        {error && <p style={{color:"#ff3050", fontWeight: "bold"}}>{error}</p>}
+        {!isSignup && (
+          <button onClick={handleForgotPassword} style={styles.forgotPassword}>
+            Forgot Password?
+          </button>
+        )}
+        {error && <p style={{color:"#ff3050", fontWeight: "bold", marginTop: "1rem"}}>{error}</p>}
+        {message && <p style={{color:"#00ff00", fontWeight: "bold", marginTop: "1rem"}}>{message}</p>}
         <p style={{marginTop:"1rem", color: "#ff3050"}}>
           <button onClick={() => setIsSignup(!isSignup)} style={{color: "#ff3050"}}>
             {isSignup ? "Already have an account? Login" : "Don't have an account? Sign Up"}

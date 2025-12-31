@@ -221,20 +221,31 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
       setSaving(true);
       // Create a reference to the file in Firebase Storage
       const timestamp = Date.now();
-      const fileRef = ref(storage, `avatars/${user.uid}/${timestamp}-${file.name}`);
+      // Ensure user.uid is available
+      const uid = user?.uid || auth.currentUser?.uid;
+      if (!uid) throw new Error("User session not found. Please log in again.");
+      
+      const fileRef = ref(storage, `avatars/${uid}/${timestamp}-${file.name}`);
       
       // Upload the file
+      console.log("Starting upload to:", fileRef.fullPath);
       await uploadBytes(fileRef, file);
       
       // Get the download URL
       const downloadURL = await getDownloadURL(fileRef);
+      console.log("Upload successful, download URL:", downloadURL);
       
       // Update the avatar URL and mark as non-DiceBear
       setAvatarURL(downloadURL);
       setIsDicebearAvatar(false);
+      alert("Selfie uploaded successfully! Click 'Save Avatar' to finalize.");
     } catch (error) {
       console.error("Error uploading avatar:", error);
-      alert("Failed to upload image: " + error.message);
+      let errorMessage = error.message;
+      if (error.code === 'storage/unauthorized') {
+        errorMessage = "Permission denied. Please ensure you are logged in.";
+      }
+      alert("Failed to upload image: " + errorMessage);
     } finally {
       setSaving(false);
     }
