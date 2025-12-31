@@ -1,7 +1,7 @@
 import React from "react";
 
 export default function Burnouts({ user, userProfile }) {
-  const categories = ["Arms", "Legs", "Core", "Cardio"];
+  const categories = ["Arms", "Legs", "Core", "Full Body"];
 
   return (
     <div>
