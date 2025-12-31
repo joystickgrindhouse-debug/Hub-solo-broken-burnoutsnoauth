@@ -88,7 +88,7 @@ export default function Profile({ user, userProfile }) {
         ? `https://api.dicebear.com/7.x/${selectedStyle}/svg?seed=${seed}`
         : currentAvatar;
       
-      console.log("Saving Avatar URL to Firebase Auth and Firestore:", avatarURL);
+      console.log("Saving Avatar URL:", avatarURL);
       
       // Update Firebase Auth
       await updateProfile(user, { photoURL: avatarURL });
@@ -97,20 +97,17 @@ export default function Profile({ user, userProfile }) {
       const result = await UserService.updateUserProfile(user.uid, { avatarURL });
       
       if (result.success) {
-        console.log("Avatar save successful");
-        setCurrentAvatar(avatarURL);
-        setIsEditingAvatar(false);
         alert("Avatar saved successfully!");
+        setIsEditingAvatar(false);
+        window.location.reload(); 
       } else {
-        throw new Error(result.error || "Firestore update failed");
+        throw new Error(result.error || "Database update failed");
       }
     } catch (error) {
       console.error("Error saving avatar:", error);
       alert("Failed to save avatar: " + error.message);
     } finally {
       setIsSavingAvatar(false);
-      // Ensure we clear any potential UI hang by explicitly forcing a state update
-      setTimeout(() => setIsSavingAvatar(false), 100);
     }
   };
 
@@ -131,52 +128,40 @@ export default function Profile({ user, userProfile }) {
 
     try {
       setIsSavingAvatar(true);
-      const timestamp = Date.now();
       
-      // Use the object URL for immediate display
+      // 1. Instant Preview
       const objectUrl = URL.createObjectURL(file);
-      console.log("Local Object URL created for immediate preview:", objectUrl);
       setCurrentAvatar(objectUrl);
       setIsDicebearAvatar(false);
 
+      // 2. Upload to Storage
+      const timestamp = Date.now();
       const fileRef = ref(storage, `avatars/${user.uid}/${timestamp}-${file.name}`);
       const metadata = { contentType: file.type };
       
-      console.log("Uploading file to Firebase Storage...");
+      console.log("Uploading to Storage...");
       await uploadBytes(fileRef, file, metadata);
-      
       const downloadURL = await getDownloadURL(fileRef);
-      console.log("File uploaded, download URL:", downloadURL);
       
-      // Now set the permanent download URL
-      console.log("Setting permanent download URL:", downloadURL);
+      // 3. Update State & Database
       setCurrentAvatar(downloadURL);
-      
-      console.log("Updating user profile in Firestore...");
+      console.log("Uploading to Firestore...");
       const updateResult = await UserService.updateUserProfile(user.uid, { avatarURL: downloadURL });
-      console.log("Firestore update result:", updateResult);
       
       if (updateResult.success) {
-        // Double-check update by fetching profile again if necessary, 
-        // but for now, we'll trust the success and update Auth
         await updateProfile(user, { photoURL: downloadURL });
-        
-        alert("Photo uploaded and profile updated!");
+        alert("Photo uploaded successfully!");
         setIsEditingAvatar(false);
-        // Force a page refresh to ensure all components see the new image
         window.location.reload();
       } else {
-        throw new Error(updateResult.error || "Failed to update profile");
+        throw new Error(updateResult.error || "Firestore update failed");
       }
     } catch (error) {
       console.error("Critical upload error:", error);
       alert("Upload failed: " + error.message);
     } finally {
-      // Small delay to ensure state transitions complete and UI unlocks
       setIsSavingAvatar(false);
       if (event.target) event.target.value = "";
-      // Triple safety check to unlock UI
-      setTimeout(() => setIsSavingAvatar(false), 200);
     }
   };
 
