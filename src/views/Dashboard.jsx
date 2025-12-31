@@ -1,26 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import soloImage from "/assets/images/solo.png";
-import burnoutsImage from "/assets/images/burnouts.png";
 import liveImage from "/assets/images/live.png";
 import runImage from "/assets/images/run.png";
 import gameboardImage from "/assets/images/gameboard.jpeg";
 
 const gameModes = [
-  {
-    id: "solo",
-    name: "Solo",
-    image: soloImage,
-    link: "/solo",
-    external: false,
-  },
-  {
-    id: "burnouts",
-    name: "Burnouts",
-    image: burnoutsImage,
-    link: "/burnouts",
-    external: false,
-  },
   {
     id: "live",
     name: "Live",

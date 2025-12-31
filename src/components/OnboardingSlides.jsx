@@ -11,7 +11,7 @@ export default function OnboardingSlides({ onComplete }) {
     },
     {
       title: "GAMIFIED TRAINING",
-      description: "Solo mode, Burnouts, Live challenges & more game modes",
+      description: "Live challenges, Run events & more game modes",
       icon: "🎮"
     },
     {
