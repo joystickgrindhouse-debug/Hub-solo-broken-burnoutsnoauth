@@ -376,16 +376,20 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
           <button onClick={randomizeSeed} style={styles.randomButton}>
             🎲 Randomize
           </button>
-          <label style={styles.uploadLabel}>
+          <button 
+            onClick={() => document.getElementById('avatar-file-input').click()} 
+            style={styles.randomButton}
+          >
             📸 Upload Photo
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileUpload}
-              disabled={saving}
-              style={styles.fileInput}
-            />
-          </label>
+          </button>
+          <input
+            id="avatar-file-input"
+            type="file"
+            accept="image/*"
+            onChange={handleFileUpload}
+            disabled={saving}
+            style={{ display: 'none' }}
+          />
         </div>
         <p style={styles.uploadHint}>Upload your own photo or selfie (JPG, PNG, GIF, WebP - max 5MB)</p>
       </div>
