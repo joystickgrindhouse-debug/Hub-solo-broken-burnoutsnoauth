@@ -4,10 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI Rep Counter Pro</title>
-    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="./style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script type="importmap">
+    {
+      "imports": {
+        "@mediapipe/pose": "https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose_bundle.js",
+        "@mediapipe/camera_utils": "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js",
+        "@mediapipe/drawing_utils": "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1675466124/drawing_utils.js"
+      }
+    }
+    </script>
 </head>
 <body>
     <div class="app-container">
@@ -70,6 +79,6 @@
         </div>
     </div>
 
-    <script type="module" src="/app.js"></script>
+    <script type="module" src="./app.js"></script>
 </body>
 </html>
