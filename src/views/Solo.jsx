@@ -2,8 +2,15 @@ import React from "react";
 
 export default function Solo({ user, userProfile }) {
   return (
-    <div>
-      {/* Solo Mode - Ready for custom implementation */}
-    </div>
+    <iframe 
+      src="/solo.html" 
+      style={{
+        width: "100%",
+        height: "100vh",
+        border: "none",
+        display: "block"
+      }}
+      title="Solo Mode"
+    />
   );
 }
