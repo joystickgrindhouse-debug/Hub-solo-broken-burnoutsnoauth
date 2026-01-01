@@ -17,11 +17,25 @@ export default function Live({ user, userProfile }) {
   const [isEliminated, setIsEliminated] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipping, setIsFlipping] = useState(false);
-  const [lobbyStatus, setLobbyStatus] = useState("WAITING"); // WAITING, STARTING, ACTIVE
+  const [lobbyStatus, setLobbyStatus] = useState("WAITING");
+  const [activeLobbies, setActiveLobbies] = useState({});
+
+  // Global listener for all showdown lobbies to show counts
+  useEffect(() => {
+    const unsubscribes = SHOWDOWNS.map(s => {
+      const q = query(collection(db, "live_competitions", `live_${s.id}`, "participants"));
+      return onSnapshot(q, (snapshot) => {
+        setActiveLobbies(prev => ({
+          ...prev,
+          [s.id]: snapshot.size
+        }));
+      });
+    });
+    return () => unsubscribes.forEach(unsub => unsub());
+  }, []);
 
   useEffect(() => {
     let unsubscribe = () => {};
-    
     if (selectedShowdown && user) {
       const compId = `live_${selectedShowdown.id}`;
       const userRef = doc(db, "live_competitions", compId, "participants", user.uid);
@@ -50,12 +64,7 @@ export default function Live({ user, userProfile }) {
         
         const activeOnes = participants.filter(p => !p.isEliminated);
         setRivals(participants);
-        
-        if (participants.length >= 2) {
-          setLobbyStatus("ACTIVE");
-        } else {
-          setLobbyStatus("WAITING");
-        }
+        setLobbyStatus(participants.length >= 2 ? "ACTIVE" : "WAITING");
 
         if (activeOnes.length > 0) {
           const currentActive = activeOnes[0];
@@ -72,8 +81,6 @@ export default function Live({ user, userProfile }) {
         const me = participants.find(p => p.id === user.uid);
         if (me?.isEliminated) setIsEliminated(true);
         else setIsEliminated(false);
-      }, (error) => {
-        console.error("Lobby listener error:", error);
       });
     }
 
@@ -88,17 +95,14 @@ export default function Live({ user, userProfile }) {
 
   const handleCardComplete = () => {
     if (activePlayerId !== user.uid || isEliminated || lobbyStatus !== "ACTIVE") return;
-    
     const nextIndex = (currentCardIndex + 1) % selectedShowdown.exercises.length;
     const compId = `live_${selectedShowdown.id}`;
-    
     updateDoc(doc(db, "live_competitions", compId, "participants", user.uid), {
       currentCardIndex: nextIndex,
       score: score + 10,
       lastUpdate: serverTimestamp(),
       joinedAt: serverTimestamp() 
     }).catch(console.error);
-    
     setScore(s => s + 10);
   };
 
@@ -112,7 +116,7 @@ export default function Live({ user, userProfile }) {
         setIsEliminated(false);
         setActivePlayerId(null);
       } catch (error) {
-        console.error("Error quitting lobby:", error);
+        console.error("Error quitting:", error);
         setSelectedShowdown(null);
       }
     }
@@ -121,12 +125,38 @@ export default function Live({ user, userProfile }) {
   if (!selectedShowdown) {
     return (
       <div className="live-selection" style={{ padding: "20px", textAlign: "center", minHeight: "calc(100vh - 64px)", background: "#000" }}>
-        <h1 style={{ fontFamily: "'Press Start 2P', cursive", color: "#ff3050", marginBottom: "30px", fontSize: "24px" }}>CARD SHOWDOWN</h1>
-        <p style={{ color: "white", marginBottom: "40px", fontFamily: "sans-serif" }}>Join a lobby and compete</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px", maxWidth: "500px", margin: "0 auto" }}>
+        <h1 style={{ fontFamily: "'Press Start 2P', cursive", color: "#ff3050", marginBottom: "10px", fontSize: "24px" }}>SHOWDOWN BROWSER</h1>
+        <p style={{ color: "white", marginBottom: "40px", fontFamily: "sans-serif" }}>Find an active session or start a new one</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px", maxWidth: "600px", margin: "0 auto" }}>
           {SHOWDOWNS.map((s) => (
-            <button key={s.id} onClick={() => setSelectedShowdown(s)} style={{ padding: "25px", background: "black", border: "2px solid #ff3050", color: "white", fontFamily: "'Press Start 2P', cursive", cursor: "pointer", boxShadow: "0 0 10px rgba(255,48,80,0.3)" }}>
-              {s.name}
+            <button 
+              key={s.id} 
+              onClick={() => setSelectedShowdown(s)} 
+              style={{ 
+                padding: "20px", 
+                background: "black", 
+                border: "2px solid #ff3050", 
+                color: "white", 
+                fontFamily: "'Press Start 2P', cursive", 
+                cursor: "pointer", 
+                display: "flex", 
+                justifyContent: "space-between", 
+                alignItems: "center",
+                textAlign: "left"
+              }}
+            >
+              <div>
+                <div style={{ fontSize: "14px" }}>{s.name}</div>
+                <div style={{ fontSize: "10px", color: "#666", marginTop: "5px" }}>{s.category}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ color: activeLobbies[s.id] > 0 ? "#0f0" : "#ff3050", fontSize: "12px" }}>
+                  {activeLobbies[s.id] || 0} RIVALS
+                </div>
+                <div style={{ fontSize: "8px", color: "#444", marginTop: "5px" }}>
+                  {activeLobbies[s.id] >= 2 ? "IN PROGRESS" : "WAITING"}
+                </div>
+              </div>
             </button>
           ))}
         </div>
@@ -142,74 +172,30 @@ export default function Live({ user, userProfile }) {
       <div style={{ padding: "15px", borderBottom: "2px solid #ff3050", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
           <span style={{ color: "#ff3050", fontFamily: "'Press Start 2P', cursive", fontSize: "12px" }}>{selectedShowdown.name}</span>
-          <span style={{ color: lobbyStatus === "ACTIVE" ? "#0f0" : "#ff0", fontSize: "10px", fontFamily: "'Press Start 2P', cursive" }}>
-            {lobbyStatus}
-          </span>
+          <span style={{ color: lobbyStatus === "ACTIVE" ? "#0f0" : "#ff0", fontSize: "10px", fontFamily: "'Press Start 2P', cursive" }}>{lobbyStatus}</span>
         </div>
-        <button onClick={handleQuit} style={{ background: "transparent", border: "1px solid #ff3050", color: "#ff3050", padding: "5px 10px", fontSize: "10px", fontFamily: "'Press Start 2P', cursive", cursor: "pointer" }}>
-          QUIT
-        </button>
+        <button onClick={handleQuit} style={{ background: "transparent", border: "1px solid #ff3050", color: "#ff3050", padding: "5px 10px", fontSize: "10px", fontFamily: "'Press Start 2P', cursive", cursor: "pointer" }}>QUIT</button>
       </div>
-      
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         <div style={{ flex: 1, borderRight: "2px solid #ff3050", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", perspective: "1000px" }}>
           {lobbyStatus === "WAITING" ? (
             <div style={{ textAlign: "center", color: "white" }}>
               <h2 style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "18px", marginBottom: "20px" }}>WAITING FOR RIVALS...</h2>
-              <p style={{ color: "#666" }}>Need at least 2 players to start showdown</p>
+              <p style={{ color: "#666" }}>Waiting for at least 1 more rival to begin</p>
             </div>
           ) : isEliminated ? (
             <h2 style={{ color: "#ff3050", fontFamily: "'Press Start 2P', cursive" }}>ELIMINATED</h2>
           ) : (
-            <div style={{ 
-              width: "280px", 
-              height: "400px", 
-              position: "relative", 
-              transformStyle: "preserve-3d",
-              transition: "transform 0.6s",
-              transform: isFlipping ? "rotateY(180deg)" : "rotateY(0deg)"
-            }}>
-              <div style={{
-                position: "absolute",
-                width: "100%",
-                height: "100%",
-                backfaceVisibility: "hidden",
-                background: "white",
-                borderRadius: "15px",
-                padding: "20px",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "space-between",
-                boxShadow: "0 0 20px #ff3050",
-                color: "black",
-                border: "8px solid #000"
-              }}>
-                <div style={{ width: "100%", display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: "20px" }}>
-                  <span>{currentCardIndex + 1}</span>
-                  <span style={{ color: "#ff3050" }}>♥</span>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <h2 style={{ fontSize: "18px", margin: "10px 0" }}>{currentExercise}</h2>
-                  <div style={{ fontSize: "40px" }}>{score}</div>
-                  <p style={{ fontSize: "12px", color: "#666" }}>TOTAL REPS</p>
-                </div>
-                {isMyTurn ? (
-                  <button onClick={handleCardComplete} style={{ width: "100%", padding: "10px", background: "#ff3050", color: "white", border: "none", fontFamily: "'Press Start 2P', cursive", fontSize: "10px", cursor: "pointer" }}>
-                    COMPLETE & FLIP
-                  </button>
-                ) : (
-                  <div style={{ fontSize: "10px", color: "#ff3050", fontWeight: "bold", fontFamily: "'Press Start 2P', cursive" }}>RIVAL'S TURN</div>
-                )}
-                <div style={{ width: "100%", display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: "20px", transform: "rotate(180deg)" }}>
-                  <span>{currentCardIndex + 1}</span>
-                  <span style={{ color: "#ff3050" }}>♥</span>
-                </div>
+            <div style={{ width: "280px", height: "400px", position: "relative", transformStyle: "preserve-3d", transition: "transform 0.6s", transform: isFlipping ? "rotateY(180deg)" : "rotateY(0deg)" }}>
+              <div style={{ position: "absolute", width: "100%", height: "100%", backfaceVisibility: "hidden", background: "white", borderRadius: "15px", padding: "20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", boxShadow: "0 0 20px #ff3050", color: "black", border: "8px solid #000" }}>
+                <div style={{ width: "100%", display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: "20px" }}><span>{currentCardIndex + 1}</span><span style={{ color: "#ff3050" }}>♥</span></div>
+                <div style={{ textAlign: "center" }}><h2 style={{ fontSize: "18px", margin: "10px 0" }}>{currentExercise}</h2><div style={{ fontSize: "40px" }}>{score}</div><p style={{ fontSize: "12px", color: "#666" }}>TOTAL REPS</p></div>
+                {isMyTurn ? (<button onClick={handleCardComplete} style={{ width: "100%", padding: "10px", background: "#ff3050", color: "white", border: "none", fontFamily: "'Press Start 2P', cursive", fontSize: "10px", cursor: "pointer" }}>COMPLETE & FLIP</button>) : (<div style={{ fontSize: "10px", color: "#ff3050", fontWeight: "bold", fontFamily: "'Press Start 2P', cursive" }}>RIVAL'S TURN</div>)}
+                <div style={{ width: "100%", display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: "20px", transform: "rotate(180deg)" }}><span>{currentCardIndex + 1}</span><span style={{ color: "#ff3050" }}>♥</span></div>
               </div>
             </div>
           )}
         </div>
-
         <div style={{ width: "280px", padding: "15px", background: "#0a0a0a" }}>
           <h3 style={{ color: "#ff3050", fontFamily: "'Press Start 2P', cursive", fontSize: "10px", marginBottom: "20px", textAlign: "center" }}>LOBBY</h3>
           {rivals.map((rival) => (
@@ -218,9 +204,7 @@ export default function Live({ user, userProfile }) {
                 <span style={{ color: "white", fontSize: "10px", fontFamily: "'Press Start 2P', cursive" }}>{rival.nickname}</span>
                 <span style={{ color: "#ff3050", fontSize: "12px", fontFamily: "'Press Start 2P', cursive" }}>{rival.score}</span>
               </div>
-              {rival.id === activePlayerId && !rival.isEliminated && (
-                <span style={{ color: "#0f0", fontSize: "8px", marginTop: "5px", fontFamily: "'Press Start 2P', cursive" }}>[ CURRENTLY FLIPPING ]</span>
-              )}
+              {rival.id === activePlayerId && !rival.isEliminated && (<span style={{ color: "#0f0", fontSize: "8px", marginTop: "5px", fontFamily: "'Press Start 2P', cursive" }}>[ CURRENTLY FLIPPING ]</span>)}
             </div>
           ))}
         </div>
