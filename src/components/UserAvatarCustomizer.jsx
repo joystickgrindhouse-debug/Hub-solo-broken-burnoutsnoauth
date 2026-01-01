@@ -131,11 +131,11 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
   }, [propUser, userProfile, isFirstTimeSetup]);
 
   useEffect(() => {
-    if (initialized && isDicebearAvatar && seed) {
+    if (initialized && isDicebearAvatar && seed && !avatarURL.startsWith('/objects/')) {
       const url = `https://api.dicebear.com/7.x/${selectedStyle}/svg?seed=${seed}`;
       setAvatarURL(url);
     }
-  }, [selectedStyle, seed, initialized, isDicebearAvatar]);
+  }, [selectedStyle, seed, initialized, isDicebearAvatar, avatarURL]);
 
   const handleSaveAvatar = async () => {
     console.log("=== SAVE AVATAR CLICKED ===");
@@ -336,6 +336,7 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
       console.log("New avatar internal path:", downloadURL);
       
       setAvatarURL(downloadURL);
+      setSeed(""); // Clear seed to prevent Dicebear override
       setIsDicebearAvatar(false);
       setImageToCrop(null);
       alert("Selfie cropped and uploaded successfully! Remember to click 'Save Avatar' at the bottom to finalize.");
