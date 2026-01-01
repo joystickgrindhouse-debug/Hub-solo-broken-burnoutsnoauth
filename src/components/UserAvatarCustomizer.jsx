@@ -281,6 +281,8 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
         return;
       }
 
+      console.log("Uploading blob of size:", croppedBlob.size);
+
       // Step 1: Request presigned URL from backend
       const response = await fetch("/api/uploads/request-url", {
         method: "POST",
@@ -297,6 +299,7 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
       }
 
       const { uploadURL, objectPath } = await response.json();
+      console.log("Received upload URL, starting PUT upload...");
 
       // Step 2: Upload directly to cloud storage
       const uploadRes = await fetch(uploadURL, {
@@ -306,20 +309,29 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
       });
 
       if (!uploadRes.ok) {
-        throw new Error("Failed to upload to storage");
+        throw new Error("Failed to upload to storage: " + uploadRes.statusText);
       }
+
+      console.log("Upload to cloud successful!");
 
       // Final avatar URL is the internal /objects/ path
       const downloadURL = objectPath;
-      console.log("New avatar internal path:", downloadURL);
+      console.log("New avatar internal path set to state:", downloadURL);
       
       setAvatarURL(downloadURL);
       setSeed(""); // Clear seed to prevent Dicebear override
       setIsDicebearAvatar(false);
       setImageToCrop(null);
-      alert("Selfie cropped and uploaded successfully! Remember to click 'Save Avatar' at the bottom to finalize.");
+      
+      // Auto-save to profile immediately after crop
+      console.log("Auto-saving to profile...");
+      await updateProfile(auth.currentUser, { photoURL: downloadURL });
+      await UserService.updateUserProfile(uid, { avatarURL: downloadURL, hasCompletedSetup: true });
+      
+      alert("Selfie uploaded and saved successfully!");
+      navigate("/dashboard");
     } catch (e) {
-      console.error("Crop save error:", e);
+      console.error("Crop save error detail:", e);
       alert("Failed to crop and upload image: " + e.message);
     } finally {
       setSaving(false);
