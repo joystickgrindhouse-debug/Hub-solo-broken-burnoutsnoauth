@@ -140,8 +140,10 @@ export default function App() {
     }
   };
 
-  // Show initial loading screen
-  if (loading || checkingSetup || !profileLoaded || initialHype) return <LoadingScreen />;
+  // Show initial loading screen or hype screen
+  if (loading || checkingSetup || !profileLoaded || initialHype) {
+    return <LoadingScreen />;
+  }
 
   // Show onboarding slides after login/signup but before main app (only for logged-in users)
   if (user && showOnboarding && !onboardingComplete) {
