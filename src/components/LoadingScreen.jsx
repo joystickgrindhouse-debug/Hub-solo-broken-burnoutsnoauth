@@ -118,12 +118,13 @@ export default function LoadingScreen() {
         }}>
           <h2 key={`title-${msgIndex}`} style={{
             fontFamily: "'Press Start 2P', cursive",
-            color: "#fff",
+            color: "#ff3050",
             fontSize: "clamp(0.8rem, 3vw, 1.2rem)",
             lineHeight: "1.6",
             marginBottom: "1.5rem",
             animation: "slideUpFade 0.5s ease-out forwards",
-            textShadow: "0 0 10px rgba(255,255,255,0.5)"
+            textShadow: "2px 2px 0px #000, 0 0 10px rgba(255, 48, 80, 0.3)",
+            fontWeight: "normal"
           }}>
             {HYPE_MESSAGES[msgIndex].title}
           </h2>
