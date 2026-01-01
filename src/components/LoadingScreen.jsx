@@ -155,7 +155,7 @@ export default function LoadingScreen() {
             background: "#ff3050",
             borderRadius: "2px",
             boxShadow: "0 0 15px #ff3050",
-            animation: "loadingBar 8s ease-in-out infinite"
+            animation: "loadingBar 15s ease-in-out infinite"
           }} />
         </div>
 
