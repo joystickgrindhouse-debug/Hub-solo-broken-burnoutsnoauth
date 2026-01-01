@@ -239,24 +239,15 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
       return;
     }
 
-    try {
-      // Use URL.createObjectURL for faster, more reliable local preview
-      const objectUrl = URL.createObjectURL(file);
-      console.log("Created Object URL:", objectUrl);
-      
-      // Reset cropping state
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      console.log("FileReader finished, setting imageToCrop");
+      setImageToCrop(reader.result);
       setCrop({ x: 0, y: 0 });
       setZoom(1);
-      
-      // Update state to show cropper
-      setImageToCrop(objectUrl);
       setIsDicebearAvatar(false);
-      
-      console.log("imageToCrop state set to objectUrl, modal should appear");
-    } catch (err) {
-      console.error("Error creating object URL:", err);
-      alert("Failed to process image. Please try another one.");
-    }
+    });
+    reader.readAsDataURL(file);
     
     // Clear input so same file can be selected again
     event.target.value = "";
