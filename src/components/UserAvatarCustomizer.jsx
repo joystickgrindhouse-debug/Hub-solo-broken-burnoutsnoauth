@@ -8,35 +8,37 @@ import { UserService } from "../services/userService";
 import { NicknameService } from "../services/nicknameService";
 
 // Helper for cropping
-const getCroppedImg = async (imageSrc, pixelCrop) => {
-  const image = new Image();
-  image.src = imageSrc;
-  await new Promise((resolve) => (image.onload = resolve));
+  const getCroppedImg = async (imageSrc, pixelCrop) => {
+    const image = new Image();
+    image.src = imageSrc;
+    await new Promise((resolve) => (image.onload = resolve));
 
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
 
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
+    // Ensure we have a square canvas for the avatar
+    const size = Math.min(pixelCrop.width, pixelCrop.height);
+    canvas.width = size;
+    canvas.height = size;
 
-  ctx.drawImage(
-    image,
-    pixelCrop.x,
-    pixelCrop.y,
-    pixelCrop.width,
-    pixelCrop.height,
-    0,
-    0,
-    pixelCrop.width,
-    pixelCrop.height
-  );
+    ctx.drawImage(
+      image,
+      pixelCrop.x,
+      pixelCrop.y,
+      pixelCrop.width,
+      pixelCrop.height,
+      0,
+      0,
+      size,
+      size
+    );
 
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => {
-      resolve(blob);
-    }, 'image/jpeg');
-  });
-};
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, 'image/jpeg', 0.85); // Added quality parameter for faster upload
+    });
+  };
 
 const avatarStyles = [
   { id: "adventurer", name: "Adventurer", desc: "Illustrated characters" },
@@ -267,63 +269,43 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
       const uid = user?.uid || auth.currentUser?.uid;
       
       if (!uid) {
-        alert("User session not found. Please log in again.");
-        setSaving(false);
-        return;
+        throw new Error("User session not found. Please log in again.");
       }
 
       console.log("Uploading blob of size:", croppedBlob.size);
 
-      // Step 1: Request presigned URL from backend
-      const response = await fetch("/api/uploads/request-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: `avatar-${uid}-${Date.now()}.jpg`,
-          size: croppedBlob.size,
-          contentType: "image/jpeg",
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to get upload URL");
-      }
-
-      const { uploadURL, objectPath } = await response.json();
-      console.log("Received upload URL, starting PUT upload...");
-
-      // Step 2: Upload directly to cloud storage
-      const uploadRes = await fetch(uploadURL, {
-        method: "PUT",
-        body: croppedBlob,
-        headers: { "Content-Type": "image/jpeg" },
-      });
-
-      if (!uploadRes.ok) {
-        throw new Error("Failed to upload to storage: " + uploadRes.statusText);
-      }
-
-      console.log("Upload to cloud successful!");
-
-      // Final avatar URL is the internal /objects/ path
-      const downloadURL = objectPath;
-      console.log("New avatar internal path set to state:", downloadURL);
+      // Upload directly to Firebase Storage
+      const storageRef = ref(storage, `avatars/${uid}-${Date.now()}.jpg`);
+      await uploadBytes(storageRef, croppedBlob);
+      const downloadURL = await getDownloadURL(storageRef);
       
+      console.log("Firebase Storage upload successful, URL:", downloadURL);
+
+      // Update local state first for immediate UI feedback
       setAvatarURL(downloadURL);
-      setSeed(""); // Clear seed to prevent Dicebear override
+      setSeed("");
       setIsDicebearAvatar(false);
       setImageToCrop(null);
       
-      // Auto-save to profile immediately after crop
-      console.log("Auto-saving to profile...");
-      await updateProfile(auth.currentUser, { photoURL: downloadURL });
-      await UserService.updateUserProfile(uid, { avatarURL: downloadURL, hasCompletedSetup: true });
+      // CRITICAL: Force update both Auth and Firestore immediately
+      console.log("Performing final profile sync...");
+      await Promise.all([
+        updateProfile(auth.currentUser, { 
+          photoURL: downloadURL,
+          displayName: nickname || auth.currentUser.displayName 
+        }),
+        UserService.updateUserProfile(uid, { 
+          avatarURL: downloadURL, 
+          nickname: nickname || auth.currentUser.displayName,
+          hasCompletedSetup: true 
+        })
+      ]);
       
-      alert("Selfie uploaded and saved successfully!");
+      console.log("Profile sync complete, navigating...");
       navigate("/dashboard");
     } catch (e) {
-      console.error("Crop save error detail:", e);
-      alert("Failed to crop and upload image: " + e.message);
+      console.error("CRITICAL SAVE ERROR:", e);
+      alert("Error saving: " + e.message);
     } finally {
       setSaving(false);
     }
