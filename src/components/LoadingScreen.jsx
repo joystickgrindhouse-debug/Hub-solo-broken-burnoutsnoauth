@@ -3,11 +3,15 @@ import React, { useState, useEffect } from "react";
 const HYPE_MESSAGES = [
   {
     title: "A NEW BREED OF FITNESS",
-    description: "The first of its kind gamified competitive fitness arena. We've bridged the gap between gaming and iron."
+    description: "Rivalis gamifies your grind. Track workouts with AI, earn dice, and dominate the gameboard. Join the movement now!"
   },
   {
-    title: "NOT JUST AN APP. A LIFESTYLE.",
-    description: "Your daily grind becomes your digital legacy. Every drop of sweat fuels your rise to legend status."
+    title: "SIGN UP. LEVEL UP.",
+    description: "New here? Create your legend to start earning rewards. Already a rival? Sign in to reclaim your throne."
+  },
+  {
+    title: "GEAR UP AT THE SHOP",
+    description: "Check out our exclusive merch shop! Rep the Rivalis colors in the real world with premium fitness apparel."
   },
   {
     title: "EARN YOUR ROLLS",
@@ -16,10 +20,6 @@ const HYPE_MESSAGES = [
   {
     title: "REAL WORLD REWARDS",
     description: "Top contenders who complete the board or go the furthest each cycle win exclusive real-world rewards."
-  },
-  {
-    title: "ARE YOU READY FOR THE CHALLENGE?",
-    description: "Rivalis isn't for the weak. It's for those who want to out-train, out-rival, and out-perform everyone else."
   }
 ];
 
