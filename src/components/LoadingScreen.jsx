@@ -25,7 +25,7 @@ export default function LoadingScreen() {
   useEffect(() => {
     const interval = setInterval(() => {
       setMsgIndex((prev) => (prev + 1) % HYPE_MESSAGES.length);
-    }, 4000);
+    }, 6000);
     return () => clearInterval(interval);
   }, []);
 
@@ -155,7 +155,7 @@ export default function LoadingScreen() {
             background: "#ff3050",
             borderRadius: "2px",
             boxShadow: "0 0 15px #ff3050",
-            animation: "loadingBar 15s ease-in-out infinite"
+            animation: "loadingBar 24s ease-in-out infinite"
           }} />
         </div>
 
