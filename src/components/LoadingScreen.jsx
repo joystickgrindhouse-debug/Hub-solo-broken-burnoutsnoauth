@@ -2,20 +2,20 @@ import React, { useState, useEffect } from "react";
 
 const HYPE_MESSAGES = [
   {
+    title: "A NEW BREED OF FITNESS",
+    description: "The first of its kind gamified competitive fitness arena. We've bridged the gap between gaming and iron."
+  },
+  {
+    title: "NOT JUST AN APP. A LIFESTYLE.",
+    description: "Your daily grind becomes your digital legacy. Every drop of sweat fuels your rise to legend status."
+  },
+  {
+    title: "ARE YOU READY FOR THE CHALLENGE?",
+    description: "Rivalis isn't for the weak. It's for those who want to out-train, out-rival, and out-perform everyone else."
+  },
+  {
     title: "THE ARENA AWAITS",
     description: "Convert your real-world sweat into digital dominance. Every rep counts towards your global rank."
-  },
-  {
-    title: "OUT-TRAIN THE RIVALS",
-    description: "Battle in real-time Burnouts. Face off against the community and prove your endurance."
-  },
-  {
-    title: "EVOLVE YOUR AVATAR",
-    description: "Unlock legendary gear and status as you crush your fitness goals. Your avatar reflects your hard work."
-  },
-  {
-    title: "TOTAL SYNC",
-    description: "AI-powered form tracking ensures every movement is precise. No shortcuts, just pure results."
   }
 ];
 
