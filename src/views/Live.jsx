@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
-import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, serverTimestamp, query, limit } from "firebase/firestore";
-import LoadingScreen from "../components/LoadingScreen";
+import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, serverTimestamp, query, limit, orderBy } from "firebase/firestore";
 
 const SHOWDOWNS = [
   { id: "arms", name: "Arm Showdown", category: "Arms" },
@@ -14,30 +13,50 @@ export default function Live({ user, userProfile }) {
   const [selectedShowdown, setSelectedShowdown] = useState(null);
   const [rivals, setRivals] = useState([]);
   const [score, setScore] = useState(0);
+  const [activePlayerId, setActivePlayerId] = useState(null);
+  const [isEliminated, setIsEliminated] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
 
   useEffect(() => {
     if (selectedShowdown && user) {
       const compId = `live_${selectedShowdown.id}`;
       const userRef = doc(db, "live_competitions", compId, "participants", user.uid);
 
-      // Join competition
       setDoc(userRef, {
         nickname: userProfile?.nickname || "Rival",
         avatar: userProfile?.avatar || "",
         score: 0,
+        isEliminated: false,
+        joinedAt: serverTimestamp(),
         lastUpdate: serverTimestamp()
       });
 
-      // Listen for rivals (top 10)
-      const q = query(collection(db, "live_competitions", compId, "participants"), limit(10));
+      const q = query(
+        collection(db, "live_competitions", compId, "participants"),
+        orderBy("joinedAt", "asc"),
+        limit(20)
+      );
+
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const participants = [];
         snapshot.forEach((doc) => {
-          if (doc.id !== user.uid) {
-            participants.push({ id: doc.id, ...doc.data() });
-          }
+          participants.push({ id: doc.id, ...doc.data() });
         });
-        setRivals(participants.sort((a, b) => b.score - a.score));
+        
+        const activeOnes = participants.filter(p => !p.isEliminated);
+        setRivals(participants);
+        
+        if (activeOnes.length > 0) {
+          // Simplistic turn logic: oldest joined player who isn't eliminated goes first
+          setActivePlayerId(activeOnes[0].id);
+          setGameStarted(activeOnes.length >= 1);
+        } else {
+          setActivePlayerId(null);
+          setGameStarted(false);
+        }
+
+        const me = participants.find(p => p.id === user.uid);
+        if (me?.isEliminated) setIsEliminated(true);
       });
 
       return () => {
@@ -48,22 +67,39 @@ export default function Live({ user, userProfile }) {
   }, [selectedShowdown, user, userProfile]);
 
   const handleScoreUpdate = () => {
+    if (activePlayerId !== user.uid || isEliminated) return;
+    
     const newScore = score + 1;
     setScore(newScore);
+    const compId = `live_${selectedShowdown.id}`;
+    updateDoc(doc(db, "live_competitions", compId, "participants", user.uid), {
+      score: newScore,
+      lastUpdate: serverTimestamp()
+    }).catch(console.error);
+  };
+
+  const handleQuit = () => {
     if (selectedShowdown && user) {
       const compId = `live_${selectedShowdown.id}`;
       updateDoc(doc(db, "live_competitions", compId, "participants", user.uid), {
-        score: newScore,
+        isEliminated: true,
         lastUpdate: serverTimestamp()
-      }).catch(console.error);
+      }).then(() => setSelectedShowdown(null)).catch(console.error);
     }
+  };
+
+  const passTurn = () => {
+    if (activePlayerId !== user.uid) return;
+    // In this "Last Man Standing" turn-based mode, passing turn means you're done for now
+    // but the next person gets to try and beat your score or keep going.
+    // For now, let's keep it simple: one person goes at a time.
   };
 
   if (!selectedShowdown) {
     return (
       <div className="live-selection" style={{ padding: "20px", textAlign: "center", minHeight: "calc(100vh - 64px)", background: "#000" }}>
-        <h1 style={{ fontFamily: "'Press Start 2P', cursive", color: "#ff3050", marginBottom: "30px", fontSize: "24px" }}>LIVE SHOWDOWN</h1>
-        <p style={{ color: "white", marginBottom: "40px", fontFamily: "sans-serif" }}>Choose your battleground</p>
+        <h1 style={{ fontFamily: "'Press Start 2P', cursive", color: "#ff3050", marginBottom: "30px", fontSize: "24px" }}>LAST MAN STANDING</h1>
+        <p style={{ color: "white", marginBottom: "40px", fontFamily: "sans-serif" }}>Real-time elimination showdown</p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px", maxWidth: "500px", margin: "0 auto" }}>
           {SHOWDOWNS.map((s) => (
             <button
@@ -77,8 +113,7 @@ export default function Live({ user, userProfile }) {
                 fontFamily: "'Press Start 2P', cursive",
                 fontSize: "14px",
                 cursor: "pointer",
-                boxShadow: "0 0 10px rgba(255,48,80,0.3)",
-                transition: "all 0.2s"
+                boxShadow: "0 0 10px rgba(255,48,80,0.3)"
               }}
             >
               {s.name}
@@ -89,54 +124,71 @@ export default function Live({ user, userProfile }) {
     );
   }
 
+  const isMyTurn = activePlayerId === user.uid;
+
   return (
     <div className="live-arena" style={{ height: "calc(100vh - 64px)", background: "black", position: "relative", display: "flex", flexDirection: "column" }}>
       <div style={{ padding: "15px", borderBottom: "2px solid #ff3050", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ color: "#ff3050", fontFamily: "'Press Start 2P', cursive", fontSize: "12px" }}>{selectedShowdown.name}</span>
         <button 
-          onClick={() => setSelectedShowdown(null)}
-          style={{ background: "transparent", border: "1px solid #555", color: "white", padding: "5px 10px", fontSize: "10px", cursor: "pointer" }}
+          onClick={handleQuit}
+          style={{ background: "transparent", border: "1px solid #ff3050", color: "#ff3050", padding: "5px 10px", fontSize: "10px", fontFamily: "'Press Start 2P', cursive", cursor: "pointer" }}
         >
-          QUIT
+          {isEliminated ? "BACK" : "SURRENDER"}
         </button>
       </div>
       
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        {/* Mock Pose Tracking Area */}
         <div style={{ flex: 1, borderRight: "2px solid #ff3050", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative" }}>
-          <div style={{ fontSize: "72px", color: "white", fontFamily: "'Press Start 2P', cursive", textShadow: "0 0 20px #ff3050" }}>{score}</div>
-          <div style={{ color: "#ff3050", marginTop: "10px", fontFamily: "'Press Start 2P', cursive", fontSize: "14px" }}>REPS</div>
-          
-          <div style={{ marginTop: "50px", textAlign: "center", padding: "20px", background: "rgba(255,48,80,0.1)", borderRadius: "10px", border: "1px dashed #ff3050" }}>
-            <p style={{ color: "white", marginBottom: "15px", fontSize: "12px" }}>AI POSE TRACKING ACTIVE</p>
-            <button 
-              onClick={handleScoreUpdate}
-              style={{ padding: "15px 30px", background: "#ff3050", border: "none", color: "white", fontFamily: "'Press Start 2P', cursive", fontSize: "12px", cursor: "pointer", boxShadow: "0 4px 0 #900" }}
-            >
-              SIMULATE REP
-            </button>
-          </div>
-          
-          <div style={{ position: "absolute", bottom: "20px", color: "#444", fontSize: "10px" }}>
-            CONNECTED TO RIVALIS ENGINE v2.4
-          </div>
+          {isEliminated ? (
+            <div style={{ textAlign: "center" }}>
+              <h2 style={{ color: "#ff3050", fontFamily: "'Press Start 2P', cursive" }}>ELIMINATED</h2>
+              <p style={{ color: "white" }}>You are spectating the remaining rivals.</p>
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: "72px", color: isMyTurn ? "white" : "#444", fontFamily: "'Press Start 2P', cursive", textShadow: isMyTurn ? "0 0 20px #ff3050" : "none" }}>{score}</div>
+              <div style={{ color: isMyTurn ? "#ff3050" : "#444", marginTop: "10px", fontFamily: "'Press Start 2P', cursive", fontSize: "14px" }}>REPS</div>
+              
+              <div style={{ marginTop: "50px", textAlign: "center", padding: "20px", background: isMyTurn ? "rgba(255,48,80,0.1)" : "transparent", borderRadius: "10px", border: isMyTurn ? "1px dashed #ff3050" : "1px solid #222" }}>
+                <p style={{ color: "white", marginBottom: "15px", fontSize: "12px", fontFamily: "'Press Start 2P', cursive" }}>
+                  {isMyTurn ? "YOUR TURN!" : "WAITING FOR RIVAL..."}
+                </p>
+                {isMyTurn && (
+                  <button 
+                    onClick={handleScoreUpdate}
+                    style={{ padding: "15px 30px", background: "#ff3050", border: "none", color: "white", fontFamily: "'Press Start 2P', cursive", fontSize: "12px", cursor: "pointer", boxShadow: "0 4px 0 #900" }}
+                  >
+                    DO REP
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
-        {/* Real-time Leaderboard */}
-        <div style={{ width: "250px", padding: "15px", display: "flex", flexDirection: "column", background: "#0a0a0a" }}>
-          <h3 style={{ color: "#ff3050", fontFamily: "'Press Start 2P', cursive", fontSize: "12px", marginBottom: "20px", textAlign: "center" }}>RIVALS</h3>
+        <div style={{ width: "280px", padding: "15px", display: "flex", flexDirection: "column", background: "#0a0a0a" }}>
+          <h3 style={{ color: "#ff3050", fontFamily: "'Press Start 2P', cursive", fontSize: "12px", marginBottom: "20px", textAlign: "center" }}>SURVIVORS</h3>
           <div style={{ flex: 1, overflowY: "auto" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "12px", marginBottom: "10px", background: "rgba(255,48,80,0.2)", border: "1px solid #ff3050" }}>
-              <span style={{ color: "white", fontWeight: "bold" }}>YOU</span>
-              <span style={{ color: "white" }}>{score}</span>
-            </div>
-            {rivals.length === 0 && (
-              <p style={{ color: "#555", fontSize: "10px", textAlign: "center", marginTop: "20px" }}>WAITING FOR RIVALS...</p>
-            )}
             {rivals.map((rival) => (
-              <div key={rival.id} style={{ display: "flex", justifyContent: "space-between", padding: "10px", borderBottom: "1px solid #222" }}>
-                <span style={{ color: "#ccc", fontSize: "12px" }}>{rival.nickname}</span>
-                <span style={{ color: "white", fontSize: "12px" }}>{rival.score}</span>
+              <div 
+                key={rival.id} 
+                style={{ 
+                  display: "flex", 
+                  justifyContent: "space-between", 
+                  padding: "12px", 
+                  marginBottom: "8px", 
+                  background: rival.id === activePlayerId ? "rgba(255,48,80,0.2)" : "transparent",
+                  border: rival.id === activePlayerId ? "1px solid #ff3050" : "1px solid #222",
+                  opacity: rival.isEliminated ? 0.3 : 1
+                }}
+              >
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <span style={{ color: "white", fontSize: "10px", fontFamily: "'Press Start 2P', cursive" }}>{rival.nickname} {rival.id === user.uid && "(YOU)"}</span>
+                  {rival.isEliminated && <span style={{ color: "#ff3050", fontSize: "8px" }}>OUT</span>}
+                  {rival.id === activePlayerId && !rival.isEliminated && <span style={{ color: "#0f0", fontSize: "8px" }}>ACTIVE</span>}
+                </div>
+                <span style={{ color: "white", fontSize: "14px", fontFamily: "'Press Start 2P', cursive" }}>{rival.score}</span>
               </div>
             ))}
           </div>
