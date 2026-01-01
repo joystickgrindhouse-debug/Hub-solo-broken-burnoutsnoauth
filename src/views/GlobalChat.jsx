@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { ChatService } from "../services/chatService.js";
 import CustomEmojiPicker from "../components/CustomEmojiPicker.jsx";
 
-export default function GlobalChat({ user, userProfile }) {
+export default function GlobalChat({ user, userProfile, hideNavbar }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -56,20 +56,30 @@ export default function GlobalChat({ user, userProfile }) {
     };
   }, []);
 
-  return (
-    <div className="hero-background">
-      <div style={{ 
-        width: "95%", 
-        maxWidth: "800px",
-        minHeight: "80vh",
-        display: "flex", 
-        flexDirection: "column",
-        background: "#000000",
-        border: "2px solid #ff3050",
-        borderRadius: "12px",
-        padding: "1.5rem",
-        boxShadow: "0 0 30px rgba(255, 48, 80, 0.5), inset 0 0 20px rgba(255, 48, 80, 0.05)"
-      }}>
+  const containerStyle = hideNavbar ? {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    background: "#000000",
+    padding: "1rem",
+    boxSizing: "border-box"
+  } : {
+    width: "95%",
+    maxWidth: "800px",
+    minHeight: "80vh",
+    display: "flex",
+    flexDirection: "column",
+    background: "#000000",
+    border: "2px solid #ff3050",
+    borderRadius: "12px",
+    padding: "1.5rem",
+    boxShadow: "0 0 30px rgba(255, 48, 80, 0.5), inset 0 0 20px rgba(255, 48, 80, 0.05)"
+  };
+
+  const content = (
+    <div style={containerStyle}>
+      {!hideNavbar && (
         <h2 style={{ 
           color: "#ff3050",
           textShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
@@ -79,6 +89,7 @@ export default function GlobalChat({ user, userProfile }) {
         }}>
           🔥 Global Chat
         </h2>
+      )}
         <div style={{ 
           flex: 1, 
           overflowY: "auto", 
@@ -228,6 +239,12 @@ export default function GlobalChat({ user, userProfile }) {
           )}
         </div>
       </div>
+    </div>
+  );
+
+  return hideNavbar ? content : (
+    <div className="hero-background">
+      {content}
     </div>
   );
 }

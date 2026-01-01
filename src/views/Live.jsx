@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, serverTimestamp, query, limit, orderBy } from "firebase/firestore";
+import GlobalChat from "./GlobalChat";
 
 const SHOWDOWNS = [
-  { id: "arms", name: "Arm Showdown", category: "Arms", exercises: ["Pushups", "Bicep Curls", "Dips"] },
-  { id: "legs", name: "Legs Showdown", category: "Legs", exercises: ["Squats", "Lunges", "Calf Raises"] },
-  { id: "core", name: "Core Showdown", category: "Core", exercises: ["Situps", "Plank", "Leg Raises"] },
-  { id: "total", name: "Total Body Showdown", category: "Full Body", exercises: ["Burpees", "Mountain Climbers", "Jumping Jacks"] }
+  { id: "arms", name: "Arms", category: "Arms", exercises: ["Pushups", "Bicep Curls", "Dips"] },
+  { id: "legs", name: "Legs", category: "Legs", exercises: ["Squats", "Lunges", "Calf Raises"] },
+  { id: "core", name: "Core", category: "Core", exercises: ["Situps", "Plank", "Leg Raises"] },
+  { id: "total", name: "Total", category: "Full Body", exercises: ["Burpees", "Mountain Climbers", "Jumping Jacks"] }
 ];
 
 export default function Live({ user, userProfile }) {
@@ -20,7 +21,6 @@ export default function Live({ user, userProfile }) {
   const [lobbyStatus, setLobbyStatus] = useState("WAITING");
   const [activeLobbies, setActiveLobbies] = useState({});
 
-  // Global listener for all showdown lobbies to show counts
   useEffect(() => {
     const unsubscribes = SHOWDOWNS.map(s => {
       const q = query(collection(db, "live_competitions", `live_${s.id}`, "participants"));
@@ -124,46 +124,50 @@ export default function Live({ user, userProfile }) {
 
   if (!selectedShowdown) {
     return (
-      <div className="live-selection" style={{ padding: "20px", textAlign: "center", minHeight: "calc(100vh - 64px)", background: "#000" }}>
-        <h1 style={{ fontFamily: "'Press Start 2P', cursive", color: "#ff3050", marginBottom: "10px", fontSize: "24px" }}>SHOWDOWN BROWSER</h1>
-        <p style={{ color: "white", marginBottom: "40px", fontFamily: "sans-serif" }}>Find an active session or start a new one</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px", maxWidth: "600px", margin: "0 auto" }}>
-          {SHOWDOWNS.map((s) => (
-            <button 
-              key={s.id} 
-              onClick={() => setSelectedShowdown(s)} 
-              style={{ 
-                padding: "20px", 
-                background: "black", 
-                border: "2px solid #ff3050", 
-                color: "white", 
-                fontFamily: "'Press Start 2P', cursive", 
-                cursor: "pointer", 
-                display: "flex", 
-                justifyContent: "space-between", 
-                alignItems: "center",
-                textAlign: "left"
-              }}
-            >
-              <div>
-                <div style={{ fontSize: "14px" }}>{s.name}</div>
-                <div style={{ fontSize: "10px", color: "#666", marginTop: "5px" }}>{s.category}</div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ color: activeLobbies[s.id] > 0 ? "#0f0" : "#ff3050", fontSize: "12px" }}>
-                  {activeLobbies[s.id] || 0} RIVALS
+      <div className="live-selection" style={{ display: "flex", height: "calc(100vh - 64px)", background: "#000", overflow: "hidden" }}>
+        {/* Left Side: Showdown List */}
+        <div style={{ width: "350px", borderRight: "2px solid #ff3050", display: "flex", flexDirection: "column", padding: "20px" }}>
+          <h1 style={{ fontFamily: "'Press Start 2P', cursive", color: "#ff3050", marginBottom: "30px", fontSize: "18px" }}>SHOWDOWNS</h1>
+          <div style={{ display: "flex", flexDirection: "column", gap: "15px", flex: 1, overflowY: "auto" }}>
+            {SHOWDOWNS.map((s) => (
+              <button 
+                key={s.id} 
+                onClick={() => setSelectedShowdown(s)} 
+                style={{ 
+                  padding: "15px", 
+                  background: "black", 
+                  border: "2px solid #ff3050", 
+                  color: "white", 
+                  fontFamily: "'Press Start 2P', cursive", 
+                  cursor: "pointer", 
+                  textAlign: "left",
+                  position: "relative"
+                }}
+              >
+                <div style={{ fontSize: "12px" }}>{s.name}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px" }}>
+                  <div style={{ fontSize: "8px", color: "#666" }}>{s.category}</div>
+                  <div style={{ color: activeLobbies[s.id] > 0 ? "#0f0" : "#ff3050", fontSize: "10px" }}>
+                    {activeLobbies[s.id] || 0} Q'D
+                  </div>
                 </div>
-                <div style={{ fontSize: "8px", color: "#444", marginTop: "5px" }}>
-                  {activeLobbies[s.id] >= 2 ? "IN PROGRESS" : "WAITING"}
-                </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Right Side: Integrated Chat Lobby */}
+        <div style={{ flex: 1, position: "relative" }}>
+          <div style={{ position: "absolute", top: "15px", left: "20px", zIndex: 10 }}>
+             <h2 style={{ fontFamily: "'Press Start 2P', cursive", color: "white", fontSize: "14px", margin: 0 }}>LOBBY CHAT</h2>
+          </div>
+          <GlobalChat user={user} userProfile={userProfile} hideNavbar={true} />
         </div>
       </div>
     );
   }
 
+  // Arena view remains the same...
   const isMyTurn = activePlayerId === user.uid;
   const currentExercise = selectedShowdown.exercises[currentCardIndex % selectedShowdown.exercises.length];
 
