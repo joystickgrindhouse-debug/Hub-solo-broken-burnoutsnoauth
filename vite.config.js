@@ -8,6 +8,10 @@ export default defineConfig({
     port: 5000,
     strictPort: true,
     allowedHosts: true,
+    proxy: {
+      '/api': 'http://localhost:3000',
+      '/objects': 'http://localhost:3000'
+    },
     hmr: {
       clientPort: 443,
       protocol: 'wss',
