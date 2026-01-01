@@ -10,12 +10,16 @@ const HYPE_MESSAGES = [
     description: "Your daily grind becomes your digital legacy. Every drop of sweat fuels your rise to legend status."
   },
   {
-    title: "ARE YOU READY FOR THE CHALLENGE?",
-    description: "Rivalis isn't for the weak. It's for those who want to out-train, out-rival, and out-perform everyone else."
+    title: "EARN YOUR ROLLS",
+    description: "Every 30 reps or half-mile ran earns you a dice roll. Move across the board and conquer the arena."
   },
   {
-    title: "THE ARENA AWAITS",
-    description: "Convert your real-world sweat into digital dominance. Every rep counts towards your global rank."
+    title: "REAL WORLD REWARDS",
+    description: "Top contenders who complete the board or go the furthest each cycle win exclusive real-world rewards."
+  },
+  {
+    title: "ARE YOU READY FOR THE CHALLENGE?",
+    description: "Rivalis isn't for the weak. It's for those who want to out-train, out-rival, and out-perform everyone else."
   }
 ];
 
@@ -156,7 +160,7 @@ export default function LoadingScreen() {
             background: "#ff3050",
             borderRadius: "2px",
             boxShadow: "0 0 15px #ff3050",
-            animation: "loadingBar 24s ease-in-out infinite"
+            animation: "loadingBar 30s ease-in-out infinite"
           }} />
         </div>
 
