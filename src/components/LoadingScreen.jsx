@@ -1,32 +1,73 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+
+const HYPE_MESSAGES = [
+  {
+    title: "THE ARENA AWAITS",
+    description: "Convert your real-world sweat into digital dominance. Every rep counts towards your global rank."
+  },
+  {
+    title: "OUT-TRAIN THE RIVALS",
+    description: "Battle in real-time Burnouts. Face off against the community and prove your endurance."
+  },
+  {
+    title: "EVOLVE YOUR AVATAR",
+    description: "Unlock legendary gear and status as you crush your fitness goals. Your avatar reflects your hard work."
+  },
+  {
+    title: "TOTAL SYNC",
+    description: "AI-powered form tracking ensures every movement is precise. No shortcuts, just pure results."
+  }
+];
 
 export default function LoadingScreen() {
+  const [msgIndex, setMsgIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMsgIndex((prev) => (prev + 1) % HYPE_MESSAGES.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="hero-background" style={{
-      position: "relative",
-      overflow: "hidden"
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      overflow: "hidden",
+      backgroundColor: "#000",
+      zIndex: 9999
     }}>
-      {/* Crossing screen effect */}
+      {/* Scanline effect */}
       <div style={{
         position: "absolute",
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        background: `
-          linear-gradient(
-            to bottom,
-            transparent 0%,
-            transparent 48%,
-            rgba(255, 48, 80, 0.1) 49%,
-            rgba(255, 48, 80, 0.1) 51%,
-            transparent 52%,
-            transparent 100%
-          )
+        background: "linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06))",
+        zIndex: 2,
+        backgroundSize: "100% 2px, 3px 100%",
+        pointerEvents: "none"
+      }} />
+
+      {/* Pulsing Grid Background */}
+      <div style={{
+        position: "absolute",
+        top: "-50%",
+        left: "-50%",
+        width: "200%",
+        height: "200%",
+        backgroundImage: `
+          linear-gradient(to right, rgba(255, 48, 80, 0.1) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 48, 80, 0.1) 1px, transparent 1px)
         `,
-        animation: "crossingScreen 2s linear infinite",
-        pointerEvents: "none",
-        zIndex: 10
+        backgroundSize: "40px 40px",
+        transform: "perspective(500px) rotateX(60deg)",
+        animation: "gridMove 20s linear infinite",
+        zIndex: 1
       }} />
 
       <div style={{
@@ -37,119 +78,130 @@ export default function LoadingScreen() {
         minHeight: "100vh",
         padding: "2rem",
         position: "relative",
-        zIndex: 1
+        zIndex: 3,
+        textAlign: "center"
       }}>
-        <h1 style={{ 
-          fontFamily: "'Press Start 2P', cursive",
-          color: "#ff3050",
-          fontSize: "clamp(1.5rem, 5vw, 3rem)",
-          fontWeight: "normal",
-          textTransform: "uppercase",
-          letterSpacing: "4px",
-          textAlign: "center",
-          lineHeight: "1.8",
-          textShadow: `
-            0 0 10px rgba(255, 48, 80, 0.8),
-            0 0 20px rgba(255, 48, 80, 0.6),
-            0 0 30px rgba(255, 48, 80, 0.4),
-            0 0 40px rgba(255, 48, 80, 0.2),
-            2px 2px 0 rgba(0, 0, 0, 0.8)
-          `,
-          animation: "neonFlicker 3s infinite, fadeIn 1s ease-in",
-          margin: "0",
-          padding: "1rem",
-          maxWidth: "90%"
-        }}>
-          RIVALIS
-          <br />
-          <span style={{
-            fontSize: "clamp(0.8rem, 2.5vw, 1.5rem)",
-            display: "block",
-            marginTop: "1rem"
+        <div style={{ marginBottom: "3rem", animation: "glitch 1s infinite" }}>
+          <h1 style={{ 
+            fontFamily: "'Press Start 2P', cursive",
+            color: "#ff3050",
+            fontSize: "clamp(2rem, 8vw, 4rem)",
+            fontWeight: "normal",
+            textTransform: "uppercase",
+            letterSpacing: "8px",
+            margin: "0",
+            textShadow: `
+              3px 3px 0px #000,
+              -1px -1px 0px #fff,
+              0 0 20px rgba(255, 48, 80, 0.6)
+            `
           }}>
-            FITNESS REIMAGINED
-          </span>
-        </h1>
-
-        {/* Loading dots */}
-        <div style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "0.8rem",
-          alignItems: "center",
-          marginTop: "3rem"
-        }}>
+            RIVALIS
+          </h1>
           <div style={{
-            width: "16px",
-            height: "16px",
-            borderRadius: "50%",
-            backgroundColor: "#ff3050",
-            boxShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
-            animation: "pulse 1.5s ease-in-out infinite"
-          }} />
-          <div style={{
-            width: "16px",
-            height: "16px",
-            borderRadius: "50%",
-            backgroundColor: "#ff3050",
-            boxShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
-            animation: "pulse 1.5s ease-in-out 0.2s infinite"
-          }} />
-          <div style={{
-            width: "16px",
-            height: "16px",
-            borderRadius: "50%",
-            backgroundColor: "#ff3050",
-            boxShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
-            animation: "pulse 1.5s ease-in-out 0.4s infinite"
+            height: "4px",
+            width: "100%",
+            background: "#ff3050",
+            marginTop: "10px",
+            boxShadow: "0 0 15px #ff3050"
           }} />
         </div>
+
+        {/* Hype Content Container */}
+        <div style={{
+          maxWidth: "600px",
+          minHeight: "200px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center"
+        }}>
+          <h2 key={`title-${msgIndex}`} style={{
+            fontFamily: "'Press Start 2P', cursive",
+            color: "#fff",
+            fontSize: "clamp(0.8rem, 3vw, 1.2rem)",
+            lineHeight: "1.6",
+            marginBottom: "1.5rem",
+            animation: "slideUpFade 0.5s ease-out forwards",
+            textShadow: "0 0 10px rgba(255,255,255,0.5)"
+          }}>
+            {HYPE_MESSAGES[msgIndex].title}
+          </h2>
+          <p key={`desc-${msgIndex}`} style={{
+            fontFamily: "system-ui, -apple-system, sans-serif",
+            color: "rgba(255, 255, 255, 0.8)",
+            fontSize: "clamp(1rem, 2vw, 1.25rem)",
+            lineHeight: "1.6",
+            maxWidth: "450px",
+            animation: "slideUpFade 0.5s ease-out 0.2s forwards",
+            opacity: 0
+          }}>
+            {HYPE_MESSAGES[msgIndex].description}
+          </p>
+        </div>
+
+        {/* Loading progress bar */}
+        <div style={{
+          width: "280px",
+          height: "8px",
+          background: "rgba(255, 48, 80, 0.2)",
+          borderRadius: "4px",
+          marginTop: "4rem",
+          padding: "2px",
+          border: "1px solid rgba(255, 48, 80, 0.3)"
+        }}>
+          <div style={{
+            height: "100%",
+            background: "#ff3050",
+            borderRadius: "2px",
+            boxShadow: "0 0 15px #ff3050",
+            animation: "loadingBar 3s ease-in-out infinite"
+          }} />
+        </div>
+
+        <p style={{
+          fontFamily: "'Press Start 2P', cursive",
+          fontSize: "0.6rem",
+          color: "#ff3050",
+          marginTop: "1.5rem",
+          letterSpacing: "2px",
+          animation: "blink 1s step-end infinite"
+        }}>
+          INITIALIZING ARENA...
+        </p>
       </div>
       
       <style>{`
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 0.3;
-            transform: scale(0.8);
-          }
-          50% {
-            opacity: 1;
-            transform: scale(1.2);
-          }
+        @keyframes gridMove {
+          0% { background-position: 0 0; }
+          100% { background-position: 0 40px; }
         }
-        @keyframes neonFlicker {
-          0%, 18%, 22%, 25%, 53%, 57%, 100% {
-            text-shadow: 
-              0 0 10px rgba(255, 48, 80, 0.8),
-              0 0 20px rgba(255, 48, 80, 0.6),
-              0 0 30px rgba(255, 48, 80, 0.4),
-              0 0 40px rgba(255, 48, 80, 0.2),
-              2px 2px 0 rgba(0, 0, 0, 0.8);
-          }
-          20%, 24%, 55% {
-            text-shadow: 
-              0 0 5px rgba(255, 48, 80, 0.4),
-              0 0 10px rgba(255, 48, 80, 0.3),
-              2px 2px 0 rgba(0, 0, 0, 0.8);
-          }
-        }
-        @keyframes crossingScreen {
-          0% {
-            transform: translateY(-100%);
-          }
-          100% {
-            transform: translateY(100vh);
-          }
-        }
-        @keyframes fadeIn {
+        @keyframes slideUpFade {
           from {
             opacity: 0;
-            transform: scale(0.9);
+            transform: translateY(20px);
           }
           to {
             opacity: 1;
-            transform: scale(1);
+            transform: translateY(0);
           }
+        }
+        @keyframes loadingBar {
+          0% { width: 0%; }
+          50% { width: 70%; }
+          100% { width: 100%; }
+        }
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        @keyframes glitch {
+          0% { transform: translate(0); }
+          20% { transform: translate(-2px, 2px); }
+          40% { transform: translate(-2px, -2px); }
+          60% { transform: translate(2px, 2px); }
+          80% { transform: translate(2px, -2px); }
+          100% { transform: translate(0); }
         }
       `}</style>
     </div>

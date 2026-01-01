@@ -32,6 +32,13 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isNewSignup, setIsNewSignup] = useState(false);
+  const [initialHype, setInitialHype] = useState(true);
+
+  // Force a minimum loading time for the hype screen even if auth is fast
+  useEffect(() => {
+    const timer = setTimeout(() => setInitialHype(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Function to refresh user profile (used after avatar creation)
   const refreshUserProfile = async (userId) => {
@@ -134,7 +141,7 @@ export default function App() {
   };
 
   // Show initial loading screen
-  if (loading || checkingSetup || !profileLoaded) return <LoadingScreen />;
+  if (loading || checkingSetup || !profileLoaded || initialHype) return <LoadingScreen />;
 
   // Show onboarding slides after login/signup but before main app (only for logged-in users)
   if (user && showOnboarding && !onboardingComplete) {
