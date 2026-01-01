@@ -36,7 +36,7 @@ export default function App() {
 
   // Force a minimum loading time for the hype screen even if auth is fast
   useEffect(() => {
-    const timer = setTimeout(() => setInitialHype(false), 5000);
+    const timer = setTimeout(() => setInitialHype(false), 8000);
     return () => clearTimeout(timer);
   }, []);
 
