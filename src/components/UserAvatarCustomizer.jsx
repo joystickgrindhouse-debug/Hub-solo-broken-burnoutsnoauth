@@ -173,49 +173,27 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
       const parsed = parseDicebearURL(avatarURL);
       if (parsed) {
         setIsDicebearAvatar(true);
+      } else if (avatarURL.startsWith('/objects/')) {
+        setIsDicebearAvatar(false);
       }
       
-      if (isFirstTimeSetup) {
-        console.log("Completing first-time setup...");
-        
-        // Wait for Firestore save to complete before proceeding
-        const setupResult = await UserService.completeUserSetup(user.uid, nickname, avatarURL);
-        
-        if (!setupResult.success) {
-          console.error("Failed to save profile to Firestore:", setupResult.error);
-          alert("Failed to save profile: " + (setupResult.error || "Unknown error"));
-          return;
+      console.log("Finalizing Firestore update with avatarURL:", avatarURL);
+      const updateResult = await UserService.updateUserProfile(user.uid, { 
+        nickname, 
+        avatarURL,
+        hasCompletedSetup: true 
+      });
+      
+      if (updateResult.success) {
+        console.log("Profile saved to Firestore successfully");
+        if (isFirstTimeSetup && onSetupComplete) {
+          onSetupComplete({ ...userProfile, nickname, avatarURL, hasCompletedSetup: true });
         }
-        
-        console.log("Profile saved to Firestore successfully:", setupResult.profile);
-        
-        if (onSetupComplete) {
-          console.log("Calling onSetupComplete callback with saved profile");
-          try {
-            onSetupComplete(setupResult.profile);
-          } catch (callbackError) {
-            console.error("Error in onSetupComplete callback:", callbackError);
-          }
-        }
-        
-        console.log("Navigating to dashboard...");
-        alert("Profile created! Welcome to Rivalis Hub!");
+        alert("Avatar and nickname saved successfully!");
         navigate("/dashboard");
       } else {
-        console.log("Updating existing profile...");
-        try {
-          const updateResult = await UserService.updateUserProfile(user.uid, { nickname, avatarURL });
-          
-          if (updateResult.success) {
-            alert("Avatar updated successfully!");
-            navigate("/dashboard");
-          } else {
-            alert("Failed to update avatar: " + (updateResult.error || "Unknown error"));
-          }
-        } catch (updateError) {
-          console.error("Error during update:", updateError);
-          alert("Failed to update avatar: " + updateError.message);
-        }
+        console.error("Failed to update profile in Firestore:", updateResult.error);
+        alert("Failed to save to Firestore: " + (updateResult.error || "Unknown error"));
       }
     } catch (error) {
       console.error("Error saving avatar:", error);
