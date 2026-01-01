@@ -303,16 +303,37 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
         return;
       }
 
-      const timestamp = Date.now();
-      const fileName = `${timestamp}.jpg`;
-      const fileRef = ref(storage, `avatars/${uid}/${fileName}`);
-      
-      const metadata = { contentType: 'image/jpeg' };
-      console.log("Uploading blob to:", fileRef.fullPath);
-      
-      await uploadBytes(fileRef, croppedBlob, metadata);
-      const downloadURL = await getDownloadURL(fileRef);
-      console.log("New avatar URL:", downloadURL);
+      // Step 1: Request presigned URL from backend
+      const response = await fetch("/api/uploads/request-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `avatar-${uid}-${Date.now()}.jpg`,
+          size: croppedBlob.size,
+          contentType: "image/jpeg",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get upload URL");
+      }
+
+      const { uploadURL, objectPath } = await response.json();
+
+      // Step 2: Upload directly to cloud storage
+      const uploadRes = await fetch(uploadURL, {
+        method: "PUT",
+        body: croppedBlob,
+        headers: { "Content-Type": "image/jpeg" },
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload to storage");
+      }
+
+      // Final avatar URL is the internal /objects/ path
+      const downloadURL = objectPath;
+      console.log("New avatar internal path:", downloadURL);
       
       setAvatarURL(downloadURL);
       setIsDicebearAvatar(false);
