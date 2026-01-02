@@ -58,23 +58,15 @@ const WaitingForUpload = ({ user, onSetupComplete }) => {
     if (!image || !croppedAreaPixels) return;
     setUploading(true);
     try {
-      console.log("Starting upload process (Base64 mode)...");
+      console.log("Starting upload process (Direct Firestore mode)...");
       const croppedBase64 = await getCroppedImgBase64(image, croppedAreaPixels);
       console.log("Cropped base64 created");
       
-      const storageRef = ref(storage, `avatars/${auth.currentUser.uid}-${Date.now()}.jpg`);
-      console.log("Uploading to:", storageRef.fullPath);
-      
-      // Use uploadString with 'data_url' which is often more resilient than binary Blobs
-      await uploadString(storageRef, croppedBase64, 'data_url');
-      console.log("Upload successful, fetching URL...");
-      
-      const downloadURL = await getDownloadURL(storageRef);
-      console.log("Download URL obtained:", downloadURL);
+      console.log("Skipping Storage upload, saving directly to Firestore...");
 
       console.log("Updating user profile in Firestore...");
       const updateResult = await UserService.updateUserProfile(auth.currentUser.uid, {
-        avatarURL: downloadURL,
+        avatarURL: croppedBase64, // Store Base64 directly for now
         hasCompletedSetup: true
       });
       console.log("Firestore update result:", updateResult);
