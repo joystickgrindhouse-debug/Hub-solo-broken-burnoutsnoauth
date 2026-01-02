@@ -35,7 +35,7 @@ const getCroppedImgBase64 = async (imageSrc, pixelCrop) => {
   return canvas.toDataURL("image/jpeg", 0.6); // Lower quality (0.6) to ensure small size
 };
 
-const WaitingForUpload = ({ user, onSetupComplete }) => {
+const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
   const [image, setImage] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -63,19 +63,21 @@ const WaitingForUpload = ({ user, onSetupComplete }) => {
       const croppedBase64 = await getCroppedImgBase64(image, croppedAreaPixels);
       console.log("Cropped base64 created");
       
-      console.log("Skipping Storage upload, saving directly to Firestore...");
-
       console.log("Updating user profile in Firestore...");
       const updateResult = await UserService.updateUserProfile(auth.currentUser.uid, {
-        avatarURL: croppedBase64, // Store Base64 directly for now
+        avatarURL: croppedBase64,
         hasCompletedSetup: true
       });
-      console.log("Firestore update result:", updateResult);
-
+      
       if (updateResult && updateResult.success) {
-        console.log("Profile updated successfully, waiting for propagation...");
+        console.log("Profile updated successfully");
         await new Promise(r => setTimeout(r, 800));
-        window.location.href = "/dashboard";
+        
+        if (isUpdating) {
+          window.location.reload();
+        } else {
+          window.location.href = "/dashboard";
+        }
       } else {
         throw new Error(updateResult?.error || "Failed to update profile");
       }
@@ -92,42 +94,61 @@ const WaitingForUpload = ({ user, onSetupComplete }) => {
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      minHeight: "100vh",
+      minHeight: isUpdating ? "auto" : "100vh",
       padding: "2rem",
       textAlign: "center",
       color: "#fff",
       position: "relative",
       overflow: "hidden"
     }}>
-      <div className="overlay-card" style={{ maxWidth: "500px", zIndex: 10 }}>
+      <div className="overlay-card" style={{ maxWidth: "500px", zIndex: 10, width: "100%" }}>
         <h1 style={{ 
           fontFamily: "'Press Start 2P', cursive", 
           color: "#ff3050",
           marginBottom: "1.5rem",
           fontSize: "1.2rem"
         }}>
-          IDENTITY TERMINAL
+          {isUpdating ? "UPDATE IDENTITY" : "IDENTITY TERMINAL"}
         </h1>
         
         {!image ? (
           <>
             <p style={{ lineHeight: "1.6", marginBottom: "2rem", fontSize: "0.9rem" }}>
-              The arena requires visual confirmation. Upload your pilot identity photo to proceed.
+              {isUpdating ? "Update your visual confirmation for the arena." : "The arena requires visual confirmation. Upload your pilot identity photo to proceed."}
             </p>
-            <label style={{
-              display: "inline-block",
-              padding: "1rem 2rem",
-              background: "#ff3050",
-              color: "#fff",
-              fontFamily: "'Press Start 2P', cursive",
-              fontSize: "0.8rem",
-              cursor: "pointer",
-              borderRadius: "4px",
-              boxShadow: "0 0 15px rgba(255, 48, 80, 0.4)"
-            }}>
-              CAPTURE PHOTO
-              <input type="file" accept="image/*" onChange={onSelectFile} style={{ display: "none" }} />
-            </label>
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+              <label style={{
+                display: "inline-block",
+                padding: "1rem 2rem",
+                background: "#ff3050",
+                color: "#fff",
+                fontFamily: "'Press Start 2P', cursive",
+                fontSize: "0.8rem",
+                cursor: "pointer",
+                borderRadius: "4px",
+                boxShadow: "0 0 15px rgba(255, 48, 80, 0.4)"
+              }}>
+                CAPTURE PHOTO
+                <input type="file" accept="image/*" onChange={onSelectFile} style={{ display: "none" }} />
+              </label>
+              {isUpdating && onSetupComplete && (
+                <button 
+                  onClick={onSetupComplete}
+                  style={{
+                    padding: "1rem 2rem",
+                    background: "transparent",
+                    border: "1px solid #ff3050",
+                    color: "#ff3050",
+                    fontFamily: "'Press Start 2P', cursive",
+                    fontSize: "0.8rem",
+                    cursor: "pointer",
+                    borderRadius: "4px"
+                  }}
+                >
+                  CANCEL
+                </button>
+              )}
+            </div>
           </>
         ) : (
           <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#000", zIndex: 1000, display: "flex", flexDirection: "column" }}>
@@ -155,7 +176,7 @@ const WaitingForUpload = ({ user, onSetupComplete }) => {
                   cursor: "pointer"
                 }}
               >
-                CANCEL
+                BACK
               </button>
               <button 
                 onClick={handleUpload}

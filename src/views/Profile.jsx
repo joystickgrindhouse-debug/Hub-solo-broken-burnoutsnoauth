@@ -3,6 +3,7 @@ import { UserService } from "../services/userService.js";
 import { storage } from "../firebase.js";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
+import WaitingForUpload from "./WaitingForUpload.jsx";
 
 const avatarStyles = [
   { id: "adventurer", name: "Adventurer" },
@@ -208,129 +209,12 @@ export default function Profile({ user, userProfile }) {
             gap: "1rem"
           }}>
             {isEditingAvatar ? (
-              <div style={{ textAlign: "center", width: "100%", maxWidth: "300px" }}>
-                <div style={{ 
-                  position: "relative",
-                  width: "150px",
-                  height: "150px",
-                  margin: "0 auto 1.5rem"
-                }}>
-                  {currentAvatar ? (
-                    <img 
-                      src={currentAvatar} 
-                      key={currentAvatar}
-                      alt="Avatar Preview" 
-                      style={{ 
-                        width: "100%", 
-                        height: "100%", 
-                        borderRadius: "50%", 
-                        background: "#fff",
-                        border: "4px solid #ff3050",
-                        boxShadow: "0 0 25px rgba(255, 48, 80, 0.8)",
-                        objectFit: "cover",
-                        display: "block"
-                      }}
-                    />
-                  ) : (
-                    <div style={{
-                      width: "100%",
-                      height: "100%",
-                      borderRadius: "50%",
-                      background: "rgba(255, 48, 80, 0.1)",
-                      border: "4px dashed #ff3050",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#ff3050"
-                    }}>
-                      No Image
-                    </div>
-                  )}
-                </div>
-                <div style={{ marginBottom: "1rem" }}>
-                  <label style={{
-                    display: "inline-block",
-                    padding: "8px 16px",
-                    background: "linear-gradient(135deg, #ff3050 0%, #cc0033 100%)",
-                    color: "#fff",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    marginBottom: "1rem"
-                  }}>
-                    📸 Upload Photo
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      disabled={isSavingAvatar}
-                      style={{ display: "none" }}
-                    />
-                  </label>
-                </div>
-                <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.6)", marginBottom: "1rem" }}>
-                  Or choose a style:
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px", marginBottom: "1rem", maxHeight: "150px", overflowY: "auto" }}>
-                  {avatarStyles.map((style) => (
-                    <button
-                      key={style.id}
-                      onClick={() => {
-                        setSelectedStyle(style.id);
-                        setIsDicebearAvatar(true);
-                        setCurrentAvatar(`https://api.dicebear.com/7.x/${style.id}/svg?seed=${seed}`);
-                      }}
-                      style={{
-                        padding: "8px",
-                        background: selectedStyle === style.id && isDicebearAvatar ? "#ff3050" : "rgba(255, 48, 80, 0.2)",
-                        border: "2px solid #ff3050",
-                        borderRadius: "6px",
-                        color: "#fff",
-                        fontSize: "12px",
-                        cursor: "pointer",
-                        fontWeight: "600"
-                      }}
-                    >
-                      {style.name}
-                    </button>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <button
-                    onClick={saveAvatar}
-                    disabled={isSavingAvatar}
-                    style={{
-                      flex: 1,
-                      padding: "8px",
-                      background: "#ff3050",
-                      border: "2px solid #ff3050",
-                      borderRadius: "6px",
-                      color: "#fff",
-                      fontWeight: "bold",
-                      cursor: "pointer",
-                      opacity: isSavingAvatar ? 0.6 : 1
-                    }}
-                  >
-                    {isSavingAvatar ? "Saving..." : "Save"}
-                  </button>
-                  <button
-                    onClick={() => setIsEditingAvatar(false)}
-                    disabled={isSavingAvatar}
-                    style={{
-                      flex: 1,
-                      padding: "8px",
-                      background: "#000000",
-                      border: "2px solid #ff3050",
-                      borderRadius: "6px",
-                      color: "#ff3050",
-                      fontWeight: "bold",
-                      cursor: "pointer"
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
+              <div style={{ textAlign: "center", width: "100%", maxWidth: "400px" }}>
+                <WaitingForUpload 
+                  user={user} 
+                  isUpdating={true} 
+                  onSetupComplete={() => setIsEditingAvatar(false)} 
+                />
               </div>
             ) : (
               <>
