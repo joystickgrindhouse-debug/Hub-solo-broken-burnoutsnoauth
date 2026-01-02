@@ -67,9 +67,11 @@ const WaitingForUpload = ({ user, onSetupComplete }) => {
       
       // Use uploadBytes with a timeout or additional checks if needed
       // But standard await should work if connection is stable
-      await uploadBytes(storageRef, croppedBlob);
-      console.log("Upload successful, fetching URL...");
+      console.log("Calling uploadBytes...");
+      const uploadResult = await uploadBytes(storageRef, croppedBlob);
+      console.log("uploadBytes completed:", uploadResult);
       
+      console.log("Fetching URL...");
       const downloadURL = await getDownloadURL(storageRef);
       console.log("Download URL obtained:", downloadURL);
 
