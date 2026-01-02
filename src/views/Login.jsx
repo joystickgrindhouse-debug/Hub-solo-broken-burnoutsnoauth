@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { auth } from "../firebase.js";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
-import { generateAvatarForUser } from "../avatarService.js";
 import { UserService } from "../services/userService.js";
 
 const styles = {
@@ -65,12 +64,11 @@ export default function Login() {
     try {
       if (isSignup) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const avatarURL = await generateAvatarForUser(userCredential.user);
         
         const tempNickname = `User${userCredential.user.uid.slice(0, 6)}`;
         await UserService.createUserProfile(userCredential.user.uid, {
           nickname: tempNickname,
-          avatarURL: avatarURL
+          avatarURL: "" // User will set this in customizer
         });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
