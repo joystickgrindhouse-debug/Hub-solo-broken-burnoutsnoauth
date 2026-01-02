@@ -169,7 +169,7 @@ export default function Profile({ user, userProfile }) {
   };
 
   const avatarURL = userProfile?.avatarURL || user?.photoURL || "";
-  const nickname = userProfile?.nickname || user?.displayName || "User";
+  const displayNickname = userProfile?.nickname || user?.displayName || "User";
   const totalReps = userProfile?.totalReps || 0;
   const totalMiles = userProfile?.totalMiles || 0;
   const diceBalance = userProfile?.diceBalance || 0;
@@ -239,7 +239,7 @@ export default function Profile({ user, userProfile }) {
                   textShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
                   margin: 0
                 }}>
-                  {nickname}
+                  {displayNickname}
                 </h2>
                 <button
                   onClick={() => setIsEditingAvatar(true)}
