@@ -169,7 +169,7 @@ export default function Profile({ user, userProfile }) {
   };
 
   const avatarURL = userProfile?.avatarURL || user?.photoURL || "";
-  const displayNickname = userProfile?.nickname || user?.displayName || "User";
+  const displayNicknameValue = userProfile?.nickname || user?.displayName || "User";
   const totalReps = userProfile?.totalReps || 0;
   const totalMiles = userProfile?.totalMiles || 0;
   const diceBalance = userProfile?.diceBalance || 0;
@@ -239,7 +239,7 @@ export default function Profile({ user, userProfile }) {
                   textShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
                   margin: 0
                 }}>
-                  {displayNickname}
+                  {displayNicknameValue}
                 </h2>
                 <button
                   onClick={() => setIsEditingAvatar(true)}
@@ -260,7 +260,6 @@ export default function Profile({ user, userProfile }) {
             )}
           </div>
 
-          <div style={{ flex: 1, minWidth: "300px" }}>
             <h3 style={{ 
               color: "#ff3050",
               textShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
@@ -365,7 +364,7 @@ export default function Profile({ user, userProfile }) {
                     cursor: "pointer"
                   }}
                 >
-                  Edit Bio
+                  Edit Identity
                 </button>
               </div>
             )}
