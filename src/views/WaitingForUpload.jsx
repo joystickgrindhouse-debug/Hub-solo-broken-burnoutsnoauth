@@ -15,8 +15,9 @@ const getCroppedImgBase64 = async (imageSrc, pixelCrop) => {
   await new Promise((resolve) => (image.onload = resolve));
 
   const canvas = document.createElement("canvas");
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
+  // Set smaller fixed dimensions for profile photo to stay under Firestore limits
+  canvas.width = 400;
+  canvas.height = 400;
   const ctx = canvas.getContext("2d");
 
   ctx.drawImage(
@@ -27,11 +28,11 @@ const getCroppedImgBase64 = async (imageSrc, pixelCrop) => {
     pixelCrop.height,
     0,
     0,
-    pixelCrop.width,
-    pixelCrop.height
+    400,
+    400
   );
 
-  return canvas.toDataURL("image/jpeg", 0.85);
+  return canvas.toDataURL("image/jpeg", 0.6); // Lower quality (0.6) to ensure small size
 };
 
 const WaitingForUpload = ({ user, onSetupComplete }) => {
