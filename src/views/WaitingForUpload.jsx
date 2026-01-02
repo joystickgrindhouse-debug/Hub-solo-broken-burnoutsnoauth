@@ -58,24 +58,38 @@ const WaitingForUpload = ({ user, onSetupComplete }) => {
     if (!image || !croppedAreaPixels) return;
     setUploading(true);
     try {
+      console.log("Starting upload process...");
       const croppedBlob = await getCroppedImg(image, croppedAreaPixels);
+      console.log("Cropped blob created, size:", croppedBlob.size);
+      
       const storageRef = ref(storage, `avatars/${auth.currentUser.uid}-${Date.now()}.jpg`);
+      console.log("Uploading to:", storageRef.fullPath);
+      
       await uploadBytes(storageRef, croppedBlob);
+      console.log("Upload successful, fetching URL...");
+      
       const downloadURL = await getDownloadURL(storageRef);
+      console.log("Download URL obtained:", downloadURL);
 
       await UserService.updateUserProfile(auth.currentUser.uid, {
         avatarURL: downloadURL,
         hasCompletedSetup: true
       });
+      console.log("Profile updated successfully");
+
+      // Small delay to ensure Firestore propagates
+      await new Promise(r => setTimeout(r, 500));
 
       if (onSetupComplete) {
+        console.log("Calling onSetupComplete callback");
         onSetupComplete();
       } else {
+        console.log("Navigating to dashboard");
         navigate("/dashboard");
       }
     } catch (err) {
-      console.error("Upload failed", err);
-      alert("Upload failed. Please try again.");
+      console.error("Upload failed details:", err);
+      alert(`Upload failed: ${err.message || 'Unknown error'}`);
     } finally {
       setUploading(false);
     }
