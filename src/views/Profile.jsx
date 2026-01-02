@@ -39,6 +39,7 @@ const parseDicebearURL = (url) => {
 
 export default function Profile({ user, userProfile }) {
   const [bio, setBio] = useState(userProfile?.bio || "");
+  const [nickname, setNickname] = useState(userProfile?.nickname || "");
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingAvatar, setIsEditingAvatar] = useState(false);
   const [currentAvatar, setCurrentAvatar] = useState("");
@@ -52,6 +53,7 @@ export default function Profile({ user, userProfile }) {
   useEffect(() => {
     if (userProfile) {
       setBio(userProfile.bio || "");
+      setNickname(userProfile.nickname || "");
       setStreaks({
         current: userProfile.currentStreak || 0,
         longest: userProfile.longestStreak || 0
@@ -74,7 +76,7 @@ export default function Profile({ user, userProfile }) {
   const saveBio = async () => {
     if (!user) return;
     
-    const result = await UserService.updateUserProfile(user.uid, { bio });
+    const result = await UserService.updateUserProfile(user.uid, { bio, nickname });
     if (result.success) {
       setIsEditing(false);
     }
@@ -264,27 +266,48 @@ export default function Profile({ user, userProfile }) {
               textShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
               marginBottom: "1rem"
             }}>
-              Bio
+              Identity Details
             </h3>
             {isEditing ? (
               <div>
-                <textarea 
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder="Tell us about yourself..."
-                  style={{
-                    width: "100%",
-                    minHeight: "100px",
-                    padding: "0.75rem",
-                    background: "#000000",
-                    border: "2px solid #ff3050",
-                    borderRadius: "8px",
-                    color: "#fff",
-                    fontSize: "14px",
-                    resize: "vertical",
-                    boxShadow: "0 0 15px rgba(255, 48, 80, 0.3), inset 0 0 10px rgba(255, 48, 80, 0.05)"
-                  }}
-                />
+                <div style={{ marginBottom: "1rem" }}>
+                  <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.8rem", fontFamily: "'Press Start 2P', cursive" }}>NICKNAME</label>
+                  <input 
+                    type="text"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem",
+                      background: "#000000",
+                      border: "2px solid #ff3050",
+                      borderRadius: "8px",
+                      color: "#fff",
+                      fontSize: "14px",
+                      boxShadow: "0 0 15px rgba(255, 48, 80, 0.3)"
+                    }}
+                  />
+                </div>
+                <div style={{ marginBottom: "1rem" }}>
+                  <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.8rem", fontFamily: "'Press Start 2P', cursive" }}>BIO</label>
+                  <textarea 
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    placeholder="Tell us about yourself..."
+                    style={{
+                      width: "100%",
+                      minHeight: "100px",
+                      padding: "0.75rem",
+                      background: "#000000",
+                      border: "2px solid #ff3050",
+                      borderRadius: "8px",
+                      color: "#fff",
+                      fontSize: "14px",
+                      resize: "vertical",
+                      boxShadow: "0 0 15px rgba(255, 48, 80, 0.3), inset 0 0 10px rgba(255, 48, 80, 0.05)"
+                    }}
+                  />
+                </div>
                 <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
                   <button
                     onClick={saveBio}
@@ -304,6 +327,7 @@ export default function Profile({ user, userProfile }) {
                   <button
                     onClick={() => {
                       setBio(userProfile?.bio || "");
+                      setNickname(userProfile?.nickname || "");
                       setIsEditing(false);
                     }}
                     style={{
