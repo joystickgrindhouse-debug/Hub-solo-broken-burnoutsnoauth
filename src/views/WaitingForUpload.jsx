@@ -65,32 +65,34 @@ const WaitingForUpload = ({ user, onSetupComplete }) => {
       const storageRef = ref(storage, `avatars/${auth.currentUser.uid}-${Date.now()}.jpg`);
       console.log("Uploading to:", storageRef.fullPath);
       
+      // Use uploadBytes with a timeout or additional checks if needed
+      // But standard await should work if connection is stable
       await uploadBytes(storageRef, croppedBlob);
       console.log("Upload successful, fetching URL...");
       
       const downloadURL = await getDownloadURL(storageRef);
       console.log("Download URL obtained:", downloadURL);
 
-      await UserService.updateUserProfile(auth.currentUser.uid, {
+      console.log("Updating user profile in Firestore...");
+      // Ensure we use the exact method from UserService
+      const updateResult = await UserService.updateUserProfile(auth.currentUser.uid, {
         avatarURL: downloadURL,
         hasCompletedSetup: true
       });
-      console.log("Profile updated successfully");
+      console.log("Firestore update result:", updateResult);
 
-      // Small delay to ensure Firestore propagates
-      await new Promise(r => setTimeout(r, 500));
-
-      if (onSetupComplete) {
-        console.log("Calling onSetupComplete callback");
-        onSetupComplete();
+      if (updateResult && updateResult.success) {
+        console.log("Profile updated successfully, waiting for propagation...");
+        await new Promise(r => setTimeout(r, 800));
+        
+        // Force a page refresh or direct navigate to ensure state is clean
+        window.location.href = "/dashboard";
       } else {
-        console.log("Navigating to dashboard");
-        navigate("/dashboard");
+        throw new Error(updateResult?.error || "Failed to update profile");
       }
     } catch (err) {
       console.error("Upload failed details:", err);
       alert(`Upload failed: ${err.message || 'Unknown error'}`);
-    } finally {
       setUploading(false);
     }
   };
