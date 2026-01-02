@@ -71,12 +71,17 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
       
       if (updateResult && updateResult.success) {
         console.log("Profile updated successfully");
+        // Force session update by notifying observers if any, 
+        // but since we are doing a hard redirect, the new load will fetch the updated profile.
+        
         await new Promise(r => setTimeout(r, 800));
         
+        // Ensure we clear any local state that might interfere
         if (isUpdating) {
           window.location.reload();
         } else {
-          window.location.href = "/dashboard";
+          // Use a cache-busting parameter for the dashboard redirect
+          window.location.href = "/dashboard?refresh=" + Date.now();
         }
       } else {
         throw new Error(updateResult?.error || "Failed to update profile");
