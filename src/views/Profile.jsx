@@ -512,6 +512,5 @@ export default function Profile({ user, userProfile }) {
           </div>
         </div>
       </div>
-    </div>
   );
 }
