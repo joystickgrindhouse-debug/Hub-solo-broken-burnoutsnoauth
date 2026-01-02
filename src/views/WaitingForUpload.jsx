@@ -1,11 +1,15 @@
 import React, { useState, useCallback } from "react";
 import Cropper from "react-easy-crop";
 import { storage, auth } from "../firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { UserService } from "../services/userService";
 import { useNavigate } from "react-router-dom";
 
-const getCroppedImg = async (imageSrc, pixelCrop) => {
+/**
+ * Converts a cropped area to a Base64 string for more reliable transfer
+ * in environments where Blobs might have issues.
+ */
+const getCroppedImgBase64 = async (imageSrc, pixelCrop) => {
   const image = new Image();
   image.src = imageSrc;
   await new Promise((resolve) => (image.onload = resolve));
@@ -27,11 +31,7 @@ const getCroppedImg = async (imageSrc, pixelCrop) => {
     pixelCrop.height
   );
 
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => {
-      resolve(blob);
-    }, "image/jpeg", 0.85);
-  });
+  return canvas.toDataURL("image/jpeg", 0.85);
 };
 
 const WaitingForUpload = ({ user, onSetupComplete }) => {
@@ -58,25 +58,21 @@ const WaitingForUpload = ({ user, onSetupComplete }) => {
     if (!image || !croppedAreaPixels) return;
     setUploading(true);
     try {
-      console.log("Starting upload process...");
-      const croppedBlob = await getCroppedImg(image, croppedAreaPixels);
-      console.log("Cropped blob created, size:", croppedBlob.size);
+      console.log("Starting upload process (Base64 mode)...");
+      const croppedBase64 = await getCroppedImgBase64(image, croppedAreaPixels);
+      console.log("Cropped base64 created");
       
       const storageRef = ref(storage, `avatars/${auth.currentUser.uid}-${Date.now()}.jpg`);
       console.log("Uploading to:", storageRef.fullPath);
       
-      // Use uploadBytes with a timeout or additional checks if needed
-      // But standard await should work if connection is stable
-      console.log("Calling uploadBytes...");
-      const uploadResult = await uploadBytes(storageRef, croppedBlob);
-      console.log("uploadBytes completed:", uploadResult);
+      // Use uploadString with 'data_url' which is often more resilient than binary Blobs
+      await uploadString(storageRef, croppedBase64, 'data_url');
+      console.log("Upload successful, fetching URL...");
       
-      console.log("Fetching URL...");
       const downloadURL = await getDownloadURL(storageRef);
       console.log("Download URL obtained:", downloadURL);
 
       console.log("Updating user profile in Firestore...");
-      // Ensure we use the exact method from UserService
       const updateResult = await UserService.updateUserProfile(auth.currentUser.uid, {
         avatarURL: downloadURL,
         hasCompletedSetup: true
@@ -86,8 +82,6 @@ const WaitingForUpload = ({ user, onSetupComplete }) => {
       if (updateResult && updateResult.success) {
         console.log("Profile updated successfully, waiting for propagation...");
         await new Promise(r => setTimeout(r, 800));
-        
-        // Force a page refresh or direct navigate to ensure state is clean
         window.location.href = "/dashboard";
       } else {
         throw new Error(updateResult?.error || "Failed to update profile");
