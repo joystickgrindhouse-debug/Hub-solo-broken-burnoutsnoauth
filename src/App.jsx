@@ -9,7 +9,6 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Login from "./views/Login.jsx";
 import Dashboard from "./views/Dashboard.jsx";
 import Profile from "./views/Profile.jsx";
-import AvatarCreator from "./views/AvatarCreator.jsx";
 import Achievements from "./views/Achievements.jsx";
 import GlobalChat from "./views/GlobalChat.jsx";
 import DMChat from "./views/DMChat.jsx";
@@ -20,6 +19,7 @@ import Live from "./views/Live.jsx";
 import Run from "./views/Run.jsx";
 import Gameboard from "./views/Gameboard.jsx";
 import Navbar from "./components/Navbar.jsx";
+import WaitingForUpload from "./views/WaitingForUpload.jsx";
 
 export default function App() {
   const navigate = useNavigate();
@@ -152,7 +152,7 @@ export default function App() {
 
   // After onboarding, check if user needs to complete setup (only for NEW signups)
   if (user && isNewSignup && (!userProfile || !userProfile.hasCompletedSetup)) {
-    return <AvatarCreator user={user} isFirstTimeSetup={true} onSetupComplete={handleSetupComplete} userProfile={userProfile} />;
+    return <WaitingForUpload />;
   }
 
   // Render routes (public and protected)
@@ -191,7 +191,7 @@ export default function App() {
           element={
             user ? (
               isNewSignup ? (
-                <AvatarCreator user={user} userProfile={userProfile} />
+                <WaitingForUpload />
               ) : (
                 <Profile user={user} userProfile={userProfile} />
               )
