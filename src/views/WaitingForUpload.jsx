@@ -1,6 +1,86 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
+import Cropper from "react-easy-crop";
+import { storage, auth } from "../firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { UserService } from "../services/userService";
+import { useNavigate } from "react-router-dom";
 
-const WaitingForUpload = () => {
+const getCroppedImg = async (imageSrc, pixelCrop) => {
+  const image = new Image();
+  image.src = imageSrc;
+  await new Promise((resolve) => (image.onload = resolve));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+  const ctx = canvas.getContext("2d");
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  );
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      resolve(blob);
+    }, "image/jpeg", 0.85);
+  });
+};
+
+const WaitingForUpload = ({ user, onSetupComplete }) => {
+  const [image, setImage] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const navigate = useNavigate();
+
+  const onSelectFile = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const reader = new FileReader();
+      reader.addEventListener("load", () => setImage(reader.result));
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
+
+  const onCropComplete = useCallback((_croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const handleUpload = async () => {
+    if (!image || !croppedAreaPixels) return;
+    setUploading(true);
+    try {
+      const croppedBlob = await getCroppedImg(image, croppedAreaPixels);
+      const storageRef = ref(storage, `avatars/${auth.currentUser.uid}-${Date.now()}.jpg`);
+      await uploadBytes(storageRef, croppedBlob);
+      const downloadURL = await getDownloadURL(storageRef);
+
+      await UserService.updateUserProfile(auth.currentUser.uid, {
+        avatarURL: downloadURL,
+        hasCompletedSetup: true
+      });
+
+      if (onSetupComplete) {
+        onSetupComplete();
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (err) {
+      console.error("Upload failed", err);
+      alert("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="hero-background" style={{
       display: "flex",
@@ -10,35 +90,100 @@ const WaitingForUpload = () => {
       minHeight: "100vh",
       padding: "2rem",
       textAlign: "center",
-      color: "#fff"
+      color: "#fff",
+      position: "relative",
+      overflow: "hidden"
     }}>
-      <div className="overlay-card" style={{ maxWidth: "500px" }}>
+      <div className="overlay-card" style={{ maxWidth: "500px", zIndex: 10 }}>
         <h1 style={{ 
           fontFamily: "'Press Start 2P', cursive", 
           color: "#ff3050",
-          marginBottom: "2rem",
-          fontSize: "1.5rem"
+          marginBottom: "1.5rem",
+          fontSize: "1.2rem"
         }}>
-          IDENTITY PENDING
+          IDENTITY TERMINAL
         </h1>
-        <p style={{ lineHeight: "1.6", marginBottom: "2rem" }}>
-          Your legend is registered, but the arena needs to see who you are. 
-        </p>
-        <div style={{
-          padding: "2rem",
-          border: "2px dashed #ff3050",
-          borderRadius: "12px",
-          background: "rgba(255, 48, 80, 0.05)",
-          marginBottom: "2rem"
-        }}>
-          <p style={{ margin: 0, fontWeight: "bold", color: "#ff3050" }}>
-            [ SYSTEM STATUS: WAITING FOR PHOTO UPLOAD ]
-          </p>
-        </div>
-        <p style={{ fontSize: "0.8rem", opacity: 0.7 }}>
-          Our admins are currently preparing the secure upload terminal. Please stay tuned as we finalize the hardware bridge.
-        </p>
+        
+        {!image ? (
+          <>
+            <p style={{ lineHeight: "1.6", marginBottom: "2rem", fontSize: "0.9rem" }}>
+              The arena requires visual confirmation. Upload your pilot identity photo to proceed.
+            </p>
+            <label style={{
+              display: "inline-block",
+              padding: "1rem 2rem",
+              background: "#ff3050",
+              color: "#fff",
+              fontFamily: "'Press Start 2P', cursive",
+              fontSize: "0.8rem",
+              cursor: "pointer",
+              borderRadius: "4px",
+              boxShadow: "0 0 15px rgba(255, 48, 80, 0.4)"
+            }}>
+              CAPTURE PHOTO
+              <input type="file" accept="image/*" onChange={onSelectFile} style={{ display: "none" }} />
+            </label>
+          </>
+        ) : (
+          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#000", zIndex: 1000, display: "flex", flexDirection: "column" }}>
+            <div style={{ flex: 1, position: "relative" }}>
+              <Cropper
+                image={image}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+            <div style={{ padding: "2rem", background: "#111", display: "flex", gap: "1rem", justifyContent: "center" }}>
+              <button 
+                onClick={() => setImage(null)}
+                style={{
+                  padding: "0.8rem 1.5rem",
+                  background: "transparent",
+                  border: "1px solid #ff3050",
+                  color: "#ff3050",
+                  fontFamily: "'Press Start 2P', cursive",
+                  fontSize: "0.7rem",
+                  cursor: "pointer"
+                }}
+              >
+                CANCEL
+              </button>
+              <button 
+                onClick={handleUpload}
+                disabled={uploading}
+                style={{
+                  padding: "0.8rem 1.5rem",
+                  background: "#ff3050",
+                  color: "#fff",
+                  fontFamily: "'Press Start 2P', cursive",
+                  fontSize: "0.7rem",
+                  cursor: "pointer",
+                  opacity: uploading ? 0.5 : 1
+                }}
+              >
+                {uploading ? "SYNCING..." : "SYNC IDENTITY"}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      <style>{`
+        .hero-background {
+          background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+        }
+        .overlay-card {
+          background: rgba(0, 0, 0, 0.85);
+          padding: 2.5rem;
+          border: 1px solid rgba(255, 48, 80, 0.3);
+          box-shadow: 0 0 40px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 48, 80, 0.1);
+          border-radius: 8px;
+        }
+      `}</style>
     </div>
   );
 };

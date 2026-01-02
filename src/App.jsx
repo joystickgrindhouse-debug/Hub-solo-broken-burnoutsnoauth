@@ -152,7 +152,7 @@ export default function App() {
 
   // After onboarding, check if user needs to complete setup (only for NEW signups)
   if (user && isNewSignup && (!userProfile || !userProfile.hasCompletedSetup)) {
-    return <WaitingForUpload />;
+    return <WaitingForUpload user={user} onSetupComplete={() => refreshUserProfile(user.uid).then(handleSetupComplete)} />;
   }
 
   // Render routes (public and protected)
