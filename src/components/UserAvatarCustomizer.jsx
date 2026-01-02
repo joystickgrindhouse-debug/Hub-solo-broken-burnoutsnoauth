@@ -5,7 +5,6 @@ import { auth, storage } from "../firebase";
 import { updateProfile } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { UserService } from "../services/userService";
-import { NicknameService } from "../services/nicknameService";
 
 // Helper for cropping
   const getCroppedImg = async (imageSrc, pixelCrop) => {
@@ -54,28 +53,7 @@ const avatarStyles = [
 ];
 
 const parseDicebearURL = (url) => {
-  if (!url || !url.includes('dicebear.com')) {
-    return null;
-  }
-  
-  try {
-    const urlObj = new URL(url);
-    const pathParts = urlObj.pathname.split('/').filter(Boolean);
-    const seed = urlObj.searchParams.get('seed');
-    
-    if (!seed) return null;
-    
-    const versionIndex = pathParts.findIndex(part => part.includes('.x'));
-    if (versionIndex === -1) return null;
-    
-    const style = pathParts[versionIndex + 1];
-    
-    if (!style) return null;
-    
-    return { style, seed };
-  } catch (e) {
-    return null;
-  }
+  return null;
 };
 
 const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetupComplete, userProfile }) => {
@@ -103,119 +81,67 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
     
     if (userProfile && userProfile.nickname) {
       setNickname(userProfile.nickname);
-    } else if (isFirstTimeSetup) {
-      setNickname(NicknameService.generate());
     }
     
     if (currentUser.photoURL) {
-      const parsed = parseDicebearURL(currentUser.photoURL);
-      
-      if (parsed && parsed.style && parsed.seed) {
-        setSelectedStyle(parsed.style);
-        setSeed(parsed.seed);
-        setAvatarURL(currentUser.photoURL);
-        setIsDicebearAvatar(true);
-      } else {
-        setAvatarURL(currentUser.photoURL);
-        setIsDicebearAvatar(false);
-        const initialSeed = currentUser.email?.split('@')[0] || Math.random().toString(36).substring(7);
-        setSeed(initialSeed);
-      }
-    } else {
-      const initialSeed = currentUser.email?.split('@')[0] || Math.random().toString(36).substring(7);
-      setSeed(initialSeed);
-      setIsDicebearAvatar(true);
-      const url = `https://api.dicebear.com/7.x/adventurer/svg?seed=${initialSeed}`;
-      setAvatarURL(url);
+      setAvatarURL(currentUser.photoURL);
+      setIsDicebearAvatar(false);
     }
     
     setInitialized(true);
-  }, [propUser, userProfile, isFirstTimeSetup]);
+  }, [propUser, userProfile]);
 
   useEffect(() => {
-    if (initialized && isDicebearAvatar && seed && !avatarURL.startsWith('/objects/')) {
-      const url = `https://api.dicebear.com/7.x/${selectedStyle}/svg?seed=${seed}`;
-      setAvatarURL(url);
-    }
+    // Disabled style generation
   }, [selectedStyle, seed, initialized, isDicebearAvatar, avatarURL]);
 
   const handleSaveAvatar = async () => {
     console.log("=== SAVE AVATAR CLICKED ===");
-    console.log("User:", user);
-    console.log("Nickname:", nickname);
-    console.log("Avatar URL:", avatarURL);
-    console.log("Is first time setup:", isFirstTimeSetup);
     
     if (!user) {
       console.error("No user found!");
       return;
     }
     
-    const validation = NicknameService.validate(nickname);
-    console.log("Validation result:", validation);
-    if (!validation.valid) {
-      setNicknameError(validation.error);
-      console.error("Validation failed:", validation.error);
-      alert("Invalid nickname: " + validation.error);
+    if (!nickname.trim()) {
+      setNicknameError("Nickname is required");
       return;
     }
     
     setNicknameError("");
     setSaving(true);
-    console.log("Starting save process...");
     
     try {
-      console.log("Updating Firebase Auth profile...");
       await updateProfile(user, {
         photoURL: avatarURL,
         displayName: nickname
       });
-      console.log("Firebase Auth profile updated successfully");
       
-      const parsed = parseDicebearURL(avatarURL);
-      if (parsed) {
-        setIsDicebearAvatar(true);
-      } else if (avatarURL.startsWith('/objects/')) {
-        setIsDicebearAvatar(false);
-      }
-      
-      console.log("Finalizing Firestore update with avatarURL:", avatarURL);
-      const updateResult = await UserService.updateUserProfile(user.uid, { 
+      await UserService.updateUserProfile(user.uid, { 
         nickname, 
         avatarURL,
         hasCompletedSetup: true 
       });
       
-      if (updateResult.success) {
-        console.log("Profile saved to Firestore successfully");
-        if (isFirstTimeSetup && onSetupComplete) {
-          onSetupComplete({ ...userProfile, nickname, avatarURL, hasCompletedSetup: true });
-        }
-        alert("Avatar and nickname saved successfully!");
-        navigate("/dashboard");
-      } else {
-        console.error("Failed to update profile in Firestore:", updateResult.error);
-        alert("Failed to save to Firestore: " + (updateResult.error || "Unknown error"));
+      if (isFirstTimeSetup && onSetupComplete) {
+        onSetupComplete({ ...userProfile, nickname, avatarURL, hasCompletedSetup: true });
       }
+      alert("Profile updated successfully!");
+      navigate("/dashboard");
     } catch (error) {
-      console.error("Error saving avatar:", error);
+      console.error("Error saving profile:", error);
       alert("Failed to save: " + error.message);
     } finally {
       setSaving(false);
-      console.log("=== SAVE COMPLETE ===");
     }
   };
 
   const generateRandomNickname = () => {
-    const newNickname = NicknameService.generate();
-    setNickname(newNickname);
-    setNicknameError("");
+    // Disabled random generation
   };
 
   const randomizeSeed = () => {
-    const newSeed = Math.random().toString(36).substring(7);
-    setSeed(newSeed);
-    setIsDicebearAvatar(true);
+    // Disabled random generation
   };
 
   const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
@@ -350,25 +276,26 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
       )}
 
       <div style={styles.previewSection}>
-        <h3 style={styles.heading}>Avatar Preview</h3>
+        <h3 style={styles.heading}>Profile Identity</h3>
         <div style={styles.avatarWrapper}>
-          {avatarURL && (
+          {avatarURL ? (
             <img
               src={avatarURL}
               alt="Avatar Preview"
               style={styles.avatar}
             />
+          ) : (
+            <div style={{ ...styles.avatar, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff3050', background: '#000' }}>
+              No Photo
+            </div>
           )}
         </div>
         <div style={styles.buttonGroup}>
-          <button onClick={randomizeSeed} style={styles.randomButton}>
-            🎲 Randomize
-          </button>
           <button 
             onClick={() => document.getElementById('avatar-file-input').click()} 
             style={styles.randomButton}
           >
-            📸 Upload Photo
+            📸 Upload Profile Photo
           </button>
           <input
             id="avatar-file-input"
@@ -385,7 +312,6 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
       <div style={styles.customizeSection}>
         <div style={styles.nicknameSection}>
           <label style={styles.label}>Nickname</label>
-          <div style={styles.hint}>Only letters, numbers, and underscores (no spaces). 3-20 characters.</div>
           <div style={styles.nicknameInputGroup}>
             <input
               type="text"
@@ -397,57 +323,19 @@ const UserAvatarCustomizer = ({ user: propUser, isFirstTimeSetup = false, onSetu
               placeholder="Enter your nickname"
               style={{...styles.input, marginBottom: 0, borderColor: nicknameError ? '#ff3050' : 'rgba(255, 255, 255, 0.1)'}}
             />
-            <button onClick={generateRandomNickname} style={styles.generateButton}>
-              🎲 Generate
-            </button>
           </div>
           {nicknameError && <div style={styles.error}>❌ {nicknameError}</div>}
         </div>
 
-        <h3 style={styles.heading}>Choose Style</h3>
-        <div style={styles.stylesGrid}>
-          {avatarStyles.map((style) => (
-            <div
-              key={style.id}
-              onClick={() => setSelectedStyle(style.id)}
-              style={{
-                ...styles.styleCard,
-                ...(selectedStyle === style.id ? styles.styleCardActive : {})
-              }}
-            >
-              <img
-                src={`https://api.dicebear.com/7.x/${style.id}/svg?seed=${seed}`}
-                alt={style.name}
-                style={styles.stylePreview}
-              />
-              <div style={styles.styleInfo}>
-                <div style={styles.styleName}>{style.name}</div>
-                <div style={styles.styleDesc}>{style.desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div style={styles.seedSection}>
-          <label style={styles.label}>Custom Seed (name or phrase)</label>
-          <input
-            type="text"
-            value={seed}
-            onChange={(e) => setSeed(e.target.value)}
-            placeholder="Enter text to generate unique avatar"
-            style={styles.input}
-          />
-        </div>
-
         <button
           onClick={handleSaveAvatar}
-          disabled={saving}
+          disabled={saving || !avatarURL || !nickname}
           style={{
             ...styles.saveButton,
-            ...(saving ? styles.saveButtonDisabled : {})
+            ...(saving || !avatarURL || !nickname ? styles.saveButtonDisabled : {})
           }}
         >
-          {saving ? "Saving..." : "💾 Save Avatar"}
+          {saving ? "Updating..." : "💾 Finalize Profile"}
         </button>
       </div>
     </div>

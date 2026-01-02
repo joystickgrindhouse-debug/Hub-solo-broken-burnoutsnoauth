@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { auth } from "../firebase";
-import { generateAvatarForUser } from "../avatarService";
 
 const UserAvatar = () => {
   const [avatarURL, setAvatarURL] = useState("");
@@ -11,10 +10,6 @@ const UserAvatar = () => {
 
     if (user.photoURL) {
       setAvatarURL(user.photoURL);
-    } else {
-      generateAvatarForUser(user)
-        .then((url) => setAvatarURL(url))
-        .catch(console.error);
     }
   }, []);
 
