@@ -32,11 +32,11 @@ export const RunLogic = {
   },
 
   /**
-   * Calculate dice earned based on distance
+   * Calculate raffle tickets earned based on distance
    * @param {number} totalDistance miles
-   * @returns {number} dice count
+   * @returns {number} ticket count
    */
-  calculateDice: (totalDistance) => {
+  calculateTickets: (totalDistance) => {
     return Math.floor(totalDistance / 0.5);
   },
 

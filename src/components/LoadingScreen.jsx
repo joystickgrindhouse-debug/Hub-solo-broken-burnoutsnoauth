@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 const HYPE_MESSAGES = [
   {
     title: "A NEW BREED OF FITNESS",
-    description: "Rivalis gamifies your grind. Track workouts with AI, earn dice, and dominate the gameboard. Join the movement now!"
+    description: "Rivalis gamifies your grind. Track workouts with AI, earn raffle tickets, and dominate the gameboard. Join the movement now!"
   },
   {
     title: "SIGN UP. LEVEL UP.",
@@ -14,8 +14,8 @@ const HYPE_MESSAGES = [
     description: "Check out our exclusive merch shop! Rep the Rivalis colors in the real world with premium fitness apparel."
   },
   {
-    title: "EARN YOUR ROLLS",
-    description: "Every 30 reps or half-mile ran earns you a dice roll. Move across the board and conquer the arena."
+    title: "EARN YOUR ENTRIES",
+    description: "Every 30 reps or half-mile ran earns you raffle tickets. Spend them on the board and conquer the arena."
   },
   {
     title: "REAL WORLD REWARDS",

@@ -28,7 +28,7 @@ export default function Run({ user, userProfile }) {
   const [isPaused, setIsPaused] = useState(false);
   const [distance, setDistance] = useState(0); // miles
   const [duration, setDuration] = useState(0); // seconds
-  const [diceEarned, setDiceEarned] = useState(0);
+  const [ticketsEarned, setTicketsEarned] = useState(0);
   const [lastPos, setLastPos] = useState(null);
   const [error, setError] = useState(null);
   const [isVerified, setIsVerified] = useState(true);
@@ -122,8 +122,8 @@ export default function Run({ user, userProfile }) {
              setDistance(prev => {
                const newDist = prev + d;
                console.log("New total distance:", newDist);
-               const newDice = RunLogic.calculateDice(newDist);
-               if (newDice > diceEarned) setDiceEarned(newDice);
+               const newTickets = RunLogic.calculateTickets(newDist);
+               if (newTickets > ticketsEarned) setTicketsEarned(newTickets);
                return newDist;
              });
              if (shareRoute) {
@@ -169,11 +169,11 @@ export default function Run({ user, userProfile }) {
     setIsActive(false);
 
     // Competitive multiplier for ghost racing
-    let finalDice = diceEarned;
+    let finalTickets = ticketsEarned;
     if (ghostMode && ghostData) {
       if (distance >= ghostData.distance && duration < ghostData.duration) {
-        finalDice = Math.floor(diceEarned * 1.5); // 50% bonus for beating ghost
-        alert("GHOST DEFEATED! 1.5x Dice Multiplier Active!");
+        finalTickets = Math.floor(ticketsEarned * 1.5); // 50% bonus for beating ghost
+        alert("GHOST DEFEATED! 1.5x Ticket Multiplier Active!");
       }
     }
 
@@ -183,7 +183,7 @@ export default function Run({ user, userProfile }) {
       totalDistance: distance,
       totalDuration: duration,
       avgPace,
-      diceEarned: finalDice,
+      ticketsEarned: finalTickets,
       isVerified,
       timestamp: new Date().toISOString(),
       source: "internal"
@@ -198,7 +198,7 @@ export default function Run({ user, userProfile }) {
       try {
         await UserService.updateUserProfile(user.uid, {
           totalMiles: (userProfile?.totalMiles || 0) + distance,
-          diceBalance: (userProfile?.diceBalance || 0) + finalDice,
+          ticketBalance: (userProfile?.ticketBalance || 0) + finalTickets,
           lastRunDate: new Date().toISOString()
         });
 
@@ -215,10 +215,10 @@ export default function Run({ user, userProfile }) {
     }
 
     // Reset local state
-    alert(`Run Ended! \nDistance: ${distance.toFixed(2)} miles\nDice Earned: ${finalDice}`);
+    alert(`Run Ended! \nDistance: ${distance.toFixed(2)} miles\nTickets Earned: ${finalTickets}`);
     setDistance(0);
     setDuration(0);
-    setDiceEarned(0);
+    setTicketsEarned(0);
     setRoute([]);
     setGhostMode(false);
     setGhostData(null);
@@ -258,8 +258,8 @@ export default function Run({ user, userProfile }) {
             )}
           </div>
           <div style={styles.statBox}>
-            <div style={styles.statLabel}>DICE</div>
-            <div style={styles.statValue}>🎲 {diceEarned}</div>
+            <div style={styles.statLabel}>TICKETS</div>
+            <div style={styles.statValue}>🎟️ {ticketsEarned}</div>
           </div>
         </div>
 

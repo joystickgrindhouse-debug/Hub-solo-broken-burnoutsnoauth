@@ -3,7 +3,7 @@ import { collection, query, where, getDocs, doc, updateDoc, getDoc, setDoc } fro
 import { db } from "../firebase";
 
 export default function Gameboard({ user, userProfile }) {
-  const [availableDice, setAvailableDice] = useState(0);
+  const [availableTickets, setAvailableTickets] = useState(0);
   const [playerPosition, setPlayerPosition] = useState(0);
   const [currentRoll, setCurrentRoll] = useState(null);
   const [isRolling, setIsRolling] = useState(false);
@@ -36,7 +36,7 @@ export default function Gameboard({ user, userProfile }) {
     ],
     reward: [
       { title: "JACKPOT!", message: "You found a treasure chest! +10 points!", points: 10 },
-      { title: "BONUS DICE", message: "You earned a free dice roll! Keep it for later.", item: 'bonus_dice' },
+      { title: "BONUS TICKETS", message: "You earned free raffle tickets! Keep them for later.", item: 'bonus_tickets' },
       { title: "DOUBLE POINTS", message: "Your next roll counts double! Save it wisely.", item: 'double_points' },
       { title: "LUCKY FIND", message: "You discovered hidden coins! +7 points!", points: 7 }
     ],
@@ -70,7 +70,7 @@ export default function Gameboard({ user, userProfile }) {
 
   const loadGameData = async () => {
     try {
-      // Calculate available dice from total reps across all modes
+      // Calculate available tickets from total reps across all modes
       const leaderboardRef = collection(db, "leaderboard");
       const userScores = query(leaderboardRef, where("userId", "==", user.uid));
       const snapshot = await getDocs(userScores);
@@ -80,7 +80,7 @@ export default function Gameboard({ user, userProfile }) {
         totalReps += doc.data().score || 0;
       });
 
-      const totalDice = Math.floor(totalReps / 30);
+      const totalTickets = Math.floor(totalReps / 30);
 
       // Load saved game progress
       const gameDocRef = doc(db, "gameboards", user.uid);
@@ -91,17 +91,17 @@ export default function Gameboard({ user, userProfile }) {
         setPlayerPosition(data.position || 0);
         setTotalScore(data.score || 0);
         setSpecialItems(data.items || []);
-        // Use saved dice balance, or initialize if not present
-        setAvailableDice(data.diceBalance !== undefined ? data.diceBalance : totalDice);
+        // Use saved ticket balance, or initialize if not present
+        setAvailableTickets(data.ticketBalance !== undefined ? data.ticketBalance : totalTickets);
       } else {
-        // First time playing - initialize with earned dice
-        setAvailableDice(totalDice);
+        // First time playing - initialize with earned tickets
+        setAvailableTickets(totalTickets);
         await setDoc(gameDocRef, {
           userId: user.uid,
           position: 0,
           score: 0,
           items: [],
-          diceBalance: totalDice,
+          ticketBalance: totalTickets,
           lastPlayed: new Date()
         });
       }
@@ -113,7 +113,7 @@ export default function Gameboard({ user, userProfile }) {
     }
   };
 
-  const saveGameProgress = async (position, score, items, diceBalance) => {
+  const saveGameProgress = async (position, score, items, ticketBalance) => {
     if (!user) return;
     
     try {
@@ -123,7 +123,7 @@ export default function Gameboard({ user, userProfile }) {
         position,
         score,
         items,
-        diceBalance,
+        ticketBalance,
         lastPlayed: new Date()
       }, { merge: true });
     } catch (error) {
@@ -132,8 +132,8 @@ export default function Gameboard({ user, userProfile }) {
   };
 
   const rollDice = async () => {
-    if (availableDice <= 0) {
-      setGameMessage("No dice available! Earn more by completing workouts in Solo or Burnouts mode.");
+    if (availableTickets <= 0) {
+      setGameMessage("No raffle tickets available! Earn more by completing workouts in Solo or Burnouts mode.");
       return;
     }
 
@@ -141,16 +141,16 @@ export default function Gameboard({ user, userProfile }) {
 
     setIsRolling(true);
     setCurrentRoll(null);
-    setGameMessage("Rolling...");
+    setGameMessage("Spinning...");
 
-    // Decrement dice immediately and save to Firestore
-    const newDiceBalance = availableDice - 1;
-    setAvailableDice(newDiceBalance);
+    // Decrement tickets immediately and save to Firestore
+    const newTicketBalance = availableTickets - 1;
+    setAvailableTickets(newTicketBalance);
     
-    // Save dice balance immediately to prevent refresh exploit
-    await saveGameProgress(playerPosition, totalScore, specialItems, newDiceBalance);
+    // Save ticket balance immediately to prevent refresh exploit
+    await saveGameProgress(playerPosition, totalScore, specialItems, newTicketBalance);
 
-    // Animate dice roll
+    // Animate spin
     let rollCount = 0;
     const rollInterval = setInterval(() => {
       setCurrentRoll(Math.floor(Math.random() * 6) + 1);
@@ -160,18 +160,18 @@ export default function Gameboard({ user, userProfile }) {
         clearInterval(rollInterval);
         const finalRoll = Math.floor(Math.random() * 6) + 1;
         setCurrentRoll(finalRoll);
-        handleRollResult(finalRoll, newDiceBalance);
+        handleRollResult(finalRoll, newTicketBalance);
       }
     }, 100);
   };
 
-  const handleRollResult = (roll, diceBalance) => {
+  const handleRollResult = (roll, ticketBalance) => {
     const newPosition = (playerPosition + roll) % BOARD_SPACES;
     setPlayerPosition(newPosition);
 
     setTimeout(() => {
       const space = getSpaceType(newPosition);
-      triggerSpaceEvent(space, newPosition, diceBalance);
+      triggerSpaceEvent(space, newPosition, ticketBalance);
       setIsRolling(false);
     }, 500);
   };
@@ -186,17 +186,17 @@ export default function Gameboard({ user, userProfile }) {
     return 'safe';
   };
 
-  const triggerSpaceEvent = (spaceType, position, diceBalance) => {
+  const triggerSpaceEvent = (spaceType, position, ticketBalance) => {
     if (spaceType === 'safe' || spaceType === 'start') {
       setGameMessage(`Safe space! You're at position ${position}.`);
-      saveGameProgress(position, totalScore, specialItems, diceBalance);
+      saveGameProgress(position, totalScore, specialItems, ticketBalance);
       return;
     }
 
     const eventList = events[spaceType];
     const event = eventList[Math.floor(Math.random() * eventList.length)];
     
-    setCurrentEvent({ ...event, spaceType, position, diceBalance });
+    setCurrentEvent({ ...event, spaceType, position, ticketBalance });
     setShowEvent(true);
   };
 
@@ -256,7 +256,7 @@ export default function Gameboard({ user, userProfile }) {
     setCurrentEvent(null);
 
     // Save with correct final position
-    saveGameProgress(finalPosition, newScore, newItems, eventToSave.diceBalance);
+    saveGameProgress(finalPosition, newScore, newItems, eventToSave.ticketBalance);
   };
 
   const getSpaceColor = (position) => {
@@ -284,8 +284,8 @@ export default function Gameboard({ user, userProfile }) {
       {/* Stats Panel */}
       <div style={styles.statsPanel}>
         <div style={styles.statBox}>
-          <div style={styles.statLabel}>DICE</div>
-          <div style={styles.statValue}>🎲 {availableDice}</div>
+          <div style={styles.statLabel}>TICKETS</div>
+          <div style={styles.statValue}>🎟️ {availableTickets}</div>
         </div>
         <div style={styles.statBox}>
           <div style={styles.statLabel}>POSITION</div>
@@ -315,11 +315,11 @@ export default function Gameboard({ user, userProfile }) {
           onClick={rollDice} 
           style={{
             ...styles.rollButton,
-            ...(availableDice <= 0 || isRolling ? styles.rollButtonDisabled : {})
+            ...(availableTickets <= 0 || isRolling ? styles.rollButtonDisabled : {})
           }}
-          disabled={availableDice <= 0 || isRolling}
+          disabled={availableTickets <= 0 || isRolling}
         >
-          {isRolling ? 'ROLLING...' : 'ROLL DICE'}
+          {isRolling ? 'SPENDING...' : 'SPEND TICKETS'}
         </button>
       </div>
 
