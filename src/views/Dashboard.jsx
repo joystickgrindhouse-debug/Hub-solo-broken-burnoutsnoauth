@@ -5,6 +5,7 @@ import burnoutsImage from "/assets/images/burnouts.png";
 import liveImage from "/assets/images/live.png";
 import runImage from "/assets/images/run.png";
 import gameboardImage from "/assets/images/gameboard.jpeg";
+import shopImage from "/assets/circuit-board.png"; // Using circuit board as placeholder
 
 const gameModes = [
   {
@@ -42,6 +43,13 @@ const gameModes = [
     link: "/gameboard",
     external: false,
   },
+  {
+    id: "shop",
+    name: "Merch Shop",
+    image: shopImage,
+    link: "https://squarespace.com",
+    external: true,
+  },
 ];
 
 export default function Dashboard({ user }) {
@@ -49,6 +57,10 @@ export default function Dashboard({ user }) {
 
   const handleTileClick = async (mode) => {
     if (mode.external) {
+      if (mode.id === "shop") {
+        window.open(mode.link, "_blank", "noopener,noreferrer");
+        return;
+      }
       // For external apps like Solo mode, pass authentication data
       try {
         const token = await user.getIdToken();

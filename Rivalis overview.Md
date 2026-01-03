@@ -34,6 +34,7 @@ Competitiveness is baked into every layer of the experience to drive retention:
     - *Road Warrior*: 50 total miles run.
 - **Social Pressure**: Integrated Global Chat and Direct Messaging allow for "trash talk," challenge invitations, and community motivation.
 - **Visual Status**: Custom avatars (via Dicebear) and unlocked badges display a user's dedication and rank to the rest of the community.
+- **Merch Integration**: Integrated link to Squarespace store for exclusive Rivalis fitness apparel.
 
 ## Ad-Economy & Monetization
 Rivalis implements a dual-tier monetization strategy designed for high retention:

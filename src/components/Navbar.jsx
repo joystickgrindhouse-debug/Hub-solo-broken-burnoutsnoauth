@@ -191,6 +191,13 @@ export default function Navbar({ user, userProfile }) {
               <Link to="/chat" onClick={closeDropdown}>Chat</Link>
               <Link to="/dm" onClick={closeDropdown}>DM</Link>
               <Link to="/leaderboard" onClick={closeDropdown}>Leaderboard</Link>
+              <a href="https://squarespace.com" target="_blank" rel="noopener noreferrer" onClick={closeDropdown} style={{
+                color: "#fff",
+                textDecoration: "none",
+                padding: "0.5rem",
+                display: "block",
+                transition: "all 0.3s ease"
+              }}>Shop</a>
               <button onClick={() => { handleLogout(); closeDropdown(); }}>Logout</button>
             </div>
           )}
