@@ -106,58 +106,120 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
       position: "relative",
       overflow: "hidden"
     }}>
-      <div className="overlay-card" style={{ maxWidth: "500px", zIndex: 10, width: "100%" }}>
+      <div className="overlay-card" style={{ 
+        maxWidth: "600px", 
+        zIndex: 10, 
+        width: "100%",
+        background: "rgba(0, 0, 0, 0.9)",
+        border: "2px solid #ff3050",
+        borderRadius: "12px",
+        padding: "2.5rem",
+        boxShadow: "0 0 30px rgba(255, 48, 80, 0.4), inset 0 0 20px rgba(255, 48, 80, 0.1)",
+        position: "relative",
+        overflow: "hidden"
+      }}>
+        {/* Decorative corner accents */}
+        <div style={{ position: "absolute", top: "10px", left: "10px", width: "20px", height: "20px", borderTop: "2px solid #ff3050", borderLeft: "2px solid #ff3050" }} />
+        <div style={{ position: "absolute", top: "10px", right: "10px", width: "20px", height: "20px", borderTop: "2px solid #ff3050", borderRight: "2px solid #ff3050" }} />
+        <div style={{ position: "absolute", bottom: "10px", left: "10px", width: "20px", height: "20px", borderBottom: "2px solid #ff3050", borderLeft: "2px solid #ff3050" }} />
+        <div style={{ position: "absolute", bottom: "10px", right: "10px", width: "20px", height: "20px", borderBottom: "2px solid #ff3050", borderRight: "2px solid #ff3050" }} />
+
         <h1 style={{ 
           fontFamily: "'Press Start 2P', cursive", 
           color: "#ff3050",
-          marginBottom: "1.5rem",
-          fontSize: "1.2rem"
+          marginBottom: "2rem",
+          fontSize: "1.4rem",
+          textShadow: "0 0 10px rgba(255, 48, 80, 0.6)",
+          letterSpacing: "2px"
         }}>
           {isUpdating ? "UPDATE IDENTITY" : "IDENTITY TERMINAL"}
         </h1>
         
         {!image ? (
           <>
-            <p style={{ lineHeight: "1.6", marginBottom: "2rem", fontSize: "0.9rem" }}>
-              {isUpdating ? "Update your visual confirmation for the arena." : "The arena requires visual confirmation. Upload your pilot identity photo to proceed."}
-            </p>
-            <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+            <div style={{
+              background: "rgba(255, 48, 80, 0.05)",
+              padding: "1.5rem",
+              borderRadius: "8px",
+              border: "1px dashed rgba(255, 48, 80, 0.3)",
+              marginBottom: "2rem"
+            }}>
+              <p style={{ 
+                lineHeight: "1.8", 
+                marginBottom: "0", 
+                fontSize: "0.95rem",
+                fontFamily: "system-ui, -apple-system, sans-serif",
+                color: "rgba(255, 255, 255, 0.9)"
+              }}>
+                {isUpdating 
+                  ? "Re-calibrating visual markers for high-stakes competition. Ensure clarity for identification." 
+                  : "The arena requires high-fidelity visual confirmation. Synchronize your pilot profile to initialize combat protocols."}
+              </p>
+            </div>
+            
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", justifyContent: "center" }}>
               <label style={{
                 display: "inline-block",
-                padding: "1rem 2rem",
-                background: "#ff3050",
+                padding: "1.2rem 2.5rem",
+                background: "linear-gradient(135deg, #ff3050 0%, #a30019 100%)",
                 color: "#fff",
                 fontFamily: "'Press Start 2P', cursive",
                 fontSize: "0.8rem",
                 cursor: "pointer",
                 borderRadius: "4px",
-                boxShadow: "0 0 15px rgba(255, 48, 80, 0.4)"
+                border: "2px solid #fff",
+                boxShadow: "0 0 20px rgba(255, 48, 80, 0.6)",
+                transition: "transform 0.2s"
               }}>
-                CAPTURE PHOTO
+                CAPTURE DATA
                 <input type="file" accept="image/*" onChange={onSelectFile} style={{ display: "none" }} />
               </label>
+              
               {isUpdating && onSetupComplete && (
                 <button 
                   onClick={onSetupComplete}
                   style={{
-                    padding: "1rem 2rem",
-                    background: "transparent",
-                    border: "1px solid #ff3050",
+                    padding: "1.2rem 2.5rem",
+                    background: "rgba(0, 0, 0, 0.5)",
+                    border: "2px solid #ff3050",
                     color: "#ff3050",
                     fontFamily: "'Press Start 2P', cursive",
                     fontSize: "0.8rem",
                     cursor: "pointer",
-                    borderRadius: "4px"
+                    borderRadius: "4px",
+                    boxShadow: "0 0 10px rgba(255, 48, 80, 0.2)"
                   }}
                 >
-                  CANCEL
+                  ABORT
                 </button>
               )}
             </div>
           </>
         ) : (
-          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#000", zIndex: 1000, display: "flex", flexDirection: "column" }}>
-            <div style={{ flex: 1, position: "relative" }}>
+          <div style={{ 
+            position: "fixed", 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            backgroundColor: "#000", 
+            zIndex: 1000, 
+            display: "flex", 
+            flexDirection: "column" 
+          }}>
+            {/* Cropper UI with scanline effect */}
+            <div style={{ flex: 1, position: "relative", borderBottom: "3px solid #ff3050" }}>
+              <div style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: "linear-gradient(rgba(255, 48, 80, 0.05) 50%, transparent 50%)",
+                backgroundSize: "100% 4px",
+                zIndex: 2,
+                pointerEvents: "none"
+              }} />
               <Cropper
                 image={image}
                 crop={crop}
@@ -166,38 +228,75 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={onCropComplete}
+                style={{
+                  containerStyle: { background: "#000" },
+                  cropAreaStyle: { border: "3px solid #ff3050", boxShadow: "0 0 50px rgba(255, 48, 80, 0.5)" }
+                }}
               />
             </div>
-            <div style={{ padding: "2rem", background: "#111", display: "flex", gap: "1rem", justifyContent: "center" }}>
-              <button 
-                onClick={() => setImage(null)}
-                style={{
-                  padding: "0.8rem 1.5rem",
-                  background: "transparent",
-                  border: "1px solid #ff3050",
-                  color: "#ff3050",
-                  fontFamily: "'Press Start 2P', cursive",
-                  fontSize: "0.7rem",
-                  cursor: "pointer"
-                }}
-              >
-                BACK
-              </button>
-              <button 
-                onClick={handleUpload}
-                disabled={uploading}
-                style={{
-                  padding: "0.8rem 1.5rem",
-                  background: "#ff3050",
-                  color: "#fff",
-                  fontFamily: "'Press Start 2P', cursive",
-                  fontSize: "0.7rem",
-                  cursor: "pointer",
-                  opacity: uploading ? 0.5 : 1
-                }}
-              >
-                {uploading ? "SYNCING..." : "SYNC IDENTITY"}
-              </button>
+            
+            <div style={{ 
+              padding: "2rem", 
+              background: "#0a0a0a", 
+              display: "flex", 
+              flexDirection: "column",
+              gap: "1.5rem", 
+              alignItems: "center",
+              borderTop: "1px solid rgba(255, 48, 80, 0.3)"
+            }}>
+              {/* Zoom control */}
+              <div style={{ width: "100%", maxWidth: "300px", display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ color: "#ff3050", fontFamily: "'Press Start 2P', cursive", fontSize: "0.6rem" }}>ZOOM</span>
+                <input 
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  value={zoom}
+                  onChange={(e) => setZoom(parseFloat(e.target.value))}
+                  style={{ flex: 1, accentColor: "#ff3050" }}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "1rem", width: "100%", justifyContent: "center" }}>
+                <button 
+                  onClick={() => setImage(null)}
+                  style={{
+                    flex: 1,
+                    maxWidth: "150px",
+                    padding: "1rem",
+                    background: "rgba(0, 0, 0, 0.5)",
+                    border: "2px solid #ff3050",
+                    color: "#ff3050",
+                    fontFamily: "'Press Start 2P', cursive",
+                    fontSize: "0.7rem",
+                    cursor: "pointer",
+                    borderRadius: "4px"
+                  }}
+                >
+                  RESCAN
+                </button>
+                <button 
+                  onClick={handleUpload}
+                  disabled={uploading}
+                  style={{
+                    flex: 1,
+                    maxWidth: "200px",
+                    padding: "1rem",
+                    background: "linear-gradient(135deg, #ff3050 0%, #a30019 100%)",
+                    color: "#fff",
+                    border: "2px solid #fff",
+                    fontFamily: "'Press Start 2P', cursive",
+                    fontSize: "0.7rem",
+                    cursor: "pointer",
+                    borderRadius: "4px",
+                    boxShadow: "0 0 20px rgba(255, 48, 80, 0.4)",
+                    opacity: uploading ? 0.5 : 1
+                  }}
+                >
+                  {uploading ? "SYNCING..." : "SYNC IDENTITY"}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -205,14 +304,11 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
 
       <style>{`
         .hero-background {
-          background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+          background: radial-gradient(circle at center, #1a0000 0%, #000 100%);
         }
-        .overlay-card {
-          background: rgba(0, 0, 0, 0.85);
-          padding: 2.5rem;
-          border: 1px solid rgba(255, 48, 80, 0.3);
-          box-shadow: 0 0 40px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 48, 80, 0.1);
-          border-radius: 8px;
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 30px rgba(255, 48, 80, 0.4); }
+          50% { box-shadow: 0 0 50px rgba(255, 48, 80, 0.6); }
         }
       `}</style>
     </div>
