@@ -49,6 +49,23 @@ export default function Profile({ user, userProfile }) {
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [streaks, setStreaks] = useState({ current: 0, longest: 0 });
   const [achievements, setAchievements] = useState([]);
+  const [fitnessGoals, setFitnessGoals] = useState(userProfile?.fitnessGoals || []);
+  const [appSeeking, setAppSeeking] = useState(userProfile?.appSeeking || "");
+
+  const fitnessGoalOptions = [
+    "Build Muscle",
+    "Lose Weight",
+    "Improve Endurance",
+    "General Fitness",
+    "Mental Health"
+  ];
+
+  const appSeekingOptions = [
+    "Gamification",
+    "Social Connection",
+    "Structured Plans",
+    "Progress Tracking"
+  ];
 
   useEffect(() => {
     if (userProfile) {
@@ -59,6 +76,8 @@ export default function Profile({ user, userProfile }) {
         longest: userProfile.longestStreak || 0
       });
       setAchievements(userProfile.achievements || []);
+      setFitnessGoals(userProfile.fitnessGoals || []);
+      setAppSeeking(userProfile.appSeeking || "");
     }
   }, [userProfile]);
 
@@ -76,10 +95,16 @@ export default function Profile({ user, userProfile }) {
   const saveBio = async () => {
     if (!user) return;
     
-    const result = await UserService.updateUserProfile(user.uid, { bio, nickname });
+    const result = await UserService.updateUserProfile(user.uid, { bio, nickname, fitnessGoals, appSeeking });
     if (result.success) {
       setIsEditing(false);
     }
+  };
+
+  const toggleFitnessGoal = (goal) => {
+    setFitnessGoals(prev => 
+      prev.includes(goal) ? prev.filter(g => g !== goal) : [...prev, goal]
+    );
   };
 
   const saveAvatar = async () => {
@@ -307,6 +332,53 @@ export default function Profile({ user, userProfile }) {
                     }}
                   />
                 </div>
+
+                <div style={{ marginBottom: "1.5rem" }}>
+                  <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.8rem", fontFamily: "'Press Start 2P', cursive" }}>FITNESS GOALS</label>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                    {fitnessGoalOptions.map(goal => (
+                      <button
+                        key={goal}
+                        onClick={() => toggleFitnessGoal(goal)}
+                        style={{
+                          padding: "0.5rem 1rem",
+                          background: fitnessGoals.includes(goal) ? "#ff3050" : "#000",
+                          border: "1px solid #ff3050",
+                          borderRadius: "20px",
+                          color: "#fff",
+                          fontSize: "0.8rem",
+                          cursor: "pointer",
+                          transition: "all 0.2s"
+                        }}
+                      >
+                        {goal}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: "1.5rem" }}>
+                  <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.8rem", fontFamily: "'Press Start 2P', cursive" }}>SEEKING IN RIVALIS</label>
+                  <select 
+                    value={appSeeking}
+                    onChange={(e) => setAppSeeking(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem",
+                      background: "#000000",
+                      border: "2px solid #ff3050",
+                      borderRadius: "8px",
+                      color: "#fff",
+                      fontSize: "14px",
+                      boxShadow: "0 0 15px rgba(255, 48, 80, 0.3)"
+                    }}
+                  >
+                    <option value="">Select an option...</option>
+                    {appSeekingOptions.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
                 <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
                   <button
                     onClick={saveBio}
@@ -352,6 +424,22 @@ export default function Profile({ user, userProfile }) {
                 }}>
                   {bio || "No bio yet. Click Edit to add one!"}
                 </p>
+                {fitnessGoals.length > 0 && (
+                  <div style={{ marginBottom: "1rem" }}>
+                    <div style={{ color: "#ff3050", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive", marginBottom: "0.5rem" }}>GOALS</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                      {fitnessGoals.map(goal => (
+                        <span key={goal} style={{ background: "rgba(255, 48, 80, 0.2)", padding: "2px 8px", borderRadius: "4px", fontSize: "0.8rem", border: "1px solid #ff3050" }}>{goal}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {appSeeking && (
+                  <div style={{ marginBottom: "1.5rem" }}>
+                    <div style={{ color: "#ff3050", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive", marginBottom: "0.5rem" }}>SEEKING</div>
+                    <div style={{ fontSize: "0.9rem" }}>{appSeeking}</div>
+                  </div>
+                )}
                 <button
                   onClick={() => setIsEditing(true)}
                   style={{
