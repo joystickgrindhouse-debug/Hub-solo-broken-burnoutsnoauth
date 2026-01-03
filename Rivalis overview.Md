@@ -34,3 +34,16 @@ Competitiveness is baked into every layer of the experience to drive retention:
     - *Road Warrior*: 50 total miles run.
 - **Social Pressure**: Integrated Global Chat and Direct Messaging allow for "trash talk," challenge invitations, and community motivation.
 - **Visual Status**: Custom avatars (via Dicebear) and unlocked badges display a user's dedication and rank to the rest of the community.
+
+## Ad-Economy & Monetization
+Rivalis implements a dual-tier monetization strategy designed for high retention:
+
+### Free Tier (Ad-Supported)
+Free users can "earn" their way into the high-stakes economy by engaging with rewarded ads. This allows them to unlock raffle tickets, double their earnings, or skip cooldowns without financial cost, generating roughly $6/mo in ad revenue per user.
+
+### Premium Tier (Subscription)
+For $14.99/mo (Founding price: $9.99), users unlock the full Rivalis experience:
+- **Zero Ads**: Seamless, uninterrupted training and navigation.
+- **Unlimited Earning**: No caps on raffle ticket generation.
+- **Exclusive Access**: Priority entry into the biggest raffles and exclusive ticket mini-games.
+- **Multipliers**: Passive boosts to all ticket and reward earnings.
