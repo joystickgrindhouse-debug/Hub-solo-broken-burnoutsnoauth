@@ -123,6 +123,7 @@ export const UserService = {
         userId,
         nickname,
         avatarURL,
+        role: userId === "v3h9WiCKKoTPH5Cyi5dVr0Pb2f03" ? "admin" : "user",
         hasCompletedSetup: true,
         createdAt: existingData.createdAt || Timestamp.now(),
         updatedAt: Timestamp.now()
