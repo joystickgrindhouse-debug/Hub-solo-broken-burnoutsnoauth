@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 const HYPE_MESSAGES = [
   {
     title: "A NEW BREED OF FITNESS",
-    description: "Rivalis gamifies your grind. Track workouts with AI, earn raffle tickets, and dominate the gameboard. Join the movement now!"
+    description: "Rivalis gamifies your grind. Track workouts with AI, earn raffle tickets, and win real-world prizes. Join the movement now!"
   },
   {
     title: "SIGN UP. LEVEL UP.",
@@ -15,11 +15,11 @@ const HYPE_MESSAGES = [
   },
   {
     title: "EARN YOUR ENTRIES",
-    description: "Every 30 reps or half-mile ran earns you raffle tickets. Spend them on the board and conquer the arena."
+    description: "Every 30 reps or half-mile ran earns you raffle tickets. Tickets are entered into draws for digital and physical rewards."
   },
   {
-    title: "REAL WORLD REWARDS",
-    description: "Top contenders who complete the board or go the furthest each cycle win exclusive real-world rewards."
+    title: "WEEKLY RAFFLE DRAWS",
+    description: "Raffles are drawn every Sunday at 8 PM PST. Win exclusive merch, digital prizes, and real-world gear!"
   }
 ];
 
