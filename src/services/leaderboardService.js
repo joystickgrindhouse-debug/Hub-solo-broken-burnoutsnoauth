@@ -16,6 +16,21 @@ import {
  * to read and write leaderboard scores
  */
 
+const getRaffleWindowStart = () => {
+  const now = new Date();
+  const day = now.getDay(); // 0 (Sun) to 6 (Sat)
+  // Calculate the most recent Sunday
+  const lastSunday = new Date(now);
+  lastSunday.setDate(now.getDate() - day);
+  lastSunday.setHours(20, 0, 0, 0);
+  
+  // If current time is before this Sunday at 8pm, the window started the previous Sunday
+  if (now < lastSunday) {
+    lastSunday.setDate(lastSunday.getDate() - 7);
+  }
+  return lastSunday;
+};
+
 export const LeaderboardService = {
   /**
    * Submit a score to the leaderboard
@@ -23,6 +38,9 @@ export const LeaderboardService = {
    */
   async submitScore({ userId, userName, gameMode, score, duration = 0, metadata = {} }) {
     try {
+      const now = new Date();
+      const windowStart = getRaffleWindowStart();
+      
       // Generate unique ticket reference numbers
       const ticketRefs = [];
       for (let i = 0; i < score; i++) {
@@ -39,19 +57,30 @@ export const LeaderboardService = {
         duration,
         metadata,
         timestamp: Timestamp.now(),
-        createdAt: new Date().toISOString()
+        windowStart: Timestamp.fromDate(windowStart),
+        createdAt: now.toISOString()
       };
 
       const docRef = await addDoc(collection(db, "leaderboard"), scoreEntry);
       
-      // Also update user's profile with active ticket refs
+      // Also update user's profile with active ticket refs if within current window
       const userRef = query(collection(db, "users"), where("uid", "==", userId));
       const userSnap = await getDocs(userRef);
       if (!userSnap.empty) {
         const userDoc = userSnap.docs[0];
-        const currentRefs = userDoc.data().activeTicketRefs || [];
+        const userData = userDoc.data();
+        
+        // Reset refs if the window has changed
+        const lastUpdate = userData.lastTicketWindowUpdate?.toDate() || new Date(0);
+        let currentRefs = userData.activeTicketRefs || [];
+        
+        if (lastUpdate < windowStart) {
+          currentRefs = [];
+        }
+
         await updateDoc(userDoc.ref, {
-          activeTicketRefs: [...currentRefs, ...ticketRefs]
+          activeTicketRefs: [...currentRefs, ...ticketRefs],
+          lastTicketWindowUpdate: Timestamp.now()
         });
       }
 
@@ -64,15 +93,18 @@ export const LeaderboardService = {
   },
 
   /**
-   * Get top scores for a specific game mode
+   * Get top scores for a specific game mode within the current raffle window
    * @param {string} gameMode - Game mode to filter by
    * @param {number} limitCount - Number of top scores to retrieve (default: 10)
    */
   async getTopScores(gameMode, limitCount = 10) {
     try {
+      const windowStart = getRaffleWindowStart();
       const q = query(
         collection(db, "leaderboard"),
         where("gameMode", "==", gameMode),
+        where("timestamp", ">=", Timestamp.fromDate(windowStart)),
+        orderBy("timestamp", "desc"),
         orderBy("score", "desc"),
         limit(limitCount)
       );
@@ -114,13 +146,16 @@ export const LeaderboardService = {
   },
 
   /**
-   * Get all top scores across all game modes
+   * Get all top scores across all game modes within the current raffle window
    * @param {number} limitCount - Number of top scores to retrieve (default: 10)
    */
   async getAllTopScores(limitCount = 10) {
     try {
+      const windowStart = getRaffleWindowStart();
       const q = query(
         collection(db, "leaderboard"),
+        where("timestamp", ">=", Timestamp.fromDate(windowStart)),
+        orderBy("timestamp", "desc"),
         orderBy("score", "desc"),
         limit(limitCount)
       );
@@ -137,13 +172,13 @@ export const LeaderboardService = {
 
       // Add mock data if needed
       if (scores.length < 5) {
-        const modes = ['solo', 'burnouts', 'live', 'run', 'gameboard'];
+        const modes = ['solo', 'burnouts', 'live', 'run'];
         const mockScores = [
           { id: 'm1', userId: 'mock1', userName: 'ShadowRunner', gameMode: 'solo', score: 1250, timestamp: Timestamp.now() },
           { id: 'm2', userId: 'mock2', userName: 'ZenMaster', gameMode: 'burnouts', score: 1100, timestamp: Timestamp.now() },
           { id: 'm3', userId: 'mock3', userName: 'NitroFlex', gameMode: 'live', score: 950, timestamp: Timestamp.now() },
           { id: 'm4', userId: 'mock4', userName: 'IronHeart', gameMode: 'run', score: 820, timestamp: Timestamp.now() },
-          { id: 'm5', userId: 'mock5', userName: 'PixelWarrior', gameMode: 'gameboard', score: 750, timestamp: Timestamp.now() },
+          { id: 'm5', userId: 'mock5', userName: 'PixelWarrior', gameMode: 'solo', score: 750, timestamp: Timestamp.now() },
           { id: 'm6', userId: 'mock6', userName: 'CyberGhost', gameMode: 'solo', score: 680, timestamp: Timestamp.now() },
           { id: 'm7', userId: 'mock7', userName: 'TitanGrip', gameMode: 'burnouts', score: 620, timestamp: Timestamp.now() }
         ];

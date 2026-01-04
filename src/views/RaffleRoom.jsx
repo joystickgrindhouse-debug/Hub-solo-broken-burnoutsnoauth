@@ -17,11 +17,25 @@ export default function RaffleRoom({ user, userProfile }) {
   }, []);
 
   const loadLeaderboard = async () => {
-    const result = await LeaderboardService.getAllTopScores(50);
+    const result = await LeaderboardService.getAllTopScores(100); // Get more for a bigger pool
     if (result.success) {
       setLeaderboard(result.scores);
     }
     setLoading(false);
+  };
+
+  const getRafflePeriodMessage = () => {
+    const now = new Date();
+    const day = now.getDay();
+    const lastSunday = new Date(now);
+    lastSunday.setDate(now.getDate() - day);
+    lastSunday.setHours(20, 0, 0, 0);
+    if (now < lastSunday) lastSunday.setDate(lastSunday.getDate() - 7);
+    
+    const nextSunday = new Date(lastSunday);
+    nextSunday.setDate(lastSunday.getDate() + 7);
+    
+    return `Active Period: ${lastSunday.toLocaleDateString()} 8PM to ${nextSunday.toLocaleDateString()} 8PM`;
   };
 
   const spinWheel = () => {
@@ -66,6 +80,7 @@ export default function RaffleRoom({ user, userProfile }) {
         {/* Left Side: Raffle Wheel */}
         <div style={styles.wheelSection}>
           <h1 className="rivalis-text" style={styles.title}>RAFFLE ROOM</h1>
+          <p style={styles.periodText}>{getRafflePeriodMessage()}</p>
           <div style={{...styles.wheel, animation: isSpinning ? "spin 3s cubic-bezier(0.15, 0, 0.15, 1) infinite" : "none"}}>
             <div style={styles.wheelInner}>
               <div style={styles.pointer}>▼</div>
@@ -180,8 +195,15 @@ const styles = {
   title: {
     fontSize: "32px",
     color: "#fff",
-    marginBottom: "40px",
+    marginBottom: "10px",
     fontFamily: "'Arial Black', sans-serif"
+  },
+  periodText: {
+    color: "#ff3050",
+    fontSize: "12px",
+    marginBottom: "30px",
+    fontWeight: "bold",
+    letterSpacing: "1px"
   },
   wheel: {
     width: "250px",
