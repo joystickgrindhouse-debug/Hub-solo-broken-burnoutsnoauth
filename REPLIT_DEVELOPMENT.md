@@ -14,30 +14,6 @@ Rivalis Hub is a high-performance web application featuring a React-based fronte
   - MediaPipe (Pose estimation)
   - Leaflet (Mapping)
 
-## 💳 Subscription & Monetization
-
-### 1. Subscription Tiers
-- **Basic (Free):**
-  - Access to 4 core exercises.
-  - Standard leaderboard participation.
-  - *Monetization:* Supported by ad-integration flow.
-- **Pro ($9.99/mo):**
-  - Full library of 16+ exercises.
-  - Advanced pose analytics (detailed form feedback).
-  - Ad-free experience.
-  - 2x Rival Credit earning rate.
-- **Elite ($19.99/mo):**
-  - All Pro features.
-  - Monthly entry into the Premium Loyalty Raffle.
-  - Custom avatar skins and profile effects.
-  - Priority support.
-
-### 2. Ad-Integration Flow (Freemium)
-- **Pre-Workout:** A non-intrusive 5-second video ad before starting a workout session.
-- **Reward Ads:** Opt-in video ads to double the "Rival Credits" earned for a specific session.
-- **Dashboard Banners:** Small, themed banners on the main dashboard that do not interfere with UI navigation.
-- **Frequency Capping:** Limit ads to one per 30 minutes to maintain user experience and prevent fatigue.
-
 ## 🛍 Shop & Rewards Ecosystem
 
 ### 1. Integrated Marketplace (Shop)
@@ -47,7 +23,6 @@ Rivalis Hub is a high-performance web application featuring a React-based fronte
 - Raffles will be held every sunday at 8pm pst and digital and physical rewards will be issued to the winners.
 ### 2. Loyalty Raffle System
 - **Mechanism:** "Raffle Tickets" awarded for consistent 7-day workout streaks.
-- **Monthly Rewards:** Top-tier fitness gear, subscription extensions, or "Early Bird" access to experimental pose-tracking modes.
 - **Retention Driver:** Automated notifications 24 hours before a draw to increase active daily users (DAU).
 
 ## 📊 Development Progress
