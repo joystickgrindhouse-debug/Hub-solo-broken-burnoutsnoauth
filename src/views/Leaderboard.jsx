@@ -128,13 +128,13 @@ export default function Leaderboard({ user }) {
                   <div style={{ fontSize: "0.9rem", color: "rgba(255, 255, 255, 0.7)" }}>
                     {Object.entries(player.gameScores).map(([mode, score]) => (
                       <span key={mode} style={{ marginRight: "1rem" }}>
-                        {mode}: {score} pts
+                        {mode}: {score} tickets
                       </span>
                     ))}
                   </div>
                 </div>
                 <div style={{ fontSize: "1.5rem", fontWeight: "700", color: "#ff4081" }}>
-                  {player.totalScore} pts
+                  {player.totalScore} tickets
                 </div>
               </div>
             ))}
@@ -142,11 +142,11 @@ export default function Leaderboard({ user }) {
         )}
 
         <div style={{ marginTop: "1.5rem", padding: "1rem", background: "rgba(102, 126, 234, 0.1)", borderRadius: "8px" }}>
-          <h3 style={{ marginBottom: "0.5rem", fontSize: "1rem" }}>How Scoring Works</h3>
+          <h3 style={{ marginBottom: "0.5rem", fontSize: "1rem" }}>How Tickets Work</h3>
           <ul style={{ margin: 0, paddingLeft: "1.5rem", fontSize: "0.9rem", color: "rgba(255, 255, 255, 0.8)" }}>
-            <li><strong>Solo Mode:</strong> 1 rep = 1 point</li>
-            <li><strong>Other Modes:</strong> Scores vary by game mode</li>
-            <li>Your total score is the sum of all your game scores</li>
+            <li><strong>Solo Mode:</strong> 1 rep = 1 raffle ticket</li>
+            <li><strong>Other Modes:</strong> 1 point = 1 raffle ticket</li>
+            <li>Your total raffle tickets are the sum of all tickets earned across game modes</li>
           </ul>
         </div>
       </div>

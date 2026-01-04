@@ -29,16 +29,16 @@ export default function Gameboard({ user, userProfile }) {
 
   const events = {
     challenge: [
-      { title: "PUSH-UP CHALLENGE", message: "The board demands 10 push-ups! Complete them to earn +5 bonus points!", points: 5 },
-      { title: "PLANK CHALLENGE", message: "Hold a 30-second plank! Earn +3 bonus points for your dedication!", points: 3 },
-      { title: "FITNESS QUIZ", message: "Answer correctly: What muscle do squats target? (Glutes!) +2 points!", points: 2 },
-      { title: "BURPEE BLAST", message: "5 burpees, right now! Earn +4 bonus points!", points: 4 }
+      { title: "PUSH-UP CHALLENGE", message: "The board demands 10 push-ups! Complete them to earn +5 bonus tickets!", points: 5 },
+      { title: "PLANK CHALLENGE", message: "Hold a 30-second plank! Earn +3 bonus tickets for your dedication!", points: 3 },
+      { title: "FITNESS QUIZ", message: "Answer correctly: What muscle do squats target? (Glutes!) +2 tickets!", points: 2 },
+      { title: "BURPEE BLAST", message: "5 burpees, right now! Earn +4 bonus tickets!", points: 4 }
     ],
     reward: [
-      { title: "JACKPOT!", message: "You found a treasure chest! +10 points!", points: 10 },
+      { title: "JACKPOT!", message: "You found a treasure chest! +10 tickets!", points: 10 },
       { title: "BONUS TICKETS", message: "You earned free raffle tickets! Keep them for later.", item: 'bonus_tickets' },
-      { title: "DOUBLE POINTS", message: "Your next roll counts double! Save it wisely.", item: 'double_points' },
-      { title: "LUCKY FIND", message: "You discovered hidden coins! +7 points!", points: 7 }
+      { title: "DOUBLE TICKETS", message: "Your next roll counts double! Save it wisely.", item: 'double_points' },
+      { title: "LUCKY FIND", message: "You discovered hidden coins! +7 tickets!", points: 7 }
     ],
     mystery: [
       { title: "WARP ZONE!", message: "You've been teleported forward 5 spaces!", warp: 5 },
@@ -47,16 +47,16 @@ export default function Gameboard({ user, userProfile }) {
       { title: "POWER SURGE", message: "Energy overload! Roll again immediately!", item: 'free_roll' }
     ],
     boost: [
-      { title: "ENERGY BOOST", message: "You feel pumped! +5 points and roll again!", points: 5, item: 'free_roll' },
+      { title: "ENERGY BOOST", message: "You feel pumped! +5 tickets and roll again!", points: 5, item: 'free_roll' },
       { title: "MOMENTUM", message: "You're on fire! Move forward 3 extra spaces!", warp: 3 },
       { title: "SHIELD UP", message: "Protected! Negative events won't affect you next turn.", item: 'shield' },
-      { title: "COMBO BREAKER", message: "Chain bonus! +8 points!", points: 8 }
+      { title: "COMBO BREAKER", message: "Chain bonus! +8 tickets!", points: 8 }
     ],
     plot: [
-      { title: "THE TWIST!", message: "A rival appears! Battle by rolling higher than 4 to win +10 points!", special: 'battle', points: 10 },
+      { title: "THE TWIST!", message: "A rival appears! Battle by rolling higher than 4 to win +10 tickets!", special: 'battle', points: 10 },
       { title: "FORK IN THE ROAD", message: "Choose your path: Risk (move +6) or Safe (move +2)?", special: 'choice' },
-      { title: "BOSS BATTLE", message: "Face the fitness boss! Complete 15 reps to earn +15 points!", points: 15 },
-      { title: "ALLIANCE", message: "Team up with past champions! +6 points and protection.", points: 6, item: 'shield' }
+      { title: "BOSS BATTLE", message: "Face the fitness boss! Complete 15 reps to earn +15 tickets!", points: 15 },
+      { title: "ALLIANCE", message: "Team up with past champions! +6 tickets and protection.", points: 6, item: 'shield' }
     ]
   };
 
@@ -222,7 +222,7 @@ export default function Gameboard({ user, userProfile }) {
       // Apply normal event effects
       if (currentEvent.points) {
         newScore += currentEvent.points;
-        message += ` Score: +${currentEvent.points}!`;
+        message += ` Tickets: +${currentEvent.points}!`;
       }
 
       if (currentEvent.item) {
@@ -240,7 +240,7 @@ export default function Gameboard({ user, userProfile }) {
         const battleRoll = Math.floor(Math.random() * 6) + 1;
         if (battleRoll > 4) {
           newScore += currentEvent.points;
-          message = `Battle won! You rolled ${battleRoll}. +${currentEvent.points} points!`;
+          message = `Battle won! You rolled ${battleRoll}. +${currentEvent.points} tickets!`;
         } else {
           message = `Battle lost. You rolled ${battleRoll}. Try again!`;
         }
@@ -292,8 +292,8 @@ export default function Gameboard({ user, userProfile }) {
           <div style={styles.statValue}>📍 {playerPosition}/{BOARD_SPACES}</div>
         </div>
         <div style={styles.statBox}>
-          <div style={styles.statLabel}>SCORE</div>
-          <div style={styles.statValue}>⭐ {totalScore}</div>
+          <div style={styles.statLabel}>TOTAL TICKETS</div>
+          <div style={styles.statValue}>🎟️ {totalScore}</div>
         </div>
         <div style={styles.statBox}>
           <div style={styles.statLabel}>ITEMS</div>

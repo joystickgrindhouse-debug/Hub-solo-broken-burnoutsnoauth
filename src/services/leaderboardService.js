@@ -76,6 +76,7 @@ export const LeaderboardService = {
           { id: 'm4', userId: 'mock4', userName: 'IronHeart', gameMode, score: 820, timestamp: Timestamp.now() },
           { id: 'm5', userId: 'mock5', userName: 'PixelWarrior', gameMode, score: 750, timestamp: Timestamp.now() }
         ];
+        // Mock data is considered as tickets
         scores = [...scores, ...mockScores].sort((a, b) => b.score - a.score).slice(0, limitCount);
       }
 
