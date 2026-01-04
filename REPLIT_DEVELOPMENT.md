@@ -36,9 +36,9 @@ Rivalis Hub is a high-performance web application featuring a React-based fronte
 - Basic routing and layout structure.
 - **Firebase Authentication & Session Persistence:** Fully implemented with themed Login/Signup UI and automated session recovery.
 - **ProtectedRoute System:** Implemented to manage access control based on auth state and profile completion.
+- **Firestore Schema Optimization:** Optimized collections (`users`, `leaderboard`, `chats`) for efficient querying, real-time updates, and activity indexing.
 
 ### ⏳ Still Needing Completion
-- **Firestore Schema Optimization:** Refine Firestore collections for efficient user profile retrieval and activity log indexing.
 - **Media Processing:** Finalize the upload pipeline from Uppy to Cloud Storage.
 - **Pose Analysis Engine:** Integrate MediaPipe results into the user dashboard.
 - **Real-time Notifications:** Set up Firebase listeners for social interactions.
