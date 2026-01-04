@@ -38,13 +38,14 @@ export default function LoadingScreen() {
       position: "fixed",
       top: 0,
       left: 0,
-      right: 0,
-      bottom: 0,
+      width: "100vw",
+      height: "100vh",
       overflow: "hidden",
       backgroundColor: "#000",
       backgroundImage: "url('/loading-bg.png')",
       backgroundSize: "cover",
       backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
       zIndex: 9999
     }}>
       {/* Scanline effect */}
