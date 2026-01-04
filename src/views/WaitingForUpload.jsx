@@ -37,6 +37,7 @@ const getCroppedImgBase64 = async (imageSrc, pixelCrop) => {
 
 const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
   const [image, setImage] = useState(null);
+  const [nickname, setNickname] = useState("");
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
@@ -56,7 +57,10 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
   }, []);
 
   const handleUpload = async () => {
-    if (!image || !croppedAreaPixels) return;
+    if (!image || !croppedAreaPixels || !nickname.trim()) {
+      if (!nickname.trim()) alert("Please enter a nickname.");
+      return;
+    }
     setUploading(true);
     try {
       console.log("Starting upload process (Direct Firestore mode)...");
@@ -65,6 +69,7 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
       
       console.log("Updating user profile in Firestore...");
       const updateResult = await UserService.updateUserProfile(auth.currentUser.uid, {
+        nickname: nickname.trim(),
         avatarURL: croppedBase64,
         hasCompletedSetup: true
       });
@@ -134,6 +139,34 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
         }}>
           {isUpdating ? "UPDATE PROFILE" : "PROFILE SETUP"}
         </h1>
+
+        <div style={{ marginBottom: "2rem", textAlign: "left" }}>
+          <label style={{ 
+            display: "block", 
+            fontFamily: "'Press Start 2P', cursive", 
+            fontSize: "0.7rem", 
+            color: "#ff3050", 
+            marginBottom: "10px" 
+          }}>
+            NICKNAME
+          </label>
+          <input 
+            type="text" 
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            placeholder="Enter your rival name..."
+            style={{
+              width: "100%",
+              padding: "12px",
+              background: "rgba(255, 48, 80, 0.1)",
+              border: "2px solid #ff3050",
+              color: "#fff",
+              fontFamily: "system-ui, sans-serif",
+              borderRadius: "4px",
+              outline: "none"
+            }}
+          />
+        </div>
         
         {!image ? (
           <>
