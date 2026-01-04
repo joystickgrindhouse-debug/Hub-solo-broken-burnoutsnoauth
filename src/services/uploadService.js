@@ -1,10 +1,7 @@
 import Uppy from '@uppy/core';
 import AwsS3 from '@uppy/aws-s3';
 
-export const createUploader = (options: {
-  onSuccess?: (url: string) => void;
-  onError?: (error: Error) => void;
-}) => {
+export const createUploader = (options) => {
   const uppy = new Uppy({
     meta: { type: 'avatar' },
     restrictions: {
@@ -41,9 +38,7 @@ export const createUploader = (options: {
   });
 
   uppy.on('upload-success', (file, response) => {
-    // The response from the bucket is usually empty for PUT, 
-    // so we use the path we know our server expects
-    const objectPath = file.meta.objectPath as string;
+    const objectPath = file.meta.objectPath;
     if (options.onSuccess) {
       options.onSuccess(objectPath);
     }
