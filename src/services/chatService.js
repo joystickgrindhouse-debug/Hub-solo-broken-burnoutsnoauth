@@ -14,6 +14,20 @@ import {
 } from "firebase/firestore";
 
 export const ChatService = {
+  async clearAllGlobalMessages() {
+    try {
+      const q = query(collection(db, "globalChat"));
+      const snapshot = await getDocs(q);
+      const deletePromises = snapshot.docs.map(d => deleteDoc(doc(db, "globalChat", d.id)));
+      await Promise.all(deletePromises);
+      console.log("Global chat cleared successfully.");
+      return { success: true };
+    } catch (error) {
+      console.error("Error clearing global chat:", error);
+      return { success: false, error: error.message };
+    }
+  },
+
   async cleanupOldGlobalMessages() {
     try {
       const q = query(

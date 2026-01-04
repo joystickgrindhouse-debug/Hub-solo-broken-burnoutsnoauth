@@ -81,6 +81,18 @@ export default function RaffleRoom({ user, userProfile }) {
     }, 3000);
   };
 
+  const clearChat = async () => {
+    if (!isAdmin) return;
+    if (window.confirm("Are you sure you want to delete all lobby chat messages?")) {
+      const result = await ChatService.clearAllGlobalMessages();
+      if (result.success) {
+        alert("Lobby chat cleared!");
+      } else {
+        alert("Error: " + result.error);
+      }
+    }
+  };
+
   return (
     <div className="hero-background" style={styles.container}>
       <div style={styles.roomLayout}>
@@ -88,6 +100,16 @@ export default function RaffleRoom({ user, userProfile }) {
         <div style={styles.wheelSection}>
           <h1 className="rivalis-text" style={styles.title}>RAFFLE ROOM</h1>
           <p style={styles.periodText}>{getRafflePeriodMessage()}</p>
+          
+          {isAdmin && (
+            <button 
+              onClick={clearChat}
+              style={{...styles.button, background: "#333", marginBottom: "20px", fontSize: "14px", padding: "10px 20px"}}
+            >
+              🗑️ CLEAR LOBBY CHAT
+            </button>
+          )}
+
           <div style={{...styles.wheel, animation: isSpinning ? "spin 3s cubic-bezier(0.15, 0, 0.15, 1) infinite" : "none"}}>
             <div style={styles.wheelInner}>
               <div style={styles.pointer}>▼</div>
