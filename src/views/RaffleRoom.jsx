@@ -35,7 +35,14 @@ export default function RaffleRoom({ user, userProfile }) {
     const nextSunday = new Date(lastSunday);
     nextSunday.setDate(lastSunday.getDate() + 7);
     
-    return `Active Period: ${lastSunday.toLocaleDateString()} 8PM to ${nextSunday.toLocaleDateString()} 8PM`;
+    // Check if drawing is happening now (Sunday 8:00 PM - 8:15 PM)
+    const isDrawingTime = now >= nextSunday && now < new Date(nextSunday.getTime() + 15 * 60000);
+    
+    if (isDrawingTime) {
+      return "🎰 DRAWING IN PROGRESS! 🎰";
+    }
+    
+    return `Next Draw: ${nextSunday.toLocaleDateString()} @ 8:00 PM`;
   };
 
   const spinWheel = () => {
