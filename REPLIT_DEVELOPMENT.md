@@ -5,7 +5,7 @@ Rivalis Hub is a high-performance web application featuring a React-based fronte
 
 ## 🛠 Project Architecture
 - **Frontend:** React + Vite (Port 5000)
-- **Backend:** Node.js + Express (Port 3000)
+- **Backend/Database:** Node.js + Firebase (Firestore & Auth)
 - **State Management:** React Hooks
 - **Styling:** CSS Modules / Global CSS
 - **Integrations:** 
@@ -38,7 +38,7 @@ Rivalis Hub is a high-performance web application featuring a React-based fronte
 - **ProtectedRoute System:** Implemented to manage access control based on auth state and profile completion.
 
 ### ⏳ Still Needing Completion
-- **Database Schema:** Finalize PostgreSQL schema for user profiles and activity logs.
+- **Firestore Schema Optimization:** Refine Firestore collections for efficient user profile retrieval and activity log indexing.
 - **Media Processing:** Finalize the upload pipeline from Uppy to Cloud Storage.
 - **Pose Analysis Engine:** Integrate MediaPipe results into the user dashboard.
 - **Real-time Notifications:** Set up Firebase listeners for social interactions.
