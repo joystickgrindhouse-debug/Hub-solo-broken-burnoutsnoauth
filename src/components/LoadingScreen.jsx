@@ -46,7 +46,8 @@ export default function LoadingScreen() {
       backgroundSize: "cover",
       backgroundPosition: "center",
       backgroundRepeat: "no-repeat",
-      zIndex: 9999
+      zIndex: 9999,
+      touchAction: "none"
     }}>
       {/* Scanline effect */}
       <div style={{
