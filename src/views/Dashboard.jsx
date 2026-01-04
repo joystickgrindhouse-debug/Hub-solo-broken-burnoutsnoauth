@@ -37,10 +37,10 @@ const gameModes = [
     external: false,
   },
   {
-    id: "gameboard",
-    name: "Gameboard",
+    id: "raffle",
+    name: "Raffle Room",
     image: gameboardImage,
-    link: "/gameboard",
+    link: "/raffle",
     external: false,
   },
   {

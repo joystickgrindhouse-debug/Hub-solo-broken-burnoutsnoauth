@@ -61,7 +61,6 @@ export default function Leaderboard({ user }) {
     { id: "burnouts", name: "Burnouts" },
     { id: "live", name: "Live" },
     { id: "run", name: "Run" },
-    { id: "gameboard", name: "Gameboard" }
   ];
 
   return (

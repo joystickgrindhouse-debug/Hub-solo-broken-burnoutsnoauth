@@ -17,7 +17,7 @@ import Solo from "./views/Solo.jsx";
 import Burnouts from "./views/Burnouts.jsx";
 import Live from "./views/Live.jsx";
 import Run from "./views/Run.jsx";
-import Gameboard from "./views/Gameboard.jsx";
+import RaffleRoom from "./views/RaffleRoom.jsx";
 import Navbar from "./components/Navbar.jsx";
 import WaitingForUpload from "./views/WaitingForUpload.jsx";
 
@@ -225,10 +225,10 @@ export default function App() {
           } 
         />
         <Route 
-          path="/gameboard" 
+          path="/raffle" 
           element={
             <ProtectedRoute user={user} userProfile={userProfile}>
-              <Gameboard user={user} userProfile={userProfile} />
+              <RaffleRoom user={user} />
             </ProtectedRoute>
           } 
         />
