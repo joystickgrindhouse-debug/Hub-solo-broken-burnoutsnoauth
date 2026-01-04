@@ -6,6 +6,7 @@ export default function RaffleRoom({ user }) {
   const [winner, setWinner] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [drawHistory, setDrawHistory] = useState([]);
 
   useEffect(() => {
     loadLeaderboard();
@@ -14,7 +15,7 @@ export default function RaffleRoom({ user }) {
   }, []);
 
   const loadLeaderboard = async () => {
-    const result = await LeaderboardService.getAllTopScores(10);
+    const result = await LeaderboardService.getAllTopScores(50);
     if (result.success) {
       setLeaderboard(result.scores);
     }
@@ -26,10 +27,33 @@ export default function RaffleRoom({ user }) {
     setIsSpinning(true);
     setWinner(null);
 
+    // Collect all unique ticket references from all users
+    const allTickets = [];
+    leaderboard.forEach(player => {
+      if (player.ticketRefs) {
+        player.ticketRefs.forEach(ref => {
+          allTickets.push({ ref, userName: player.userName, userId: player.userId });
+        });
+      } else {
+        // Fallback for mock data without refs
+        for (let i = 0; i < player.score; i++) {
+          allTickets.push({ 
+            ref: `MOCK-${player.userId}-${i}`, 
+            userName: player.userName, 
+            userId: player.userId 
+          });
+        }
+      }
+    });
+
     // Simulate wheel spin
     setTimeout(() => {
-      const randomIndex = Math.floor(Math.random() * leaderboard.length);
-      setWinner(leaderboard[randomIndex]);
+      const luckyTicket = allTickets[Math.floor(Math.random() * allTickets.length)];
+      setWinner(luckyTicket);
+      setDrawHistory(prev => [{
+        ...luckyTicket,
+        timestamp: new Date().toLocaleTimeString()
+      }, ...prev].slice(0, 10));
       setIsSpinning(false);
     }, 3000);
   };
@@ -61,9 +85,25 @@ export default function RaffleRoom({ user }) {
             <div style={styles.winnerAnnouncement}>
               <h2>CONGRATULATIONS!</h2>
               <p style={styles.winnerName}>{winner.userName}</p>
+              <p style={{fontFamily: "monospace", color: "#ff3050"}}>REF: {winner.ref}</p>
               <p>HAS WON THE RAFFLE!</p>
             </div>
           )}
+
+          {/* Draw History */}
+          <div style={styles.historySection}>
+            <h3 style={styles.historyTitle}>📜 DRAW HISTORY</h3>
+            <div style={styles.historyList}>
+              {drawHistory.map((draw, idx) => (
+                <div key={idx} style={styles.historyItem}>
+                  <span>{draw.timestamp}</span>
+                  <span style={{color: "#ffd700"}}>{draw.userName}</span>
+                  <span style={{fontFamily: "monospace", fontSize: "0.8rem"}}>{draw.ref}</span>
+                </div>
+              ))}
+              {drawHistory.length === 0 && <div style={{color: "rgba(255,255,255,0.4)"}}>No draws yet</div>}
+            </div>
+          </div>
         </div>
 
         {/* Right Side: Real-time Leaderboard */}
@@ -217,5 +257,35 @@ const styles = {
     color: "#ffd700",
     fontWeight: "bold",
     margin: "10px 0"
+  },
+  historySection: {
+    marginTop: "40px",
+    width: "100%",
+    borderTop: "1px solid rgba(255, 48, 80, 0.2)",
+    paddingTop: "20px"
+  },
+  historyTitle: {
+    color: "#fff",
+    fontSize: "14px",
+    marginBottom: "15px",
+    textAlign: "center",
+    opacity: 0.8
+  },
+  historyList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+    maxHeight: "150px",
+    overflowY: "auto"
+  },
+  historyItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    background: "rgba(255,255,255,0.05)",
+    padding: "8px 12px",
+    borderRadius: "4px",
+    fontSize: "0.9rem",
+    color: "#fff"
   }
 };

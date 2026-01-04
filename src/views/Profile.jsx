@@ -541,6 +541,38 @@ export default function Profile({ user, userProfile }) {
           </div>
         </div>
 
+        {userProfile?.activeTicketRefs?.length > 0 && (
+          <div style={{ marginBottom: "2rem" }}>
+            <h3 style={{ color: "#ff3050", marginBottom: "1rem" }}>🎟️ Active Ticket References</h3>
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", 
+              gap: "0.5rem",
+              maxHeight: "200px",
+              overflowY: "auto",
+              padding: "1rem",
+              background: "rgba(255, 48, 80, 0.05)",
+              borderRadius: "8px",
+              border: "1px solid rgba(255, 48, 80, 0.2)"
+            }}>
+              {userProfile.activeTicketRefs.map((ref, idx) => (
+                <div key={idx} style={{ 
+                  color: "#fff", 
+                  fontSize: "0.8rem", 
+                  fontFamily: "monospace",
+                  background: "rgba(0,0,0,0.5)",
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  textAlign: "center",
+                  border: "1px solid rgba(255, 48, 80, 0.3)"
+                }}>
+                  {ref}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div>
           <h3 style={{ 
             color: "#ff3050",

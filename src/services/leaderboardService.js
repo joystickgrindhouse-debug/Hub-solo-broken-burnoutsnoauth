@@ -23,11 +23,19 @@ export const LeaderboardService = {
    */
   async submitScore({ userId, userName, gameMode, score, duration = 0, metadata = {} }) {
     try {
+      // Generate unique ticket reference numbers
+      const ticketRefs = [];
+      for (let i = 0; i < score; i++) {
+        const ref = `RIV-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+        ticketRefs.push(ref);
+      }
+
       const scoreEntry = {
         userId,
         userName,
         gameMode,
         score,
+        ticketRefs,
         duration,
         metadata,
         timestamp: Timestamp.now(),
@@ -35,6 +43,18 @@ export const LeaderboardService = {
       };
 
       const docRef = await addDoc(collection(db, "leaderboard"), scoreEntry);
+      
+      // Also update user's profile with active ticket refs
+      const userRef = query(collection(db, "users"), where("uid", "==", userId));
+      const userSnap = await getDocs(userRef);
+      if (!userSnap.empty) {
+        const userDoc = userSnap.docs[0];
+        const currentRefs = userDoc.data().activeTicketRefs || [];
+        await updateDoc(userDoc.ref, {
+          activeTicketRefs: [...currentRefs, ...ticketRefs]
+        });
+      }
+
       console.log("Score submitted successfully:", docRef.id);
       return { success: true, id: docRef.id };
     } catch (error) {
