@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { LeaderboardService } from "../services/leaderboardService.js";
 
-export default function RaffleRoom({ user }) {
+export default function RaffleRoom({ user, userProfile }) {
   const [isSpinning, setIsSpinning] = useState(false);
   const [winner, setWinner] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [drawHistory, setDrawHistory] = useState([]);
+
+  const isAdmin = userProfile?.role === "admin" || user?.email === "admin@rivalis.com"; // Add your admin email here
 
   useEffect(() => {
     loadLeaderboard();
@@ -73,13 +75,20 @@ export default function RaffleRoom({ user }) {
             </div>
           </div>
           
-          <button 
-            onClick={spinWheel} 
-            disabled={isSpinning || leaderboard.length === 0}
-            style={{...styles.button, opacity: (isSpinning || leaderboard.length === 0) ? 0.5 : 1}}
-          >
-            {isSpinning ? "DRAWING..." : "DRAW WINNER"}
-          </button>
+          {isAdmin ? (
+            <button 
+              onClick={spinWheel} 
+              disabled={isSpinning || leaderboard.length === 0}
+              style={{...styles.button, opacity: (isSpinning || leaderboard.length === 0) ? 0.5 : 1}}
+            >
+              {isSpinning ? "DRAWING..." : "DRAW WINNER"}
+            </button>
+          ) : (
+            <div style={styles.adminOnlyMessage}>
+              <span style={{fontSize: "24px"}}>🔒</span>
+              <p>DRAWING IS ADMIN ONLY</p>
+            </div>
+          )}
 
           {winner && !isSpinning && (
             <div style={styles.winnerAnnouncement}>
@@ -287,5 +296,16 @@ const styles = {
     borderRadius: "4px",
     fontSize: "0.9rem",
     color: "#fff"
+  },
+  adminOnlyMessage: {
+    padding: "15px 30px",
+    background: "rgba(255, 48, 80, 0.1)",
+    border: "2px solid rgba(255, 48, 80, 0.3)",
+    borderRadius: "30px",
+    color: "#fff",
+    textAlign: "center",
+    fontFamily: "'Arial Black', sans-serif",
+    fontSize: "14px",
+    opacity: 0.8
   }
 };

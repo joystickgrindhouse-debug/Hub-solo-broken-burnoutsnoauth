@@ -228,7 +228,7 @@ export default function App() {
           path="/raffle" 
           element={
             <ProtectedRoute user={user} userProfile={userProfile}>
-              <RaffleRoom user={user} />
+              <RaffleRoom user={user} userProfile={userProfile} />
             </ProtectedRoute>
           } 
         />
