@@ -14,6 +14,18 @@ Rivalis Hub is a high-performance web application featuring a React-based fronte
   - MediaPipe (Pose estimation)
   - Leaflet (Mapping)
 
+## 🛍 Shop & Rewards Ecosystem
+
+### 1. Integrated Marketplace (Shop)
+- **Currency:** "Rival Credits" earned through workouts and challenges.
+- **Digital Goods:** Exclusive avatar cosmetics (neon skins, retro gear), badge upgrades, and profile themes.
+- **Physical Integration:** Partner with fitness apparel brands for discount codes unlockable via the shop.
+
+### 2. Loyalty Raffle System
+- **Mechanism:** "Raffle Tickets" awarded for consistent 7-day workout streaks.
+- **Monthly Rewards:** Top-tier fitness gear, subscription extensions, or "Early Bird" access to experimental pose-tracking modes.
+- **Retention Driver:** Automated notifications 24 hours before a draw to increase active daily users (DAU).
+
 ## 📊 Development Progress
 
 ### ✅ Completed
