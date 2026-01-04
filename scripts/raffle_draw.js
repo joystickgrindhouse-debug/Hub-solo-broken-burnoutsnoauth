@@ -1,4 +1,4 @@
-const { db } = require('./src/firebase_server'); // Need a server-side firebase entry
+const { db } = require('../src/firebase_server'); // Need server-side firebase setup
 const { Timestamp } = require('firebase-admin/firestore');
 
 async function runRaffle() {
@@ -6,16 +6,24 @@ async function runRaffle() {
   try {
     const leaderboardRef = db.collection('leaderboard');
     const now = new Date();
+    // Get start of the current raffle window (last Sunday 8pm)
+    const day = now.getDay();
     const windowStart = new Date(now);
-    windowStart.setDate(now.getDate() - 7);
+    windowStart.setDate(now.getDate() - day);
+    windowStart.setHours(20, 0, 0, 0);
+    
+    // If it's before Sunday 8pm, the window started the previous Sunday
+    if (now < windowStart) {
+      windowStart.setDate(windowStart.getDate() - 7);
+    }
     
     const snapshot = await leaderboardRef
       .where('timestamp', '>=', windowStart)
       .get();
       
     if (snapshot.empty) {
-      console.log("No entries for this week's raffle.");
-      return;
+      console.log("No entries for this raffle window.");
+      return null;
     }
     
     let allTickets = [];
@@ -26,7 +34,8 @@ async function runRaffle() {
           allTickets.push({
             ticket: ref,
             userId: data.userId,
-            userName: data.userName
+            userName: data.userName,
+            gameMode: data.gameMode
           });
         });
       }
@@ -34,26 +43,29 @@ async function runRaffle() {
     
     if (allTickets.length === 0) {
       console.log("No valid tickets found.");
-      return;
+      return null;
     }
     
-    const winner = allTickets[Math.floor(Math.random() * allTickets.length)];
-    console.log(`WINNER SELECTED: ${winner.userName} (${winner.userId}) with ticket ${winner.ticket}`);
+    // Select winner using secure random
+    const winnerIndex = Math.floor(Math.random() * allTickets.length);
+    const winner = allTickets[winnerIndex];
     
-    // Save winner to a new collection
-    await db.collection('raffle_winners').add({
+    console.log(`WINNER SELECTED: ${winner.userName} with ticket ${winner.ticket}`);
+    
+    const winnerRecord = {
       ...winner,
       drawDate: Timestamp.now(),
-      status: 'pending_fulfillment'
-    });
+      status: 'pending_fulfillment',
+      raffleWindowStart: Timestamp.fromDate(windowStart)
+    };
     
+    const docRef = await db.collection('raffle_winners').add(winnerRecord);
+    
+    return { id: docRef.id, ...winnerRecord };
   } catch (error) {
-    console.error("Raffle draw failed:", error);
+    console.error("Raffle automation logic failed:", error);
+    throw error;
   }
 }
 
-// In production, this would be triggered by a Cron Job
-// For now, it's a script that can be run manually or scheduled
-if (require.main === module) {
-  runRaffle();
-}
+module.exports = { runRaffle };

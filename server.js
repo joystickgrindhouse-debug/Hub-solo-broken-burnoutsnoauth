@@ -84,5 +84,23 @@ app.get("/objects/:type/:id", async (req, res) => {
   }
 });
 
+// Add raffle draw endpoint
+app.post("/api/admin/raffle-draw", async (req, res) => {
+  // Simple admin check (in production use a real auth middleware)
+  const authHeader = req.headers.authorization;
+  if (authHeader !== `Bearer ${process.env.ADMIN_SECRET}`) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const { runRaffle } = require('./scripts/raffle_draw');
+    const result = await runRaffle();
+    res.json({ success: true, winner: result });
+  } catch (error) {
+    console.error("Raffle draw failed:", error);
+    res.status(500).json({ error: "Raffle draw failed" });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
