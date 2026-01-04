@@ -132,7 +132,7 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
           textShadow: "0 0 10px rgba(255, 48, 80, 0.6)",
           letterSpacing: "2px"
         }}>
-          {isUpdating ? "UPDATE IDENTITY" : "IDENTITY TERMINAL"}
+          {isUpdating ? "UPDATE PROFILE" : "PROFILE SETUP"}
         </h1>
         
         {!image ? (
@@ -152,8 +152,8 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
                 color: "rgba(255, 255, 255, 0.9)"
               }}>
                 {isUpdating 
-                  ? "Re-calibrating visual markers for high-stakes competition. Ensure clarity for identification." 
-                  : "The arena requires high-fidelity visual confirmation. Synchronize your pilot profile to initialize combat protocols."}
+                  ? "Upload a new selfie or avatar to update your profile photo." 
+                  : "Welcome to Rivalis! Please upload a selfie or an avatar to complete your profile setup."}
               </p>
             </div>
             
@@ -171,7 +171,7 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
                 boxShadow: "0 0 20px rgba(255, 48, 80, 0.6)",
                 transition: "transform 0.2s"
               }}>
-                CAPTURE DATA
+                CHOOSE PHOTO
                 <input type="file" accept="image/*" onChange={onSelectFile} style={{ display: "none" }} />
               </label>
               
@@ -190,7 +190,7 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
                     boxShadow: "0 0 10px rgba(255, 48, 80, 0.2)"
                   }}
                 >
-                  ABORT
+                  CANCEL
                 </button>
               )}
             </div>
@@ -274,7 +274,7 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
                     borderRadius: "4px"
                   }}
                 >
-                  RESCAN
+                  CANCEL
                 </button>
                 <button 
                   onClick={handleUpload}
@@ -294,7 +294,7 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
                     opacity: uploading ? 0.5 : 1
                   }}
                 >
-                  {uploading ? "SYNCING..." : "SYNC IDENTITY"}
+                  {uploading ? "SAVING..." : "SAVE PHOTO"}
                 </button>
               </div>
             </div>
