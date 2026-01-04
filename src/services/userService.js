@@ -112,6 +112,38 @@ export const UserService = {
     }
   },
 
+  async updateHeartbeat(userId) {
+    try {
+      const userDocRef = doc(db, "users", userId);
+      await updateDoc(userDocRef, {
+        lastSeen: Timestamp.now(),
+        isOnline: true
+      });
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  subscribeToOnlineUsers(callback) {
+    const usersRef = collection(db, "users");
+    // Only show users active in the last 2 minutes
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+    const q = query(
+      usersRef,
+      where("lastSeen", ">=", Timestamp.fromDate(twoMinutesAgo)),
+      limit(20)
+    );
+
+    return onSnapshot(q, (snapshot) => {
+      const users = [];
+      snapshot.forEach((doc) => {
+        users.push({ id: doc.id, ...doc.data() });
+      });
+      callback(users);
+    });
+  },
+
   async completeUserSetup(userId, nickname, avatarURL) {
     try {
       const userDocRef = doc(db, "users", userId);
