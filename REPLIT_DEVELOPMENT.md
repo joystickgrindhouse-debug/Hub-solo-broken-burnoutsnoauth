@@ -59,6 +59,7 @@ Rivalis Hub is a high-performance web application featuring a React-based fronte
 - Frontend development server configuration (Vite).
 - Integration with Google Object Storage.
 - Basic routing and layout structure.
+- **Security Hardening:** Implemented robust Firestore and Storage security rules to enforce authenticated-only access and owner-only data modification.
 - **Media Processing:** Fully implemented Uppy-to-Cloud Storage pipeline with signed URL support for secure uploads and retrievals.
 - **Firebase Authentication & Session Persistence:** Fully implemented with themed Login/Signup UI and automated session recovery.
 - **ProtectedRoute System:** Implemented to manage access control based on auth state and profile completion.
