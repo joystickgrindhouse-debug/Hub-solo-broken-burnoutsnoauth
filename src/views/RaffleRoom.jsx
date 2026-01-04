@@ -8,7 +8,7 @@ export default function RaffleRoom({ user, userProfile }) {
   const [loading, setLoading] = useState(true);
   const [drawHistory, setDrawHistory] = useState([]);
 
-  const isAdmin = userProfile?.role === "admin" || user?.email === "admin@rivalis.com" || user?.uid === "v3h9WiCKKoTPH5Cyi5dVr0Pb2f03"; // Add your admin email here
+  const isAdmin = userProfile?.role === "admin" || user?.email === "admin@rivalis.com" || user?.email === "Socalturfexperts@gmail.com" || user?.uid === "v3h9WiCKKoTPH5Cyi5dVr0Pb2f03"; // Add your admin email here
 
   useEffect(() => {
     loadLeaderboard();
