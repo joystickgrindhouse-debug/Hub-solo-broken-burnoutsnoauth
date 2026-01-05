@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
-import { collection, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, limit, Timestamp } from "firebase/firestore";
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
+  const [messages, setMessages] = useState([]);
   const [raffleWinners, setRaffleWinners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [adminKey, setAdminKey] = useState("");
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [activeTab, setActiveTab] = useState("users");
 
   useEffect(() => {
     const savedKey = localStorage.getItem("rivalis_admin_key");
@@ -32,37 +34,40 @@ const AdminDashboard = () => {
     setLoading(false);
   };
 
-  const handleDrawRaffle = async () => {
-    if (!adminKey) return alert("Admin Key Required");
+  useEffect(() => {
+    if (isAuthorized && activeTab === "chat") {
+      const q = query(collection(db, "global_messages"), orderBy("timestamp", "desc"), limit(50));
+      return onSnapshot(q, (snapshot) => {
+        setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      });
+    }
+  }, [isAuthorized, activeTab]);
+
+  const adminAction = async (endpoint, body) => {
     try {
-      const response = await fetch("/api/admin/raffle-draw", {
+      const response = await fetch(`/api/admin/${endpoint}`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${adminKey}`,
           "Content-Type": "application/json"
-        }
+        },
+        body: JSON.stringify(body)
       });
       const data = await response.json();
       if (data.success) {
-        alert("Raffle drawn successfully!");
+        alert("Action successful");
         fetchData();
       } else {
-        alert("Draw failed: " + data.error);
+        alert("Failed: " + data.error);
       }
     } catch (error) {
       alert("Error: " + error.message);
     }
   };
 
-  const updateUserRole = async (userId, newRole) => {
-    try {
-      await updateDoc(doc(db, "users", userId), { role: newRole });
-      alert("Role updated");
-      fetchData();
-    } catch (error) {
-      alert("Update failed");
-    }
-  };
+  const handleDrawRaffle = () => adminAction("raffle-draw", {});
+  const handleUserAction = (userId, action, value, message) => adminAction("user-action", { userId, action, data: { value, message } });
+  const handleDeleteMessage = (messageId) => adminAction("delete-message", { messageId });
 
   if (!isAuthorized) {
     return (
@@ -96,52 +101,66 @@ const AdminDashboard = () => {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8 border-b border-zinc-800 pb-4">
           <h1 className="text-3xl font-bold text-red-600">COMMAND CENTER</h1>
-          <button 
-            onClick={handleDrawRaffle}
-            className="bg-red-600 px-6 py-2 rounded font-bold hover:bg-red-700"
-          >
-            TRIGGER WEEKLY DRAW
-          </button>
+          <div className="flex gap-4">
+            <button onClick={() => setActiveTab("users")} className={`px-4 py-2 rounded ${activeTab === "users" ? "bg-red-600" : "bg-zinc-800"}`}>USERS</button>
+            <button onClick={() => setActiveTab("chat")} className={`px-4 py-2 rounded ${activeTab === "chat" ? "bg-red-600" : "bg-zinc-800"}`}>CHAT</button>
+            <button onClick={() => setActiveTab("raffle")} className={`px-4 py-2 rounded ${activeTab === "raffle" ? "bg-red-600" : "bg-zinc-800"}`}>RAFFLE</button>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          <section className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-            <h2 className="text-xl font-bold mb-4 text-zinc-400">USER MANAGEMENT</h2>
-            <div className="space-y-4 max-h-[500px] overflow-y-auto">
-              {users.map(u => (
-                <div key={u.id} className="flex justify-between items-center bg-black p-3 rounded border border-zinc-800">
-                  <div>
-                    <p className="font-bold">{u.nickname || "Anonymous"}</p>
-                    <p className="text-xs text-zinc-500">{u.id}</p>
+        {activeTab === "users" && (
+          <div className="grid gap-4">
+            {users.map(u => (
+              <div key={u.id} className="bg-zinc-900 p-4 rounded border border-zinc-800 flex justify-between items-center">
+                <div>
+                  <h3 className="font-bold text-lg">{u.nickname || "Anonymous"}</h3>
+                  <p className="text-xs text-zinc-500">{u.id} | {u.email}</p>
+                  <div className="flex gap-2 mt-2">
+                    {u.isBanned && <span className="text-[10px] bg-red-900 px-2 py-0.5 rounded">BANNED</span>}
+                    {u.isMuted && <span className="text-[10px] bg-yellow-900 px-2 py-0.5 rounded">MUTED</span>}
                   </div>
-                  <select 
-                    value={u.role || "user"} 
-                    onChange={(e) => updateUserRole(u.id, e.target.value)}
-                    className="bg-zinc-800 text-xs p-1 rounded"
-                  >
-                    <option value="user">User</option>
-                    <option value="pro">Pro</option>
-                    <option value="elite">Elite</option>
-                    <option value="admin">Admin</option>
-                  </select>
                 </div>
-              ))}
-            </div>
-          </section>
+                <div className="flex gap-2">
+                  <button onClick={() => handleUserAction(u.id, "ban", !u.isBanned)} className="bg-red-900 text-[10px] px-3 py-1 rounded">{u.isBanned ? "UNBAN" : "BAN"}</button>
+                  <button onClick={() => handleUserAction(u.id, "mute", !u.isMuted)} className="bg-yellow-900 text-[10px] px-3 py-1 rounded">{u.isMuted ? "UNMUTE" : "MUTE"}</button>
+                  <button onClick={() => {
+                    const msg = prompt("Warning message:");
+                    if (msg) handleUserAction(u.id, "warn", true, msg);
+                  }} className="bg-zinc-700 text-[10px] px-3 py-1 rounded">WARN</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
-          <section className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-            <h2 className="text-xl font-bold mb-4 text-zinc-400">RAFFLE HISTORY</h2>
-            <div className="space-y-4 max-h-[500px] overflow-y-auto">
+        {activeTab === "chat" && (
+          <div className="bg-zinc-900 p-4 rounded border border-zinc-800 max-h-[70vh] overflow-y-auto">
+            {messages.map(m => (
+              <div key={m.id} className="border-b border-zinc-800 py-3 flex justify-between items-start">
+                <div>
+                  <p className="text-red-500 font-bold text-sm">{m.userName}</p>
+                  <p className="text-white mt-1">{m.text}</p>
+                </div>
+                <button onClick={() => handleDeleteMessage(m.id)} className="text-zinc-600 hover:text-red-500">DELETE</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "raffle" && (
+          <div className="grid md:grid-cols-2 gap-8">
+            <button onClick={handleDrawRaffle} className="bg-red-600 p-4 rounded font-bold hover:bg-red-700">TRIGGER WEEKLY DRAW</button>
+            <div className="bg-zinc-900 p-6 rounded border border-zinc-800">
+              <h2 className="text-xl font-bold mb-4 text-zinc-400">WINNER HISTORY</h2>
               {raffleWinners.map(w => (
-                <div key={w.id} className="bg-black p-3 rounded border border-zinc-800">
-                  <p className="text-red-500 font-bold">WINNER: {w.userName}</p>
-                  <p className="text-xs text-zinc-400">Date: {new Date(w.drawDate?.seconds * 1000).toLocaleDateString()}</p>
-                  <p className="text-xs text-zinc-500">Ticket: {w.ticket}</p>
+                <div key={w.id} className="bg-black p-3 mb-2 rounded border border-zinc-800">
+                  <p className="text-red-500 font-bold">{w.userName}</p>
+                  <p className="text-xs text-zinc-400">{new Date(w.drawDate?.seconds * 1000).toLocaleDateString()}</p>
                 </div>
               ))}
             </div>
-          </section>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

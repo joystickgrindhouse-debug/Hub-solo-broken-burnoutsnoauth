@@ -102,5 +102,45 @@ app.post("/api/admin/raffle-draw", async (req, res) => {
   }
 });
 
+// Admin moderation endpoints
+app.post("/api/admin/user-action", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader !== `Bearer ${process.env.ADMIN_SECRET}`) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+
+  const { userId, action, data } = req.body;
+  try {
+    const { db } = require('./src/firebase_server');
+    const userRef = db.collection('users').doc(userId);
+    
+    let update = { updatedAt: new Date() };
+    if (action === 'ban') update.isBanned = data.value;
+    if (action === 'mute') update.isMuted = data.value;
+    if (action === 'warn') update.lastWarning = data.message;
+
+    await userRef.update(update);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/admin/delete-message", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader !== `Bearer ${process.env.ADMIN_SECRET}`) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+
+  const { messageId, collection } = req.body;
+  try {
+    const { db } = require('./src/firebase_server');
+    await db.collection(collection || 'global_messages').doc(messageId).delete();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
