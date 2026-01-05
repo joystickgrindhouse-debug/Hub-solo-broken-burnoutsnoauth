@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
-import { collection, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, limit, Timestamp } from "firebase/firestore";
+import { collection, getDocs, doc, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -36,10 +36,11 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (isAuthorized && activeTab === "chat") {
-      const q = query(collection(db, "global_messages"), orderBy("timestamp", "desc"), limit(50));
-      return onSnapshot(q, (snapshot) => {
+      const q = query(collection(db, "globalChat"), orderBy("timestamp", "desc"), limit(50));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
         setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       });
+      return unsubscribe;
     }
   }, [isAuthorized, activeTab]);
 
@@ -67,7 +68,7 @@ const AdminDashboard = () => {
 
   const handleDrawRaffle = () => adminAction("raffle-draw", {});
   const handleUserAction = (userId, action, value, message) => adminAction("user-action", { userId, action, data: { value, message } });
-  const handleDeleteMessage = (messageId) => adminAction("delete-message", { messageId });
+  const handleDeleteMessage = (messageId) => adminAction("delete-message", { messageId, collection: "globalChat" });
 
   if (!isAuthorized) {
     return (
@@ -118,6 +119,7 @@ const AdminDashboard = () => {
                   <div className="flex gap-2 mt-2">
                     {u.isBanned && <span className="text-[10px] bg-red-900 px-2 py-0.5 rounded">BANNED</span>}
                     {u.isMuted && <span className="text-[10px] bg-yellow-900 px-2 py-0.5 rounded">MUTED</span>}
+                    {u.role && <span className="text-[10px] bg-zinc-700 px-2 py-0.5 rounded">{u.role.toUpperCase()}</span>}
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -138,7 +140,7 @@ const AdminDashboard = () => {
             {messages.map(m => (
               <div key={m.id} className="border-b border-zinc-800 py-3 flex justify-between items-start">
                 <div>
-                  <p className="text-red-500 font-bold text-sm">{m.userName}</p>
+                  <p className="text-red-500 font-bold text-sm">{m.nickname || m.userName}</p>
                   <p className="text-white mt-1">{m.text}</p>
                 </div>
                 <button onClick={() => handleDeleteMessage(m.id)} className="text-zinc-600 hover:text-red-500">DELETE</button>
