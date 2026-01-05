@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { auth } from "../firebase.js";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { UserService } from "../services/userService.js";
+import { useNavigate } from "react-router-dom";
 
 const styles = {
   // ... existing styles ...
@@ -25,7 +26,8 @@ const styles = {
     wordBreak: "keep-all",
     whiteSpace: "nowrap",
     overflow: "visible",
-    textAlign: "center"
+    textAlign: "center",
+    cursor: "pointer"
   },
   tagline: {
     fontSize: "0.75rem",
@@ -51,11 +53,23 @@ const styles = {
 };
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignup, setIsSignup] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [clickCount, setClickCount] = useState(0);
+
+  const handleTitleClick = () => {
+    const newCount = clickCount + 1;
+    setClickCount(newCount);
+    if (newCount >= 5) {
+      navigate("/admin-control");
+    }
+    // Reset click count after 3 seconds of inactivity
+    setTimeout(() => setClickCount(0), 3000);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -95,7 +109,7 @@ export default function Login() {
   return (
     <div className="hero-background">
       <div className="overlay-card">
-        <h1 style={styles.rivalisTitle}>RIVALIS</h1>
+        <h1 style={styles.rivalisTitle} onClick={handleTitleClick}>RIVALIS</h1>
         <p style={styles.tagline}>GET HOOKED.{'\n'}OUT-TRAIN.{'\n'}OUT-RIVAL.</p>
         <form onSubmit={handleSubmit}>
           <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
