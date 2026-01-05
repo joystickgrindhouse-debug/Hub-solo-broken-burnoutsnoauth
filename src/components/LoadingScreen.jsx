@@ -23,7 +23,7 @@ const HYPE_MESSAGES = [
   }
 ];
 
-export default function LoadingScreen() {
+export default function LoadingScreen({ onSkip }) {
   const [msgIndex, setMsgIndex] = useState(0);
 
   useEffect(() => {
@@ -49,6 +49,39 @@ export default function LoadingScreen() {
       zIndex: 9999,
       touchAction: "none"
     }}>
+      {/* Skip Button */}
+      {onSkip && (
+        <button 
+          onClick={onSkip}
+          style={{
+            position: "absolute",
+            top: "20px",
+            right: "20px",
+            zIndex: 10000,
+            background: "rgba(255, 48, 80, 0.2)",
+            border: "1px solid #ff3050",
+            color: "#ff3050",
+            padding: "8px 16px",
+            fontFamily: "'Press Start 2P', cursive",
+            fontSize: "0.7rem",
+            cursor: "pointer",
+            borderRadius: "4px",
+            transition: "all 0.3s ease",
+            boxShadow: "0 0 10px rgba(255, 48, 80, 0.3)"
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = "#ff3050";
+            e.target.style.color = "#000";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = "rgba(255, 48, 80, 0.2)";
+            e.target.style.color = "#ff3050";
+          }}
+        >
+          SKIP [X]
+        </button>
+      )}
+
       {/* Scanline effect */}
       <div style={{
         position: "absolute",

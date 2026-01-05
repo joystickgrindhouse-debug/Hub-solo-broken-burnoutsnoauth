@@ -143,9 +143,16 @@ export default function App() {
     }
   };
 
+  const skipLoading = () => {
+    setInitialHype(false);
+    setLoading(false);
+    setCheckingSetup(false);
+    setProfileLoaded(true);
+  };
+
   // Show initial loading screen or hype screen
   if (loading || checkingSetup || !profileLoaded || initialHype) {
-    return <LoadingScreen />;
+    return <LoadingScreen onSkip={skipLoading} />;
   }
 
   // Show onboarding slides after login/signup but before main app (only for logged-in users)
