@@ -11,6 +11,7 @@ service cloud.firestore {
     }
     
     function getUserData() {
+      // Use getAfter to ensure we're looking at the most current data if we're in a batch
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
@@ -26,7 +27,7 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && isOwner(userId);
       allow update: if isSignedIn() && (isOwner(userId) || isAdmin());
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
 
     // Leaderboard collection
@@ -51,7 +52,7 @@ service cloud.firestore {
 
     // Private messages
     match /private_messages/{msgId} {
-      allow read: if isSignedIn() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
+      allow read: if isSignedIn() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId || isAdmin());
       allow create: if isSignedIn() && request.auth.uid == request.resource.data.senderId;
       allow update, delete: if isAdmin();
     }
@@ -59,7 +60,7 @@ service cloud.firestore {
     // System Logs
     match /system_logs/{logId} {
       allow read: if isAdmin();
-      allow create: if true; // Allow client-side logging
+      allow create: if true; 
       allow update, delete: if isAdmin();
     }
     

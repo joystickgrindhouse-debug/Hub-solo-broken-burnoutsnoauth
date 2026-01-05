@@ -35,6 +35,7 @@ const AdminDashboard = () => {
       // Real-time listener for ALL users (online and offline)
       const unsubscribeUsers = onSnapshot(collection(db, "users"), (snapshot) => {
         const allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("Admin Dashboard - Fetched users:", allUsers.length);
         // Sort: Live/Online first, then offline
         setUsers(allUsers.sort((a, b) => {
           const aLive = isUserLive(a);
@@ -43,6 +44,8 @@ const AdminDashboard = () => {
           if (!aLive && bLive) return 1;
           return 0;
         }));
+      }, (error) => {
+        console.error("Admin Dashboard - Users listener failed:", error);
       });
 
       if (activeTab === "chat") {
