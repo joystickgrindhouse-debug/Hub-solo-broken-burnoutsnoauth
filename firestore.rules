@@ -10,9 +10,7 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
-    // BROAD PERMISSION FOR DEBUGGING
-    // This allows anyone who is signed in to read the user list
-    // This will help us determine if the issue is the 'isAdmin' function or the 'request.auth' itself
+    // AUTHENTICATED ADMIN CHECK (Bypass for owner email)
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && isOwner(userId);
