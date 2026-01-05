@@ -13,11 +13,10 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("users");
 
   useEffect(() => {
+    // Require key every time by not reading from localStorage for authorization
     const savedKey = localStorage.getItem("rivalis_admin_key");
     if (savedKey) {
       setAdminKey(savedKey);
-      setIsAuthorized(true);
-      fetchData();
     }
   }, []);
 
