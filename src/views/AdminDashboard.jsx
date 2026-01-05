@@ -1,19 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
-import { collection, getDocs, doc, onSnapshot, query, orderBy, limit } from "firebase/firestore";
+import { collection, getDocs, doc, onSnapshot, query, orderBy, limit, Timestamp, where } from "firebase/firestore";
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [raffleWinners, setRaffleWinners] = useState([]);
   const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [adminKey, setAdminKey] = useState("");
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [activeTab, setActiveTab] = useState("users");
 
   useEffect(() => {
-    // Require key every time by not reading from localStorage for authorization
     const savedKey = localStorage.getItem("rivalis_admin_key");
     if (savedKey) {
       setAdminKey(savedKey);
@@ -21,7 +19,6 @@ const AdminDashboard = () => {
   }, []);
 
   const fetchData = async () => {
-    setLoading(true);
     try {
       const userSnap = await getDocs(collection(db, "users"));
       setUsers(userSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -31,20 +28,37 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Fetch failed:", error);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
-    if (isAuthorized && activeTab === "chat") {
-      const q = query(collection(db, "globalChat"), orderBy("timestamp", "desc"), limit(50));
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    if (isAuthorized) {
+      // Real-time user tracking
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const q = query(
+        collection(db, "users"), 
+        where("lastSeen", ">=", Timestamp.fromDate(fiveMinutesAgo))
+      );
+      const unsubscribeUsers = onSnapshot(q, (snapshot) => {
+        const liveUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setUsers(prev => {
+          const others = prev.filter(p => !liveUsers.find(l => l.id === p.id));
+          return [...liveUsers, ...others];
+        });
       });
-      return unsubscribe;
-    }
-    
-    if (isAuthorized && activeTab === "logs") {
-      fetchSystemLogs();
+
+      if (activeTab === "chat") {
+        const qChat = query(collection(db, "globalChat"), orderBy("timestamp", "desc"), limit(50));
+        const unsubscribeChat = onSnapshot(qChat, (snapshot) => {
+          setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        });
+        return () => { unsubscribeUsers(); unsubscribeChat(); };
+      }
+
+      if (activeTab === "logs") {
+        fetchSystemLogs();
+      }
+
+      return () => unsubscribeUsers();
     }
   }, [isAuthorized, activeTab]);
 
@@ -119,13 +133,19 @@ const AdminDashboard = () => {
     );
   }
 
+  const getStatusColor = (user) => {
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    const lastSeen = user.lastSeen?.toMillis() || 0;
+    return lastSeen >= fiveMinutesAgo ? "text-green-500" : "text-zinc-500";
+  };
+
   return (
     <div className="min-h-screen bg-black text-white p-6 pb-24">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8 border-b border-zinc-800 pb-4">
           <h1 className="text-3xl font-bold text-red-600">COMMAND CENTER</h1>
           <div className="flex gap-4">
-            <button onClick={() => setActiveTab("users")} className={`px-4 py-2 rounded ${activeTab === "users" ? "bg-red-600" : "bg-zinc-800"}`}>USERS</button>
+            <button onClick={() => setActiveTab("users")} className={`px-4 py-2 rounded ${activeTab === "users" ? "bg-red-600" : "bg-zinc-800"}`}>LIVE USERS</button>
             <button onClick={() => setActiveTab("chat")} className={`px-4 py-2 rounded ${activeTab === "chat" ? "bg-red-600" : "bg-zinc-800"}`}>CHAT</button>
             <button onClick={() => setActiveTab("logs")} className={`px-4 py-2 rounded ${activeTab === "logs" ? "bg-red-600" : "bg-zinc-800"}`}>LOGS</button>
             <button onClick={() => setActiveTab("raffle")} className={`px-4 py-2 rounded ${activeTab === "raffle" ? "bg-red-600" : "bg-zinc-800"}`}>RAFFLE</button>
@@ -134,24 +154,29 @@ const AdminDashboard = () => {
 
         {activeTab === "users" && (
           <div className="grid gap-4">
+            <div className="flex justify-between items-center mb-2 px-2 text-zinc-500 text-xs">
+              <span>ACTIVE USER / ACTIVITY</span>
+              <span>CONTROLS</span>
+            </div>
             {users.map(u => (
               <div key={u.id} className="bg-zinc-900 p-4 rounded border border-zinc-800 flex justify-between items-center">
-                <div>
-                  <h3 className="font-bold text-lg">{u.nickname || "Anonymous"}</h3>
-                  <p className="text-xs text-zinc-500">{u.id} | {u.email}</p>
-                  <div className="flex gap-2 mt-2">
-                    {u.isBanned && <span className="text-[10px] bg-red-900 px-2 py-0.5 rounded">BANNED</span>}
-                    {u.isMuted && <span className="text-[10px] bg-yellow-900 px-2 py-0.5 rounded">MUTED</span>}
-                    {u.role && <span className="text-[10px] bg-zinc-700 px-2 py-0.5 rounded">{u.role.toUpperCase()}</span>}
+                <div className="flex items-center gap-4">
+                  <div className={`w-2 h-2 rounded-full ${getStatusColor(u)} bg-current shadow-[0_0_8px_currentColor]`} />
+                  <div>
+                    <h3 className="font-bold text-lg">{u.nickname || "Anonymous"}</h3>
+                    <p className={`text-xs ${getStatusColor(u)} uppercase tracking-widest`}>
+                      {u.currentActivity ? `LOCATION: ${u.currentActivity}` : "IDLE"}
+                    </p>
+                    <p className="text-[10px] text-zinc-600 mt-1">{u.id}</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => handleUserAction(u.id, "ban", !u.isBanned)} className="bg-red-900 text-[10px] px-3 py-1 rounded">{u.isBanned ? "UNBAN" : "BAN"}</button>
-                  <button onClick={() => handleUserAction(u.id, "mute", !u.isMuted)} className="bg-yellow-900 text-[10px] px-3 py-1 rounded">{u.isMuted ? "UNMUTE" : "MUTE"}</button>
-                  <button onClick={() => {
-                    const msg = prompt("Warning message:");
-                    if (msg) handleUserAction(u.id, "warn", true, msg);
-                  }} className="bg-zinc-700 text-[10px] px-3 py-1 rounded">WARN</button>
+                  <button onClick={() => handleUserAction(u.id, "ban", !u.isBanned)} className="bg-red-900/50 hover:bg-red-600 text-[10px] px-3 py-1 rounded border border-red-900 transition-colors">
+                    {u.isBanned ? "UNBAN" : "BAN"}
+                  </button>
+                  <button onClick={() => handleUserAction(u.id, "mute", !u.isMuted)} className="bg-yellow-900/50 hover:bg-yellow-600 text-[10px] px-3 py-1 rounded border border-yellow-900 transition-colors">
+                    {u.isMuted ? "UNMUTE" : "MUTE"}
+                  </button>
                 </div>
               </div>
             ))}
@@ -187,7 +212,6 @@ const AdminDashboard = () => {
                 </div>
                 <p className="text-white mt-2 font-mono text-xs break-all">{l.message || JSON.stringify(l)}</p>
                 {l.stack && <pre className="text-[10px] text-zinc-500 mt-2 p-2 bg-black rounded overflow-x-auto">{l.stack}</pre>}
-                {l.userAgent && <p className="text-[9px] text-zinc-600 mt-1">{l.userAgent}</p>}
               </div>
             ))}
           </div>

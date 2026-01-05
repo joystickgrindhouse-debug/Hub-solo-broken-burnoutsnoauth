@@ -1,5 +1,5 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { auth } from "./firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
 import { UserService } from "./services/userService.js";
@@ -36,6 +36,21 @@ export default function App() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isNewSignup, setIsNewSignup] = useState(false);
   const [initialHype, setInitialHype] = useState(true);
+  const location = useLocation();
+
+  // Activity tracking
+  useEffect(() => {
+    if (user) {
+      const path = location.pathname.split('/')[1] || 'dashboard';
+      UserService.updateHeartbeat(user.uid, path);
+      
+      const interval = setInterval(() => {
+        UserService.updateHeartbeat(user.uid, path);
+      }, 30000); // Heartbeat every 30s
+      
+      return () => clearInterval(interval);
+    }
+  }, [user, location.pathname]);
 
   // Force a minimum loading time for the hype screen even if auth is fast
   useEffect(() => {

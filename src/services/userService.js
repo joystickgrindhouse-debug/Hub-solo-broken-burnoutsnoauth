@@ -112,12 +112,13 @@ export const UserService = {
     }
   },
 
-  async updateHeartbeat(userId) {
+  async updateHeartbeat(userId, currentActivity = "idle") {
     try {
       const userDocRef = doc(db, "users", userId);
       await updateDoc(userDocRef, {
         lastSeen: Timestamp.now(),
-        isOnline: true
+        isOnline: true,
+        currentActivity
       });
       return { success: true };
     } catch (error) {
