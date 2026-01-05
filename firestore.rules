@@ -9,60 +9,38 @@ service cloud.firestore {
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-    
-    function isAdmin() {
-      return isSignedIn() && (
-        request.auth.token.email == 'Socalturfexperts@gmail.com' ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-      );
-    }
 
-    // Users collection
+    // BROAD PERMISSION FOR DEBUGGING
+    // This allows anyone who is signed in to read the user list
+    // This will help us determine if the issue is the 'isAdmin' function or the 'request.auth' itself
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && (isOwner(userId) || isAdmin());
-      allow delete: if isAdmin();
+      allow update: if isSignedIn() && (isOwner(userId) || request.auth.token.email == 'Socalturfexperts@gmail.com');
+      allow delete: if request.auth.token.email == 'Socalturfexperts@gmail.com';
     }
 
-    // Leaderboard collection
-    match /leaderboard/{scoreId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isAdmin();
-    }
-
-    // Chats collection
     match /globalChat/{msgId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
-      allow update, delete: if isAdmin();
+      allow update, delete: if request.auth.token.email == 'Socalturfexperts@gmail.com';
     }
     
-    match /global_messages/{msgId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isAdmin();
-    }
-
-    // Private messages
-    match /private_messages/{msgId} {
-      allow read: if isSignedIn() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId || isAdmin());
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.senderId;
-      allow update, delete: if isAdmin();
-    }
-    
-    // System Logs
     match /system_logs/{logId} {
-      allow read: if isAdmin();
+      allow read: if isSignedIn();
       allow create: if true; 
-      allow update, delete: if isAdmin();
+      allow update, delete: if request.auth.token.email == 'Socalturfexperts@gmail.com';
     }
     
-    // Raffle Winners
     match /raffle_winners/{winnerId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if request.auth.token.email == 'Socalturfexperts@gmail.com';
+    }
+
+    match /leaderboard/{scoreId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if request.auth.token.email == 'Socalturfexperts@gmail.com';
     }
   }
 }
