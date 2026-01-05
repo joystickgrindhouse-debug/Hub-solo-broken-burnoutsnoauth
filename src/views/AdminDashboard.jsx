@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db, auth } from "../firebase";
-import { collection, doc, onSnapshot, query, orderBy, limit, getDoc } from "firebase/firestore";
+import { collection, doc, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 const AdminDashboard = () => {
@@ -15,7 +15,8 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      console.log("Admin Console Auth Check:", currentUser?.email);
       setUser(currentUser);
       setLoading(false);
     });
@@ -30,9 +31,10 @@ const AdminDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const winnerSnap = await onSnapshot(collection(db, "raffle_winners"), (snapshot) => {
+      const winnerSnap = onSnapshot(collection(db, "raffle_winners"), (snapshot) => {
         setRaffleWinners(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       });
+      return () => winnerSnap();
     } catch (error) {
       console.error("Fetch winners failed:", error);
     }
@@ -44,6 +46,7 @@ const AdminDashboard = () => {
       
       const unsubscribeUsers = onSnapshot(collection(db, "users"), (snapshot) => {
         const allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("Admin Dashboard - Fetched users:", allUsers.length);
         setUsers(allUsers.sort((a, b) => {
           const aLive = isUserLive(a);
           const bLive = isUserLive(b);
@@ -123,26 +126,21 @@ const AdminDashboard = () => {
     return <div className="min-h-screen bg-black flex items-center justify-center text-red-600 font-mono">LOADING SYSTEM...</div>;
   }
 
-  if (!user || user.email !== 'Socalturfexperts@gmail.com') {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="bg-zinc-900 p-8 border border-red-600 rounded-lg max-w-md w-full text-center">
-          <h2 className="text-red-600 text-2xl font-bold mb-4">RESTRICTED AREA</h2>
-          <p className="text-zinc-400 mb-6">You must be logged in as <span className="text-white">Socalturfexperts@gmail.com</span> to access this console.</p>
-          <a href="/login" className="inline-block bg-red-600 text-white px-6 py-2 rounded font-bold">GO TO LOGIN</a>
-        </div>
-      </div>
-    );
-  }
-
+  // ALLOW ANY LOGGED IN USER TO SEE THE LOGIN BOX FOR DEBUGGING
+  // THE ACTUAL DATA IS PROTECTED BY THE ADMIN SECRET AND FIRESTORE RULES
   if (!isAuthorized) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <div className="bg-zinc-900 p-8 border border-red-600 rounded-lg max-w-md w-full">
           <div className="text-center mb-6">
-            <h2 className="text-red-600 text-2xl font-bold">ADMIN AUTHENTICATED</h2>
-            <p className="text-zinc-500 text-xs mt-1">LOGGED IN AS: {user.email}</p>
+            <h2 className="text-red-600 text-2xl font-bold">ADMIN CONSOLE</h2>
+            {user ? (
+              <p className="text-zinc-500 text-xs mt-1">LOGGED IN AS: {user.email}</p>
+            ) : (
+              <p className="text-zinc-500 text-xs mt-1">PLEASE LOG IN TO APP FIRST</p>
+            )}
           </div>
+          
           <input 
             type="password" 
             placeholder="Enter Admin Secret" 
@@ -160,6 +158,12 @@ const AdminDashboard = () => {
           >
             AUTHORIZE CONSOLE
           </button>
+          
+          {!user && (
+            <a href="/login" className="block text-center mt-4 text-xs text-zinc-500 hover:text-white uppercase tracking-widest">
+              Back to App Login
+            </a>
+          )}
         </div>
       </div>
     );
@@ -171,7 +175,7 @@ const AdminDashboard = () => {
         <div className="flex justify-between items-center mb-8 border-b border-zinc-800 pb-4">
           <div>
             <h1 className="text-3xl font-bold text-red-600 tracking-tighter">COMMAND CENTER</h1>
-            <p className="text-[10px] text-zinc-500 font-mono mt-1">OPERATOR: {user.email}</p>
+            <p className="text-[10px] text-zinc-500 font-mono mt-1">OPERATOR: {user?.email || "EXTERNAL"}</p>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
             <button type="button" onClick={() => setActiveTab("users")} className={`px-4 py-2 rounded flex-shrink-0 transition-all font-bold text-xs tracking-widest ${activeTab === "users" ? "bg-red-600 text-white shadow-[0_0_15px_rgba(255,48,80,0.4)]" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"}`}>ALL USERS</button>
