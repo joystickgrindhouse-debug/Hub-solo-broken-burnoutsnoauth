@@ -6,6 +6,7 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [raffleWinners, setRaffleWinners] = useState([]);
+  const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [adminKey, setAdminKey] = useState("");
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -42,7 +43,29 @@ const AdminDashboard = () => {
       });
       return unsubscribe;
     }
+    
+    if (isAuthorized && activeTab === "logs") {
+      fetchSystemLogs();
+    }
   }, [isAuthorized, activeTab]);
+
+  const fetchSystemLogs = async () => {
+    try {
+      const response = await fetch("/api/admin/system-logs", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${adminKey}`,
+          "Content-Type": "application/json"
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setLogs(data.logs);
+      }
+    } catch (error) {
+      console.error("Failed to fetch logs:", error);
+    }
+  };
 
   const adminAction = async (endpoint, body) => {
     try {
@@ -105,6 +128,7 @@ const AdminDashboard = () => {
           <div className="flex gap-4">
             <button onClick={() => setActiveTab("users")} className={`px-4 py-2 rounded ${activeTab === "users" ? "bg-red-600" : "bg-zinc-800"}`}>USERS</button>
             <button onClick={() => setActiveTab("chat")} className={`px-4 py-2 rounded ${activeTab === "chat" ? "bg-red-600" : "bg-zinc-800"}`}>CHAT</button>
+            <button onClick={() => setActiveTab("logs")} className={`px-4 py-2 rounded ${activeTab === "logs" ? "bg-red-600" : "bg-zinc-800"}`}>LOGS</button>
             <button onClick={() => setActiveTab("raffle")} className={`px-4 py-2 rounded ${activeTab === "raffle" ? "bg-red-600" : "bg-zinc-800"}`}>RAFFLE</button>
           </div>
         </div>
@@ -144,6 +168,27 @@ const AdminDashboard = () => {
                   <p className="text-white mt-1">{m.text}</p>
                 </div>
                 <button onClick={() => handleDeleteMessage(m.id)} className="text-zinc-600 hover:text-red-500">DELETE</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "logs" && (
+          <div className="bg-zinc-900 p-4 rounded border border-zinc-800 max-h-[70vh] overflow-y-auto">
+            <button onClick={fetchSystemLogs} className="mb-4 bg-zinc-800 px-4 py-1 rounded text-xs">REFRESH</button>
+            {logs.map(l => (
+              <div key={l.id} className={`border-b border-zinc-800 py-3 ${l.type === 'error' ? 'bg-red-950/20' : ''}`}>
+                <div className="flex justify-between items-start">
+                  <span className={`text-[10px] px-2 py-0.5 rounded ${l.type === 'error' ? 'bg-red-600' : 'bg-blue-600'}`}>
+                    {l.type.toUpperCase()}
+                  </span>
+                  <span className="text-[10px] text-zinc-500">
+                    {l.timestamp ? new Date(l.timestamp._seconds * 1000).toLocaleString() : 'N/A'}
+                  </span>
+                </div>
+                <p className="text-white mt-2 font-mono text-xs break-all">{l.message || JSON.stringify(l)}</p>
+                {l.stack && <pre className="text-[10px] text-zinc-500 mt-2 p-2 bg-black rounded overflow-x-auto">{l.stack}</pre>}
+                {l.userAgent && <p className="text-[9px] text-zinc-600 mt-1">{l.userAgent}</p>}
               </div>
             ))}
           </div>

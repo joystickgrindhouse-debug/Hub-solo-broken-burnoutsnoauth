@@ -14,14 +14,15 @@ class ErrorBoundary extends React.Component {
     // In production, we could send this to a service like Sentry or a custom backend endpoint
     console.error("Production Error Caught:", error, errorInfo);
     
-    // Log to our own backend if needed
-    fetch('/api/logs/error', {
+    // Log to our own backend
+    fetch('/api/logs/client-error', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        error: error.toString(),
-        info: errorInfo.componentStack,
-        timestamp: new Date().toISOString()
+        message: error.toString(),
+        stack: errorInfo.componentStack,
+        url: window.location.href,
+        type: 'error'
       })
     }).catch(err => console.error("Failed to send error to log server", err));
   }

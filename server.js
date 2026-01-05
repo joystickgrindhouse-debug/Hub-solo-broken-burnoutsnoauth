@@ -102,7 +102,58 @@ app.post("/api/admin/raffle-draw", async (req, res) => {
   }
 });
 
+// System Logging Endpoints
+app.post("/api/logs/client-error", async (req, res) => {
+  try {
+    const { db } = require('./src/firebase_server');
+    const logEntry = {
+      ...req.body,
+      type: 'error',
+      timestamp: new Date(),
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    };
+    await db.collection('system_logs').add(logEntry);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).send("Logging failed");
+  }
+});
+
+app.post("/api/logs/activity", async (req, res) => {
+  try {
+    const { db } = require('./src/firebase_server');
+    const logEntry = {
+      ...req.body,
+      type: 'activity',
+      timestamp: new Date()
+    };
+    await db.collection('system_logs').add(logEntry);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).send("Logging failed");
+  }
+});
+
 // Admin moderation endpoints
+app.post("/api/admin/system-logs", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader !== `Bearer ${process.env.ADMIN_SECRET}`) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+  try {
+    const { db } = require('./src/firebase_server');
+    const snapshot = await db.collection('system_logs')
+      .orderBy('timestamp', 'desc')
+      .limit(100)
+      .get();
+    const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json({ success: true, logs });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post("/api/admin/user-action", async (req, res) => {
   const authHeader = req.headers.authorization;
   if (authHeader !== `Bearer ${process.env.ADMIN_SECRET}`) {
