@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { auth } from "./firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
@@ -6,20 +6,22 @@ import { UserService } from "./services/userService.js";
 import LoadingScreen from "./components/LoadingScreen.jsx";
 import OnboardingSlides from "./components/OnboardingSlides.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import Login from "./views/Login.jsx";
-import Dashboard from "./views/Dashboard.jsx";
-import Profile from "./views/Profile.jsx";
-import Achievements from "./views/Achievements.jsx";
-import GlobalChat from "./views/GlobalChat.jsx";
-import DMChat from "./views/DMChat.jsx";
-import Leaderboard from "./views/Leaderboard.jsx";
-import Solo from "./views/Solo.jsx";
-import Burnouts from "./views/Burnouts.jsx";
-import Live from "./views/Live.jsx";
-import Run from "./views/Run.jsx";
-import RaffleRoom from "./views/RaffleRoom.jsx";
 import Navbar from "./components/Navbar.jsx";
-import WaitingForUpload from "./views/WaitingForUpload.jsx";
+
+// Lazy load views for better performance
+const Login = lazy(() => import("./views/Login.jsx"));
+const Dashboard = lazy(() => import("./views/Dashboard.jsx"));
+const Profile = lazy(() => import("./views/Profile.jsx"));
+const Achievements = lazy(() => import("./views/Achievements.jsx"));
+const GlobalChat = lazy(() => import("./views/GlobalChat.jsx"));
+const DMChat = lazy(() => import("./views/DMChat.jsx"));
+const Leaderboard = lazy(() => import("./views/Leaderboard.jsx"));
+const Solo = lazy(() => import("./views/Solo.jsx"));
+const Burnouts = lazy(() => import("./views/Burnouts.jsx"));
+const Live = lazy(() => import("./views/Live.jsx"));
+const Run = lazy(() => import("./views/Run.jsx"));
+const RaffleRoom = lazy(() => import("./views/RaffleRoom.jsx"));
+const WaitingForUpload = lazy(() => import("./views/WaitingForUpload.jsx"));
 
 export default function App() {
   const navigate = useNavigate();
@@ -159,112 +161,114 @@ export default function App() {
   return (
     <div>
       {user && <Navbar user={user} userProfile={userProfile} />}
-      <Routes>
-        <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
-        <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
-        
-        {/* Public routes */}
-        <Route 
-          path="/burnouts" 
-          element={<Burnouts user={user} userProfile={userProfile} />} 
-        />
-        
-        {/* Protected routes */}
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute user={user} userProfile={userProfile}>
-              <Dashboard user={user} />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/profile" 
-          element={
-            <ProtectedRoute user={user} userProfile={userProfile}>
-              <Profile user={user} userProfile={userProfile} />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/avatar-creator" 
-          element={
-            user ? (
-              isNewSignup ? (
-                <WaitingForUpload />
-              ) : (
+      <Suspense fallback={<LoadingScreen />}>
+        <Routes>
+          <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
+          <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
+          
+          {/* Public routes */}
+          <Route 
+            path="/burnouts" 
+            element={<Burnouts user={user} userProfile={userProfile} />} 
+          />
+          
+          {/* Protected routes */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute user={user} userProfile={userProfile}>
+                <Dashboard user={user} />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute user={user} userProfile={userProfile}>
                 <Profile user={user} userProfile={userProfile} />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/avatar-creator" 
+            element={
+              user ? (
+                isNewSignup ? (
+                  <WaitingForUpload />
+                ) : (
+                  <Profile user={user} userProfile={userProfile} />
+                )
+              ) : (
+                <Login />
               )
-            ) : (
-              <Login />
-            )
-          } 
-        />
-        <Route 
-          path="/solo" 
-          element={
-            <ProtectedRoute user={user} userProfile={userProfile}>
-              <Solo user={user} userProfile={userProfile} />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/live" 
-          element={
-            <ProtectedRoute user={user} userProfile={userProfile}>
-              <Live user={user} userProfile={userProfile} />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/run" 
-          element={
-            <ProtectedRoute user={user} userProfile={userProfile}>
-              <Run user={user} userProfile={userProfile} />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/raffle" 
-          element={
-            <ProtectedRoute user={user} userProfile={userProfile}>
-              <RaffleRoom user={user} userProfile={userProfile} />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/achievements" 
-          element={
-            <ProtectedRoute user={user} userProfile={userProfile}>
-              <Achievements user={user} userProfile={userProfile} />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/chat" 
-          element={
-            <ProtectedRoute user={user} userProfile={userProfile}>
-              <GlobalChat user={user} userProfile={userProfile} />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/dm" 
-          element={
-            <ProtectedRoute user={user} userProfile={userProfile}>
-              <DMChat user={user} userProfile={userProfile} />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/leaderboard" 
-          element={
-            <ProtectedRoute user={user} userProfile={userProfile}>
-              <Leaderboard user={user} />
-            </ProtectedRoute>
-          } 
-        />
-      </Routes>
+            } 
+          />
+          <Route 
+            path="/solo" 
+            element={
+              <ProtectedRoute user={user} userProfile={userProfile}>
+                <Solo user={user} userProfile={userProfile} />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/live" 
+            element={
+              <ProtectedRoute user={user} userProfile={userProfile}>
+                <Live user={user} userProfile={userProfile} />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/run" 
+            element={
+              <ProtectedRoute user={user} userProfile={userProfile}>
+                <Run user={user} userProfile={userProfile} />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/raffle" 
+            element={
+              <ProtectedRoute user={user} userProfile={userProfile}>
+                <RaffleRoom user={user} userProfile={userProfile} />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/achievements" 
+            element={
+              <ProtectedRoute user={user} userProfile={userProfile}>
+                <Achievements user={user} userProfile={userProfile} />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/chat" 
+            element={
+              <ProtectedRoute user={user} userProfile={userProfile}>
+                <GlobalChat user={user} userProfile={userProfile} />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dm" 
+            element={
+              <ProtectedRoute user={user} userProfile={userProfile}>
+                <DMChat user={user} userProfile={userProfile} />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/leaderboard" 
+            element={
+              <ProtectedRoute user={user} userProfile={userProfile}>
+                <Leaderboard user={user} />
+              </ProtectedRoute>
+            } 
+          />
+        </Routes>
+      </Suspense>
     </div>
   );
 }
