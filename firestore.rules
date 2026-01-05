@@ -11,34 +11,42 @@ service cloud.firestore {
     }
 
     // AUTHENTICATED ADMIN CHECK (Bypass for owner email)
+    // IMPORTANT: Firebase email is case-sensitive in rules. Ensure lowercase check.
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && (isOwner(userId) || request.auth.token.email == 'Socalturfexperts@gmail.com');
-      allow delete: if request.auth.token.email == 'Socalturfexperts@gmail.com';
+      allow update: if isSignedIn() && (isOwner(userId) || request.auth.token.email.lower() == 'socalturfexperts@gmail.com');
+      allow delete: if request.auth.token.email.lower() == 'socalturfexperts@gmail.com';
     }
 
     match /globalChat/{msgId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
-      allow update, delete: if request.auth.token.email == 'Socalturfexperts@gmail.com';
+      allow update, delete: if request.auth.token.email.lower() == 'socalturfexperts@gmail.com';
     }
     
     match /system_logs/{logId} {
       allow read: if isSignedIn();
       allow create: if true; 
-      allow update, delete: if request.auth.token.email == 'Socalturfexperts@gmail.com';
+      allow update, delete: if request.auth.token.email.lower() == 'socalturfexperts@gmail.com';
     }
     
     match /raffle_winners/{winnerId} {
       allow read: if isSignedIn();
-      allow write: if request.auth.token.email == 'Socalturfexperts@gmail.com';
+      allow write: if request.auth.token.email.lower() == 'socalturfexperts@gmail.com';
     }
 
     match /leaderboard/{scoreId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
-      allow update, delete: if request.auth.token.email == 'Socalturfexperts@gmail.com';
+      allow update, delete: if request.auth.token.email.lower() == 'socalturfexperts@gmail.com';
+    }
+    
+    // Legacy support
+    match /global_messages/{msgId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if request.auth.token.email.lower() == 'socalturfexperts@gmail.com';
     }
   }
 }

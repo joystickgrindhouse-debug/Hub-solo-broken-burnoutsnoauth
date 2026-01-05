@@ -123,29 +123,36 @@ const AdminDashboard = () => {
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="bg-zinc-900 p-8 border border-red-600 rounded-lg max-w-md w-full">
-          <div className="text-center mb-6">
-            <h2 className="text-red-600 text-2xl font-bold uppercase tracking-tighter">Command Center</h2>
-            <p className="text-zinc-500 text-[10px] mt-2 font-mono uppercase tracking-widest">Secure Authorization Required</p>
+      <div className="min-h-screen bg-black flex items-center justify-center p-4 relative z-[9999]">
+        <div className="bg-zinc-900 p-8 border-2 border-red-600 rounded-2xl max-w-md w-full shadow-[0_0_50px_rgba(220,38,38,0.3)]">
+          <div className="text-center mb-8">
+            <h2 className="text-red-600 text-3xl font-black uppercase italic tracking-tighter">System Access</h2>
+            <div className="h-1 w-20 bg-red-600 mx-auto mt-2" />
           </div>
           
-          <input 
-            type="password" 
-            placeholder="ENTER ADMIN SECRET" 
-            className="w-full bg-black border border-zinc-700 text-white p-4 rounded mb-4 focus:border-red-600 outline-none text-center font-mono"
-            value={adminKey}
-            onChange={(e) => setAdminKey(e.target.value)}
-          />
-          <button 
-            className="w-full bg-red-600 text-white font-black py-4 rounded hover:bg-red-700 transition shadow-[0_0_20px_rgba(220,38,38,0.4)] uppercase tracking-tighter"
-            onClick={() => {
-              localStorage.setItem("rivalis_admin_key", adminKey);
-              setIsAuthorized(true);
-            }}
-          >
-            Authorize Console
-          </button>
+          <div className="space-y-6">
+            <div>
+              <label className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em] mb-2 block">Operator Credentials</label>
+              <input 
+                type="password" 
+                placeholder="ENTER ADMIN SECRET" 
+                className="w-full bg-black border border-zinc-700 text-white p-4 rounded-xl focus:border-red-600 outline-none text-center font-mono font-bold tracking-[0.3em] transition-all"
+                value={adminKey}
+                onChange={(e) => setAdminKey(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            <button 
+              className="w-full bg-red-600 text-white font-black py-5 rounded-xl hover:bg-red-500 transition-all shadow-[0_0_30px_rgba(220,38,38,0.5)] uppercase tracking-widest text-sm border-b-4 border-red-900 active:border-b-0 active:translate-y-1"
+              onClick={() => {
+                localStorage.setItem("rivalis_admin_key", adminKey);
+                setIsAuthorized(true);
+              }}
+            >
+              Initialize Console
+            </button>
+          </div>
         </div>
       </div>
     );
