@@ -151,11 +151,35 @@ const AdminDashboard = () => {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8 border-b border-zinc-800 pb-4">
           <h1 className="text-3xl font-bold text-red-600">COMMAND CENTER</h1>
-          <div className="flex gap-4">
-            <button onClick={() => setActiveTab("users")} className={`px-4 py-2 rounded ${activeTab === "users" ? "bg-red-600" : "bg-zinc-800"}`}>LIVE USERS</button>
-            <button onClick={() => setActiveTab("chat")} className={`px-4 py-2 rounded ${activeTab === "chat" ? "bg-red-600" : "bg-zinc-800"}`}>CHAT</button>
-            <button onClick={() => setActiveTab("logs")} className={`px-4 py-2 rounded ${activeTab === "logs" ? "bg-red-600" : "bg-zinc-800"}`}>LOGS</button>
-            <button onClick={() => setActiveTab("raffle")} className={`px-4 py-2 rounded ${activeTab === "raffle" ? "bg-red-600" : "bg-zinc-800"}`}>RAFFLE</button>
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            <button 
+              type="button"
+              onClick={() => setActiveTab("users")} 
+              className={`px-4 py-2 rounded flex-shrink-0 transition-all font-bold ${activeTab === "users" ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"}`}
+            >
+              LIVE USERS
+            </button>
+            <button 
+              type="button"
+              onClick={() => setActiveTab("chat")} 
+              className={`px-4 py-2 rounded flex-shrink-0 transition-all font-bold ${activeTab === "chat" ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"}`}
+            >
+              CHAT
+            </button>
+            <button 
+              type="button"
+              onClick={() => setActiveTab("logs")} 
+              className={`px-4 py-2 rounded flex-shrink-0 transition-all font-bold ${activeTab === "logs" ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"}`}
+            >
+              LOGS
+            </button>
+            <button 
+              type="button"
+              onClick={() => setActiveTab("raffle")} 
+              className={`px-4 py-2 rounded flex-shrink-0 transition-all font-bold ${activeTab === "raffle" ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"}`}
+            >
+              RAFFLE
+            </button>
           </div>
         </div>
 
