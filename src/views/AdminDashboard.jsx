@@ -32,10 +32,13 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (isAuthorized) {
+      console.log("Admin Dashboard - Authorized, starting listeners...");
+      
       // Real-time listener for ALL users (online and offline)
       const unsubscribeUsers = onSnapshot(collection(db, "users"), (snapshot) => {
         const allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        console.log("Admin Dashboard - Fetched users:", allUsers.length);
+        console.log("Admin Dashboard - Found " + allUsers.length + " users in database");
+        
         // Sort: Live/Online first, then offline
         setUsers(allUsers.sort((a, b) => {
           const aLive = isUserLive(a);
@@ -45,7 +48,8 @@ const AdminDashboard = () => {
           return 0;
         }));
       }, (error) => {
-        console.error("Admin Dashboard - Users listener failed:", error);
+        console.error("CRITICAL: Users listener failed. Permission Denied?", error);
+        alert("Permission Denied: Your account (Socalturfexperts@gmail.com) might not be recognized as Admin in Firestore yet.");
       });
 
       if (activeTab === "chat") {
