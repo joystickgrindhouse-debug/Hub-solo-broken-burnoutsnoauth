@@ -41,9 +41,11 @@ export const LeaderboardService = {
       const now = new Date();
       const windowStart = getRaffleWindowStart();
       
-      // Generate unique ticket reference numbers
+      // Generate unique ticket reference numbers: 1 ticket per 30 score (reps/distance)
       const ticketRefs = [];
-      for (let i = 0; i < score; i++) {
+      const ticketCount = Math.floor(score / 30);
+      
+      for (let i = 0; i < ticketCount; i++) {
         const ref = `RIV-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
         ticketRefs.push(ref);
       }
