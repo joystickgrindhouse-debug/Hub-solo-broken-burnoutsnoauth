@@ -51,8 +51,7 @@ export default function Burnouts({ user, userProfile }) {
         score: stats.reps || 0,
         duration: stats.duration || 0,
         metadata: {
-          exercises: stats.exercises || [],
-          calories: stats.calories || 0
+          exercises: stats.exercises || []
         }
       });
       alert("Session saved! Tickets earned.");
