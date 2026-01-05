@@ -32,17 +32,25 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (isAuthorized) {
-      // Real-time user tracking
+      // Real-time user tracking for live status
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
       const q = query(
         collection(db, "users"), 
         where("lastSeen", ">=", Timestamp.fromDate(fiveMinutesAgo))
       );
+      
       const unsubscribeUsers = onSnapshot(q, (snapshot) => {
         const liveUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setUsers(prev => {
+          // Merge live data with full user list
           const others = prev.filter(p => !liveUsers.find(l => l.id === p.id));
-          return [...liveUsers, ...others];
+          return [...liveUsers, ...others].sort((a, b) => {
+            const aLive = (a.lastSeen?.toMillis() || 0) >= (Date.now() - 300000);
+            const bLive = (b.lastSeen?.toMillis() || 0) >= (Date.now() - 300000);
+            if (aLive && !bLive) return -1;
+            if (!aLive && bLive) return 1;
+            return 0;
+          });
         });
       });
 
@@ -133,10 +141,9 @@ const AdminDashboard = () => {
     );
   }
 
-  const getStatusColor = (user) => {
+  const isUserLive = (user) => {
     const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-    const lastSeen = user.lastSeen?.toMillis() || 0;
-    return lastSeen >= fiveMinutesAgo ? "text-green-500" : "text-zinc-500";
+    return (user.lastSeen?.toMillis() || 0) >= fiveMinutesAgo;
   };
 
   return (
@@ -154,28 +161,37 @@ const AdminDashboard = () => {
 
         {activeTab === "users" && (
           <div className="grid gap-4">
-            <div className="flex justify-between items-center mb-2 px-2 text-zinc-500 text-xs">
-              <span>ACTIVE USER / ACTIVITY</span>
-              <span>CONTROLS</span>
+            <div className="flex justify-between items-center mb-2 px-2 text-zinc-500 text-xs font-mono">
+              <span>ACTIVE USER / ACTIVITY STATUS</span>
+              <span>MODERATION CONTROLS</span>
             </div>
             {users.map(u => (
-              <div key={u.id} className="bg-zinc-900 p-4 rounded border border-zinc-800 flex justify-between items-center">
+              <div key={u.id} className="bg-zinc-900 p-4 rounded border border-zinc-800 flex justify-between items-center transition-all">
                 <div className="flex items-center gap-4">
-                  <div className={`w-2 h-2 rounded-full ${getStatusColor(u)} bg-current shadow-[0_0_8px_currentColor]`} />
+                  <div className={`w-3 h-3 rounded-full ${isUserLive(u) ? "bg-green-500 shadow-[0_0_10px_#22c55e]" : "bg-zinc-800"}`} />
                   <div>
-                    <h3 className="font-bold text-lg">{u.nickname || "Anonymous"}</h3>
-                    <p className={`text-xs ${getStatusColor(u)} uppercase tracking-widest`}>
-                      {u.currentActivity ? `LOCATION: ${u.currentActivity}` : "IDLE"}
+                    <h3 className="font-bold text-lg flex items-center gap-2">
+                      {u.nickname || "Anonymous"}
+                      {u.role === 'admin' && <span className="text-[10px] bg-red-600 text-white px-1.5 rounded">MOD</span>}
+                    </h3>
+                    <p className={`text-xs ${isUserLive(u) ? "text-green-400" : "text-zinc-600"} uppercase tracking-widest font-mono`}>
+                      {u.currentActivity ? `ACTION: ${u.currentActivity}` : "IDLE"}
                     </p>
-                    <p className="text-[10px] text-zinc-600 mt-1">{u.id}</p>
+                    <p className="text-[10px] text-zinc-700 mt-1">{u.id}</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => handleUserAction(u.id, "ban", !u.isBanned)} className="bg-red-900/50 hover:bg-red-600 text-[10px] px-3 py-1 rounded border border-red-900 transition-colors">
+                  <button onClick={() => handleUserAction(u.id, "ban", !u.isBanned)} className="bg-red-950/30 hover:bg-red-600 text-[10px] px-3 py-1 rounded border border-red-900 transition-all font-bold">
                     {u.isBanned ? "UNBAN" : "BAN"}
                   </button>
-                  <button onClick={() => handleUserAction(u.id, "mute", !u.isMuted)} className="bg-yellow-900/50 hover:bg-yellow-600 text-[10px] px-3 py-1 rounded border border-yellow-900 transition-colors">
+                  <button onClick={() => handleUserAction(u.id, "mute", !u.isMuted)} className="bg-yellow-950/30 hover:bg-yellow-600 text-[10px] px-3 py-1 rounded border border-yellow-900 transition-all font-bold">
                     {u.isMuted ? "UNMUTE" : "MUTE"}
+                  </button>
+                  <button onClick={() => {
+                    const msg = prompt("Warning message:");
+                    if (msg) handleUserAction(u.id, "warn", true, msg);
+                  }} className="bg-zinc-800 hover:bg-zinc-700 text-[10px] px-3 py-1 rounded border border-zinc-700 font-bold transition-all">
+                    WARN
                   </button>
                 </div>
               </div>
@@ -190,8 +206,9 @@ const AdminDashboard = () => {
                 <div>
                   <p className="text-red-500 font-bold text-sm">{m.nickname || m.userName}</p>
                   <p className="text-white mt-1">{m.text}</p>
+                  <p className="text-[9px] text-zinc-600 mt-1">{new Date(m.timestamp?.seconds * 1000).toLocaleString()}</p>
                 </div>
-                <button onClick={() => handleDeleteMessage(m.id)} className="text-zinc-600 hover:text-red-500">DELETE</button>
+                <button onClick={() => handleDeleteMessage(m.id)} className="text-zinc-600 hover:text-red-500 font-bold text-xs">REMOVE</button>
               </div>
             ))}
           </div>
@@ -199,19 +216,19 @@ const AdminDashboard = () => {
 
         {activeTab === "logs" && (
           <div className="bg-zinc-900 p-4 rounded border border-zinc-800 max-h-[70vh] overflow-y-auto">
-            <button onClick={fetchSystemLogs} className="mb-4 bg-zinc-800 px-4 py-1 rounded text-xs">REFRESH</button>
+            <button onClick={fetchSystemLogs} className="mb-4 bg-zinc-800 px-4 py-1 rounded text-xs font-bold hover:bg-zinc-700">REFRESH LOGS</button>
             {logs.map(l => (
               <div key={l.id} className={`border-b border-zinc-800 py-3 ${l.type === 'error' ? 'bg-red-950/20' : ''}`}>
                 <div className="flex justify-between items-start">
-                  <span className={`text-[10px] px-2 py-0.5 rounded ${l.type === 'error' ? 'bg-red-600' : 'bg-blue-600'}`}>
+                  <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${l.type === 'error' ? 'bg-red-600' : 'bg-blue-600'}`}>
                     {l.type.toUpperCase()}
                   </span>
-                  <span className="text-[10px] text-zinc-500">
+                  <span className="text-[10px] text-zinc-500 font-mono">
                     {l.timestamp ? new Date(l.timestamp._seconds * 1000).toLocaleString() : 'N/A'}
                   </span>
                 </div>
-                <p className="text-white mt-2 font-mono text-xs break-all">{l.message || JSON.stringify(l)}</p>
-                {l.stack && <pre className="text-[10px] text-zinc-500 mt-2 p-2 bg-black rounded overflow-x-auto">{l.stack}</pre>}
+                <p className="text-white mt-2 font-mono text-xs break-all leading-relaxed">{l.message || JSON.stringify(l)}</p>
+                {l.stack && <pre className="text-[10px] text-zinc-600 mt-2 p-3 bg-black/50 rounded overflow-x-auto border border-zinc-800">{l.stack}</pre>}
               </div>
             ))}
           </div>
@@ -219,15 +236,30 @@ const AdminDashboard = () => {
 
         {activeTab === "raffle" && (
           <div className="grid md:grid-cols-2 gap-8">
-            <button onClick={handleDrawRaffle} className="bg-red-600 p-4 rounded font-bold hover:bg-red-700">TRIGGER WEEKLY DRAW</button>
-            <div className="bg-zinc-900 p-6 rounded border border-zinc-800">
-              <h2 className="text-xl font-bold mb-4 text-zinc-400">WINNER HISTORY</h2>
-              {raffleWinners.map(w => (
-                <div key={w.id} className="bg-black p-3 mb-2 rounded border border-zinc-800">
-                  <p className="text-red-500 font-bold">{w.userName}</p>
-                  <p className="text-xs text-zinc-400">{new Date(w.drawDate?.seconds * 1000).toLocaleDateString()}</p>
-                </div>
-              ))}
+            <div className="space-y-4">
+              <button onClick={handleDrawRaffle} className="w-full bg-red-600 p-8 rounded-lg font-bold hover:bg-red-700 shadow-[0_0_20px_rgba(220,38,38,0.3)] transition-all text-xl">
+                TRIGGER SUNDAY DRAW
+              </button>
+              <div className="bg-zinc-900 p-4 rounded border border-zinc-800 text-xs text-zinc-500 leading-relaxed">
+                <p className="font-bold text-zinc-400 mb-1">SYSTEM NOTE:</p>
+                This will instantly process all tickets for the current window and select a winner. The results are final and saved to the winners registry.
+              </div>
+            </div>
+            <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+              <h2 className="text-xl font-bold mb-6 text-zinc-400 border-b border-zinc-800 pb-2">WINNER REGISTRY</h2>
+              <div className="space-y-3">
+                {raffleWinners.length > 0 ? raffleWinners.map(w => (
+                  <div key={w.id} className="bg-black p-4 rounded border border-zinc-800 flex justify-between items-center">
+                    <div>
+                      <p className="text-red-500 font-bold">{w.userName}</p>
+                      <p className="text-[10px] text-zinc-600 font-mono">TX: {w.ticket}</p>
+                    </div>
+                    <p className="text-xs text-zinc-400 font-mono">{new Date(w.drawDate?.seconds * 1000).toLocaleDateString()}</p>
+                  </div>
+                )) : (
+                  <p className="text-zinc-600 text-center py-8 font-mono text-sm">NO DRAW HISTORY FOUND</p>
+                )}
+              </div>
             </div>
           </div>
         )}
