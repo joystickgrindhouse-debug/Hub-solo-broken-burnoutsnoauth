@@ -83,6 +83,9 @@ export const UserService = {
         userId,
         nickname: profileData.nickname,
         avatarURL: profileData.avatarURL || "",
+        ticketBalance: 0,
+        totalReps: 0,
+        totalMiles: 0,
         hasCompletedSetup: false,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
