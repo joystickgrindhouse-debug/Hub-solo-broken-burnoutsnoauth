@@ -11,10 +11,10 @@ import {
   doc,
   updateDoc
 } from 'firebase/firestore';
-import ChatBubble from './ChatBubble';
-import TourStep from './TourStep';
-import LogsGraph from './LogsGraph';
-import NutritionalCoach from './NutritionalCoach';
+import ChatBubble from './ChatBubble.jsx';
+import TourStep from './TourStep.jsx';
+import LogsGraph from './LogsGraph.jsx';
+import NutritionalCoach from './NutritionalCoach.jsx';
 
 const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
   const [messages, setMessages] = useState([]);
