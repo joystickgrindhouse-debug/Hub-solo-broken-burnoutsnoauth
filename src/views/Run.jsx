@@ -189,10 +189,6 @@ export default function Run({ user, userProfile }) {
       source: "internal"
     };
 
-    if (shareRoute) {
-      runData.route = route;
-    }
-
     // Update user profile and leaderboard
     if (user) {
       try {
@@ -206,7 +202,7 @@ export default function Run({ user, userProfile }) {
           userId: user.uid, 
           userName: userProfile?.nickname || "Runner", 
           gameMode: "run", 
-          score: Math.floor(distance * 100),
+          score: finalTickets, // Store tickets as the score
           duration: duration
         });
       } catch (err) {
