@@ -48,12 +48,19 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       let botResponse = "I'm listening! Tell me more about your progress.";
       const input = inputText.toLowerCase();
 
-      if (input.includes('support')) {
+      if (input.includes('yes') || input.includes('sure') || input.includes('ok')) {
+        if (showTour) {
+          botResponse = "Great! Let's move to the next step of the tour.";
+          nextTourStep();
+        } else {
+          botResponse = "Awesome! How can I help you today?";
+        }
+      } else if (input.includes('plan')) {
+        botResponse = "Nutritional guidance active. Check the coach panel for your macro breakdown. I've also generated a suggested workout plan for you!";
+      } else if (input.includes('support')) {
         botResponse = "Support will respond shortly. In the meantime, keep pushing!";
       } else if (input.includes('weight') || input.includes('log')) {
         botResponse = "Daily log updated! I've visualized your latest trends in the graphs above.";
-      } else if (input.includes('meal') || input.includes('diet')) {
-        botResponse = "Nutritional guidance active. Check the coach panel for your macro breakdown.";
       } else if (input.includes('nickname') || input.includes('bio')) {
         botResponse = "Profile updated! Looking sharp, Rival.";
       }
