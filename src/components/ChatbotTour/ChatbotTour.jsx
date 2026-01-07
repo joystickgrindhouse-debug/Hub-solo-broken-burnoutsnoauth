@@ -46,6 +46,16 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
     try {
       // Create conversation if it doesn't exist
       let convId = window.localStorage.getItem('rivalis_conv_id');
+      
+      const sendRequest = async (cid) => {
+        return await fetch(`/api/conversations/${cid}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: inputText })
+        });
+      };
+
+      let response;
       if (!convId) {
         const convRes = await fetch('/api/conversations', {
           method: 'POST',
@@ -55,15 +65,25 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
         const convData = await convRes.json();
         convId = convData.id;
         window.localStorage.setItem('rivalis_conv_id', convId);
+        response = await sendRequest(convId);
+      } else {
+        response = await sendRequest(convId);
+        if (response.status === 404 || response.status === 500) {
+          // If the conversation ID is invalid (e.g. from a previous failed run), clear and retry once
+          window.localStorage.removeItem('rivalis_conv_id');
+          const convRes = await fetch('/api/conversations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: `Chat with ${userProfile?.nickname || 'Rival'}` })
+          });
+          const convData = await convRes.json();
+          convId = convData.id;
+          window.localStorage.setItem('rivalis_conv_id', convId);
+          response = await sendRequest(convId);
+        }
       }
 
-      const response = await fetch(`/api/conversations/${convId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: inputText })
-      });
-
-      if (!response.ok) throw new Error('AI connection failed');
+      if (!response || !response.ok) throw new Error('AI connection failed');
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();

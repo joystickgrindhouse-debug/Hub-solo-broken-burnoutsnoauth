@@ -1,10 +1,18 @@
 const admin = require('firebase-admin');
 
-// We assume firebase-admin is already initialized in the main process or we initialize it here safely
+// Hardcoded for this specific project to avoid environment detection errors
+const projectId = "rivalis-fitness-reimagined";
+
 if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault()
-  });
+  try {
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+      projectId: projectId
+    });
+    console.log("Firebase Admin initialized for project:", projectId);
+  } catch (e) {
+    console.error("Firebase Admin init error:", e);
+  }
 }
 
 const db = admin.firestore();
