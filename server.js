@@ -3,9 +3,15 @@ const cors = require('cors');
 const { Storage } = require('@google-cloud/storage');
 const { randomUUID } = require('crypto');
 
+const { registerChatRoutes } = require("./replit_integrations/chat");
+const { registerImageRoutes } = require("./replit_integrations/image");
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+registerChatRoutes(app);
+registerImageRoutes(app);
 
 // Minimal object storage implementation for avatar uploads
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";

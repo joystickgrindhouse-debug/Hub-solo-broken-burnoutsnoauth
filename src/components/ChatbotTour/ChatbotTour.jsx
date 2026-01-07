@@ -43,30 +43,70 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
     setMessages(prev => [...prev, userMsg]);
     setInputText('');
 
-    // Simulated Bot Responses based on keywords
-    setTimeout(() => {
-      let botResponse = "I'm listening! Tell me more about your progress.";
-      const input = inputText.toLowerCase();
-
-      if (input.includes('yes') || input.includes('sure') || input.includes('ok') || input.includes('tour')) {
-        if (showTour) {
-          botResponse = "Great! Let's move to the next step of the tour. I'll guide you through our main features.";
-          nextTourStep();
-        } else {
-          botResponse = "Awesome! How can I help you today?";
-        }
-      } else if (input.includes('plan')) {
-        botResponse = "Nutritional guidance active. Check the coach panel for your macro breakdown. I've also generated a suggested workout plan for you!";
-      } else if (input.includes('support')) {
-        botResponse = "Support will respond shortly. In the meantime, keep pushing!";
-      } else if (input.includes('weight') || input.includes('log')) {
-        botResponse = "Daily log updated! I've visualized your latest trends in the graphs above.";
-      } else if (input.includes('nickname') || input.includes('bio')) {
-        botResponse = "Profile updated! Looking sharp, Rival.";
+    try {
+      // Create conversation if it doesn't exist
+      let convId = window.localStorage.getItem('rivalis_conv_id');
+      if (!convId) {
+        const convRes = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: `Chat with ${userProfile?.nickname || 'Rival'}` })
+        });
+        const convData = await convRes.json();
+        convId = convData.id;
+        window.localStorage.setItem('rivalis_conv_id', convId);
       }
 
-      setMessages(prev => [...prev, { id: Date.now() + 1, text: botResponse, isBot: true, timestamp: new Date() }]);
-    }, 1000);
+      const response = await fetch(`/api/conversations/${convId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: inputText })
+      });
+
+      if (!response.ok) throw new Error('AI connection failed');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantMsgId = Date.now() + 1;
+      let fullText = "";
+
+      // Add empty assistant message to be filled
+      setMessages(prev => [...prev, { id: assistantMsgId, text: "", isBot: true, timestamp: new Date() }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.slice(6));
+            if (data.content) {
+              fullText += data.content;
+              setMessages(prev => prev.map(m => 
+                m.id === assistantMsgId ? { ...m, text: fullText } : m
+              ));
+            }
+          }
+        }
+      }
+
+      // Handle tour progress via AI response analysis if needed
+      if (showTour && (fullText.toLowerCase().includes('next') || fullText.toLowerCase().includes('continue'))) {
+        nextTourStep();
+      }
+
+    } catch (error) {
+      console.error("AI Error:", error);
+      setMessages(prev => [...prev, { 
+        id: Date.now() + 2, 
+        text: "My neural link is flickering, Rival. Try again in a moment.", 
+        isBot: true, 
+        timestamp: new Date() 
+      }]);
+    }
   };
 
   const nextTourStep = () => {

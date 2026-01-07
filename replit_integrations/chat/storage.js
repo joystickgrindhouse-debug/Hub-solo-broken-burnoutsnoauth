@@ -1,7 +1,15 @@
-const { db } = require('../../firebase_server');
-const { Timestamp } = require('firebase-admin/firestore');
+const admin = require('firebase-admin');
 
-export const chatStorage = {
+// We assume firebase-admin is already initialized in the main process or we initialize it here safely
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault()
+  });
+}
+
+const db = admin.firestore();
+
+const chatStorage = {
   async getConversation(id) {
     const doc = await db.collection('conversations').doc(String(id)).get();
     return doc.exists ? { id: doc.id, ...doc.data() } : null;
@@ -13,7 +21,7 @@ export const chatStorage = {
   async createConversation(title) {
     const res = await db.collection('conversations').add({
       title,
-      createdAt: Timestamp.now()
+      createdAt: admin.firestore.Timestamp.now()
     });
     return { id: res.id, title };
   },
@@ -32,8 +40,9 @@ export const chatStorage = {
       conversationId: String(conversationId),
       role,
       content,
-      createdAt: Timestamp.now()
+      createdAt: admin.firestore.Timestamp.now()
     });
     return { id: res.id, role, content };
   }
 };
+module.exports = { chatStorage };
