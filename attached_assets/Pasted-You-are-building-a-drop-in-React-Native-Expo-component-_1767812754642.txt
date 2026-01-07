@@ -1,0 +1,77 @@
+You are building a **drop-in React Native / Expo component** for an existing fitness app. The module must integrate **directly into an existing app and chatbox**, using the existing Firebase authentication and Firestore database.  
+
+Requirements:
+
+1. **Component Name & Structure**
+   - Main component: `ChatbotTour.js`
+   - Subcomponents: `TourStep.js`, `ChatBubble.js`, `LogsGraph.js`, `NutritionalCoach.js`
+   - Component must **not overwrite or conflict** with existing files
+   - Props:  
+     - `user` → current authenticated user object  
+     - `firebase` → existing Firebase instance  
+     - `onTourComplete` → callback after tour completion  
+     - `initialMessage` → optional initial greeting message  
+
+2. **Firebase Integration**
+   - Use the **existing Firebase instance**
+   - Read/write to:
+     - `users` → profile data  
+     - `logs` → daily weight, mood, meals, workouts, runs  
+     - `achievements` → milestones & streaks  
+     - `leaderboard` → points/activity
+   - Real-time listeners for leaderboard and global chat
+   - Ensure all operations respect the authenticated user (`firebase.auth().currentUser.uid`)
+
+3. **Chatbot Behavior**
+   - Opens automatically on login with a **motivational greeting** (from `initialMessage`)  
+   - Responds to:
+     - Account updates: nickname, bio  
+     - Support requests: “Support will respond shortly”  
+     - Nutritional guidance (meal plans, macros)  
+     - Daily logs & session feedback (weight, mood emoji, meals, workouts/runs)  
+     - Milestones, streak rewards, and trend insights
+
+4. **Tour Flow**
+   - 7-step interactive tour:
+     1. Upload avatar  
+     2. Profile: bio, achievements, milestones  
+     3. Leaderboard & social: global chat & DMs  
+     4. Workout demos: Solo Mode, Burnouts, Run Mode (distance & time), Live Mode  
+     5. Shop tour  
+     6. Optional: Workout plan setup (user can skip)  
+     7. Close tour and switch to normal app mode  
+
+5. **Logging & Graphs**
+   - Logs stored in Firebase per user
+   - Graphs for trends in weight, mood, distance, calories
+   - Chatbot provides insights based on trends
+
+6. **UI / Styling**
+   - Red neon primary color (#FF0000) with dark backgrounds (#000000 / #111111)  
+   - Neon-style buttons, chat bubbles, progress indicators  
+   - Smooth glowing accents for interactive elements  
+   - Must blend seamlessly with an existing app’s navigation  
+
+7. **Example JSON Templates**
+   - Pre-filled examples for:
+     - Daily logs: weight, mood, meals, workouts, runs
+     - Nutritional plans: calories, macros, meals
+     - Achievements & streaks
+
+8. **Integration Instructions**
+   - Component must be **self-contained and plug-and-play**  
+   - All Firebase paths configurable if needed  
+   - No new Firebase instance created  
+   - Local state used internally unless updating Firebase  
+
+9. **Output**
+   - Provide **full component code**, subcomponents, and example JSON files  
+   - Include ready-to-use functions for:
+     - Tour navigation  
+     - Chatbot responses  
+     - Logging and updating Firebase  
+     - Graph generation  
+     - Optional workout plan setup  
+   - Must **run immediately** in Replit / Expo and integrate into an existing React Native app
+
+Focus on making a **drop-in, fully integrated ChatbotTour module** with **auto-open greeting**, **tour flow**, **nutritional coach**, **logs**, **streaks**, and **red neon UI**. The module should be ready to **just drop into an existing chatbox in a fitness app**.

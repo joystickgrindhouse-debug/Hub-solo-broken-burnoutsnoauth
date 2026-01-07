@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ChatbotTour from "../components/ChatbotTour/ChatbotTour";
 import soloImage from "/assets/images/solo.png";
 import burnoutsImage from "/assets/images/burnouts.png";
 import liveImage from "/assets/images/live.png";
@@ -52,8 +53,9 @@ const gameModes = [
   },
 ];
 
-export default function Dashboard({ user }) {
+export default function Dashboard({ user, userProfile }) {
   const navigate = useNavigate();
+  const [showBot, setShowBot] = useState(false);
 
   const handleTileClick = async (mode) => {
     if (mode.external) {
@@ -114,6 +116,26 @@ export default function Dashboard({ user }) {
           ))}
         </div>
       </div>
+
+      {/* Floating Chatbot Trigger */}
+      <button 
+        onClick={() => setShowBot(!showBot)}
+        style={styles.botTrigger}
+      >
+        {showBot ? '✕' : '🤖 AI ASSISTANT'}
+      </button>
+
+      {showBot && (
+        <div style={styles.botContainer}>
+          <ChatbotTour 
+            user={user} 
+            userProfile={userProfile}
+            onTourComplete={() => console.log('Tour finished')}
+            initialMessage="Hey Rival! I'm your new AI Fitness Coach. Ready for a quick tour?"
+          />
+        </div>
+      )}
+
       <style>{`
         @keyframes breathing {
           0%, 100% { 
@@ -144,6 +166,7 @@ const styles = {
     maxWidth: "1400px",
     margin: "0 auto",
     padding: "20px",
+    position: 'relative',
   },
   header: {
     textAlign: "center",
@@ -174,19 +197,6 @@ const styles = {
     wordWrap: "break-word",
     maxWidth: "100%",
     lineHeight: "1.2",
-  },
-  title: {
-    fontSize: "36px",
-    fontWeight: "800",
-    background: "linear-gradient(135deg, #667eea 0%, #ff4081 100%)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    marginBottom: "10px",
-  },
-  subtitle: {
-    fontSize: "18px",
-    color: "rgba(255, 255, 255, 0.7)",
-    fontWeight: "400",
   },
   tilesGrid: {
     display: "grid",
@@ -229,8 +239,28 @@ const styles = {
     margin: "0",
     textShadow: "2px 2px 4px rgba(0, 0, 0, 0.8)",
   },
-  externalIcon: {
-    fontSize: "20px",
-    opacity: "0.8",
+  botTrigger: {
+    position: 'fixed',
+    bottom: '20px',
+    right: '20px',
+    background: '#FF0000',
+    color: '#FFF',
+    border: 'none',
+    borderRadius: '30px',
+    padding: '12px 24px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    boxShadow: '0 0 15px #FF0000',
+    zIndex: 1000,
+    fontSize: '14px',
   },
+  botContainer: {
+    position: 'fixed',
+    bottom: '80px',
+    right: '20px',
+    width: '350px',
+    height: '500px',
+    zIndex: 1000,
+    boxShadow: '0 0 30px rgba(0,0,0,0.5)',
+  }
 };
