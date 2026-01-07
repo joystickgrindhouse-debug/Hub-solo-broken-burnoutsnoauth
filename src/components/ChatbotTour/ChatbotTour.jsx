@@ -48,9 +48,9 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       let botResponse = "I'm listening! Tell me more about your progress.";
       const input = inputText.toLowerCase();
 
-      if (input.includes('yes') || input.includes('sure') || input.includes('ok')) {
+      if (input.includes('yes') || input.includes('sure') || input.includes('ok') || input.includes('tour')) {
         if (showTour) {
-          botResponse = "Great! Let's move to the next step of the tour.";
+          botResponse = "Great! Let's move to the next step of the tour. I'll guide you through our main features.";
           nextTourStep();
         } else {
           botResponse = "Awesome! How can I help you today?";
