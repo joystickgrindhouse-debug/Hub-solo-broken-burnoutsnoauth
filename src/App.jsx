@@ -167,7 +167,6 @@ export default function App() {
 
   // Show initial loading screen or hype screen
   if (loading || checkingSetup || !profileLoaded || initialHype) {
-    console.log("App loading state:", { loading, checkingSetup, profileLoaded, initialHype });
     return <LoadingScreen onSkip={skipLoading} />;
   }
 
