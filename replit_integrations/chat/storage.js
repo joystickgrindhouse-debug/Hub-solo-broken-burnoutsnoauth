@@ -1,56 +1,31 @@
-const admin = require('firebase-admin');
-
-// Hardcoded for this specific project to avoid environment detection errors
-const projectId = "rivalis-fitness-reimagined";
-
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-      projectId: projectId
-    });
-    console.log("Firebase Admin initialized for project:", projectId);
-  } catch (e) {
-    console.error("Firebase Admin init error:", e);
-  }
-}
-
-const db = admin.firestore();
+let conversations = {};
+let messages = {};
 
 const chatStorage = {
   async getConversation(id) {
-    const doc = await db.collection('conversations').doc(String(id)).get();
-    return doc.exists ? { id: doc.id, ...doc.data() } : null;
+    return conversations[id] || null;
   },
   async getAllConversations() {
-    const snapshot = await db.collection('conversations').orderBy('createdAt', 'desc').get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return Object.values(conversations);
   },
   async createConversation(title) {
-    const res = await db.collection('conversations').add({
-      title,
-      createdAt: admin.firestore.Timestamp.now()
-    });
-    return { id: res.id, title };
+    const id = Date.now().toString();
+    conversations[id] = { id, title, createdAt: new Date() };
+    return conversations[id];
   },
   async deleteConversation(id) {
-    await db.collection('conversations').doc(String(id)).delete();
+    delete conversations[id];
+    delete messages[id];
   },
   async getMessagesByConversation(conversationId) {
-    const snapshot = await db.collection('messages')
-      .where('conversationId', '==', String(conversationId))
-      .orderBy('createdAt', 'asc')
-      .get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return messages[conversationId] || [];
   },
   async createMessage(conversationId, role, content) {
-    const res = await db.collection('messages').add({
-      conversationId: String(conversationId),
-      role,
-      content,
-      createdAt: admin.firestore.Timestamp.now()
-    });
-    return { id: res.id, role, content };
+    if (!messages[conversationId]) messages[conversationId] = [];
+    const msg = { id: Date.now().toString(), role, content, createdAt: new Date() };
+    messages[conversationId].push(msg);
+    return msg;
   }
 };
+
 module.exports = { chatStorage };
