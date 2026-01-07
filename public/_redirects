@@ -1,0 +1,6 @@
+/*
+  Netlify Redirects
+  This file ensures that React Router works correctly when the page is refreshed
+  or when navigating directly to a sub-route.
+*/
+/*  /index.html  200
