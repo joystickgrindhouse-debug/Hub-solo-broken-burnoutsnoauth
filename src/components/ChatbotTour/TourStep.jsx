@@ -11,28 +11,33 @@ const TourStep = ({ step, onNext, onSkip }) => {
     },
     { 
       title: "SECTOR: PROFILE", 
-      description: "This is your hub. Track your bio, achievements, and milestones here. Your hard data is visualized for maximum optimization.",
-      route: "/profile"
+      description: "Analyzing biometric data... This is your hub. Track achievements and milestones here. Your hard data is visualized for maximum optimization.",
+      route: "/profile",
+      highlight: ".profile-card, .stats-container"
     },
     { 
       title: "SECTOR: SOLO MODE", 
-      description: "Our camera-based AI protocol. It tracks your bio-metrics in real-time, counting every rep with mathematical precision.",
-      route: "/solo"
+      description: "Calibrating neural link... Our camera-based AI protocol. It tracks your bio-metrics in real-time with mathematical precision.",
+      route: "/solo",
+      highlight: ".solo-camera-preview, .rep-counter"
     },
     { 
       title: "SECTOR: BURNOUTS", 
-      description: "High-intensity data streams. Category-specific grinds designed to push your biological limits.",
-      route: "/burnouts"
+      description: "Accessing combat data... High-intensity data streams. Category-specific grinds designed to push your biological limits.",
+      route: "/burnouts",
+      highlight: ".burnout-tiles, .mode-selector"
     },
     { 
       title: "SECTOR: RAFFLE ROOM", 
-      description: "Your hard work earns raffle tickets. These are your entries for weekly elite-level rewards in the mainframe.",
-      route: "/raffle"
+      description: "Calculating rewards... Your hard work earns raffle tickets. These are entries for weekly elite-level rewards.",
+      route: "/raffle",
+      highlight: ".ticket-count, .prize-display"
     },
     { 
       title: "SECTOR: LEADERBOARD", 
-      description: "The global rankings mainframe. Compare your optimization stats against every Rival in this sector.",
-      route: "/leaderboard"
+      description: "Syncing global rankings... Compare your optimization stats against every Rival in this sector. Dominance is the objective.",
+      route: "/leaderboard",
+      highlight: ".leaderboard-table, .rank-row"
     },
     { 
       title: "INITIALIZATION COMPLETE", 
@@ -46,6 +51,23 @@ const TourStep = ({ step, onNext, onSkip }) => {
   useEffect(() => {
     if (currentStep && currentStep.route) {
       navigate(currentStep.route);
+      
+      // Flash highlight effect
+      if (currentStep.highlight) {
+        setTimeout(() => {
+          const elements = document.querySelectorAll(currentStep.highlight);
+          elements.forEach(el => {
+            el.style.transition = 'all 0.3s ease';
+            el.style.boxShadow = '0 0 30px #FF0000, inset 0 0 20px #FF0000';
+            el.style.border = '2px solid #FF0000';
+            
+            setTimeout(() => {
+              el.style.boxShadow = '';
+              el.style.border = '';
+            }, 1500);
+          });
+        }, 500);
+      }
     }
   }, [step, navigate, currentStep]);
 
