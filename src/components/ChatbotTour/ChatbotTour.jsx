@@ -138,11 +138,42 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
     }
   };
 
+  const exportConversation = () => {
+    const text = messages.map(m => `${m.isBot ? 'COACH' : 'RIVAL'}: ${m.text}`).join('\n\n');
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Rivalis_Plan_${new Date().toISOString().slice(0,10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <div style={styles.statusDot}></div>
-        <span style={styles.headerTitle}>RIVALIS CHATBOT AI</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={styles.statusDot}></div>
+          <span style={styles.headerTitle}>RIVALIS CHATBOT AI</span>
+        </div>
+        <button 
+          onClick={exportConversation}
+          style={{
+            background: 'transparent',
+            border: '1px solid #FF0000',
+            color: '#FF0000',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            fontSize: '10px',
+            cursor: 'pointer',
+            fontFamily: "'Press Start 2P', cursive",
+            textShadow: '0 0 5px #FF0000'
+          }}
+        >
+          EXPORT PLAN
+        </button>
       </div>
 
       <div style={styles.chatArea}>
