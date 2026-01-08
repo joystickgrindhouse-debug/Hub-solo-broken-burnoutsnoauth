@@ -11,10 +11,7 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor': ['react', 'react-dom', 'react-router-dom', 'firebase/app', 'firebase/auth', 'firebase/firestore'],
-          'mediapipe': ['@mediapipe/pose', '@mediapipe/camera_utils', '@mediapipe/drawing_utils']
-        }
+        manualChunks: undefined
       }
     },
     chunkSizeWarningLimit: 1000,
