@@ -37,7 +37,7 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       setShowTour(true);
       setMessages([{ 
         id: 'init', 
-        text: "Welcome to the sector, Rival. I am your AI Coach. Let's begin the initialization tour.", 
+        text: "INITIALIZING NEURAL LINK... Welcome to the sector, Rival. I am your high-intelligence AI Fitness Coach. Initialization tour protocol engaged.", 
         isBot: true, 
         timestamp: new Date() 
       }]);
@@ -45,7 +45,7 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       const quote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
       setMessages([{ 
         id: 'welcome', 
-        text: `${quote} What can I do for you today, ${userProfile?.nickname || 'Rival'}? Have a killer workout!`, 
+        text: `PROTOCOL ACTIVE. ${quote} State your objective, ${userProfile?.nickname || 'Rival'}. I am ready to optimize your performance.`, 
         isBot: true, 
         timestamp: new Date() 
       }]);
