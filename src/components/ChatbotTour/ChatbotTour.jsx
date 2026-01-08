@@ -158,6 +158,23 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
         }
       }
 
+      // Check for escalation
+      if (fullText.includes("TRANSFERRING TO HUMAN AGENT")) {
+        try {
+          await addDoc(collection(db, 'admin_notifications'), {
+            type: 'CHAT_ESCALATION',
+            userId: user.uid,
+            userName: userProfile?.nickname || user.email,
+            timestamp: Timestamp.now(),
+            status: 'pending',
+            message: `User ${userProfile?.nickname || user.email} requested assistance that the AI could not provide.`
+          });
+          console.log("Admin notification sent for escalation");
+        } catch (error) {
+          console.error("Failed to notify admins:", error);
+        }
+      }
+
       // Handle tour progress via AI response analysis if needed
       if (showTour && (fullText.toLowerCase().includes('next') || fullText.toLowerCase().includes('continue'))) {
         nextTourStep();
