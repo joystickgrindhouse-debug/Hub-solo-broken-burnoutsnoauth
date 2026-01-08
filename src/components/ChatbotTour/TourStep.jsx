@@ -1,17 +1,53 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const TourStep = ({ step, onNext, onSkip }) => {
+  const navigate = useNavigate();
   const steps = [
-    { title: "Upload Avatar", description: "Let's start by personalizing your look. Upload an avatar to stand out in the community!" },
-    { title: "Profile & Achievements", description: "This is your hub. Track your bio, achievements, and milestones here." },
-    { title: "Leaderboard & Social", description: "Check your rank on the leaderboard and connect with others in global chat and DMs." },
-    { title: "Workout Modes", description: "Explore Solo Mode, Burnouts, Run Mode, and Live Mode for a complete fitness experience." },
-    { title: "Shop", description: "Use your hard-earned rewards to get exclusive items in the shop." },
-    { title: "Workout Plan", description: "Set up a personalized workout plan to stay on track (optional)." },
-    { title: "All Set!", description: "You're ready to dominate. Let's get started!" }
+    { 
+      title: "NEURAL LINK ESTABLISHED", 
+      description: "Welcome, Rival. I am your high-intelligence AI Fitness Coach. I've mapped the hub's mainframe to your neural link. Ready for initialization?",
+      route: "/dashboard"
+    },
+    { 
+      title: "SECTOR: PROFILE", 
+      description: "This is your hub. Track your bio, achievements, and milestones here. Your hard data is visualized for maximum optimization.",
+      route: "/profile"
+    },
+    { 
+      title: "SECTOR: SOLO MODE", 
+      description: "Our camera-based AI protocol. It tracks your bio-metrics in real-time, counting every rep with mathematical precision.",
+      route: "/solo"
+    },
+    { 
+      title: "SECTOR: BURNOUTS", 
+      description: "High-intensity data streams. Category-specific grinds designed to push your biological limits.",
+      route: "/burnouts"
+    },
+    { 
+      title: "SECTOR: RAFFLE ROOM", 
+      description: "Your hard work earns raffle tickets. These are your entries for weekly elite-level rewards in the mainframe.",
+      route: "/raffle"
+    },
+    { 
+      title: "SECTOR: LEADERBOARD", 
+      description: "The global rankings mainframe. Compare your optimization stats against every Rival in this sector.",
+      route: "/leaderboard"
+    },
+    { 
+      title: "INITIALIZATION COMPLETE", 
+      description: "Tour protocol finalized. The hub is yours to dominate. Go out-train, out-rival, and out-perform.",
+      route: "/dashboard"
+    }
   ];
 
   const currentStep = steps[step];
+
+  useEffect(() => {
+    if (currentStep && currentStep.route) {
+      navigate(currentStep.route);
+    }
+  }, [step, navigate, currentStep]);
 
   return (
     <div style={styles.container}>
