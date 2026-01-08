@@ -13,8 +13,8 @@ const gameModes = [
     id: "solo",
     name: "Solo",
     image: soloImage,
-    link: "https://rivalis-solo.netlify.app/",
-    external: true,
+    link: "/solo",
+    external: false,
   },
   {
     id: "burnouts",
