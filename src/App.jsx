@@ -27,10 +27,10 @@ const AdminDashboard = lazy(() => import("./views/AdminDashboard.jsx"));
 export default function App() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
-  const [checkingSetup, setCheckingSetup] = useState(false);
-  const [profileLoaded, setProfileLoaded] = useState(true);
+  const [checkingSetup, setCheckingSetup] = useState(true);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [loadingStartTime] = useState(Date.now());
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
@@ -54,7 +54,7 @@ export default function App() {
 
   // Force a minimum loading time for the hype screen even if auth is fast
   useEffect(() => {
-    const timer = setTimeout(() => setInitialHype(false), 5000);
+    const timer = setTimeout(() => setInitialHype(false), 3000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -74,6 +74,10 @@ export default function App() {
 
   useEffect(() => {
     const MINIMUM_LOADING_TIME = 3000;
+    setLoading(true);
+    setCheckingSetup(true);
+    setProfileLoaded(false);
+    setInitialHype(true);
     const timeout = setTimeout(() => {
       console.log("Loading timeout - forcing end of loading state");
       setLoading(false);
