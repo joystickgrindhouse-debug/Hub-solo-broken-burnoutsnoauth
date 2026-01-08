@@ -74,7 +74,7 @@ TONE:
           ...chatMessages
         ],
         stream: true,
-        max_tokens: 2048,
+        max_tokens: 1024,
       });
 
       let fullResponse = "";
@@ -86,13 +86,16 @@ TONE:
         }
       }
       await chatStorage.createMessage(conversationId, "assistant", fullResponse);
-      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-      res.end();
+      if (!res.writableEnded) {
+        res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+        res.end();
+      }
     } catch (error) {
-      console.error(error);
+      console.error("AI Route Error:", error);
       if (!res.headersSent) {
-        res.status(500).json({ error: "Failed" });
-      } else {
+        res.status(500).json({ error: error.message || "Failed" });
+      } else if (!res.writableEnded) {
+        res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
         res.end();
       }
     }

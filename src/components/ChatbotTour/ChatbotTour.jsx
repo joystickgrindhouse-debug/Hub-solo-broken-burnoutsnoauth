@@ -75,6 +75,7 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       let convId = window.localStorage.getItem('rivalis_conv_id');
       
       const sendRequest = async (cid) => {
+        // Use full URL to avoid proxy issues if necessary, but /api is configured in vite
         return await fetch(`/api/conversations/${cid}/messages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -89,6 +90,12 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title: `Chat with ${userProfile?.nickname || 'Rival'}` })
         });
+        
+        if (!convRes.ok) {
+          const errData = await convRes.json().catch(() => ({}));
+          throw new Error(errData.error || 'Failed to create conversation');
+        }
+        
         const convData = await convRes.json();
         convId = convData.id;
         window.localStorage.setItem('rivalis_conv_id', convId);
@@ -96,13 +103,16 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       } else {
         response = await sendRequest(convId);
         if (response.status === 404 || response.status === 500) {
-          // If the conversation ID is invalid (e.g. from a previous failed run), clear and retry once
+          // If the conversation ID is invalid, clear and retry once
           window.localStorage.removeItem('rivalis_conv_id');
           const convRes = await fetch('/api/conversations', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title: `Chat with ${userProfile?.nickname || 'Rival'}` })
           });
+          
+          if (!convRes.ok) throw new Error('Failed to reset conversation');
+          
           const convData = await convRes.json();
           convId = convData.id;
           window.localStorage.setItem('rivalis_conv_id', convId);
@@ -110,7 +120,11 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
         }
       }
 
-      if (!response || !response.ok) throw new Error('AI connection failed');
+      if (!response || !response.ok) {
+        const errText = await response.text().catch(() => 'Unknown error');
+        console.error("Server responded with error:", response.status, errText);
+        throw new Error(`AI connection failed: ${response.status}`);
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -128,13 +142,17 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
         const lines = chunk.split('\n');
         
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = JSON.parse(line.slice(6));
-            if (data.content) {
-              fullText += data.content;
-              setMessages(prev => prev.map(m => 
-                m.id === assistantMsgId ? { ...m, text: fullText } : m
-              ));
+          if (line.trim().startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.content) {
+                fullText += data.content;
+                setMessages(prev => prev.map(m => 
+                  m.id === assistantMsgId ? { ...m, text: fullText } : m
+                ));
+              }
+            } catch (e) {
+              console.warn("Error parsing SSE chunk:", e);
             }
           }
         }
@@ -149,7 +167,7 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       console.error("AI Error:", error);
       setMessages(prev => [...prev, { 
         id: Date.now() + 2, 
-        text: "My neural link is flickering, Rival. Try again in a moment.", 
+        text: `My neural link is flickering, Rival. (Error: ${error.message}). Try again in a moment.`, 
         isBot: true, 
         timestamp: new Date() 
       }]);
@@ -256,49 +274,54 @@ const styles = {
     position: 'relative',
   },
   header: {
-    padding: '15px',
+    padding: '10px 15px',
     background: '#111',
     borderBottom: '1px solid #333',
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: '10px',
   },
   statusDot: {
-    width: '10px',
-    height: '10px',
+    width: '8px',
+    height: '8px',
     borderRadius: '50%',
     background: '#FF0000',
     boxShadow: '0 0 10px #FF0000',
   },
   headerTitle: {
     color: '#FF0000',
-    fontSize: '14px',
+    fontSize: '12px',
     fontWeight: 'bold',
-    letterSpacing: '2px',
+    letterSpacing: '1px',
     textShadow: '0 0 5px #FF0000',
+    fontFamily: "'Press Start 2P', cursive",
   },
   chatArea: {
     flex: 1,
-    padding: '20px',
+    padding: '15px 10px',
     overflowY: 'auto',
     display: 'flex',
     flexDirection: 'column',
+    gap: '10px',
+    WebkitOverflowScrolling: 'touch',
   },
   inputArea: {
-    padding: '15px',
+    padding: '10px',
     background: '#111',
     borderTop: '1px solid #333',
     display: 'flex',
-    gap: '10px',
+    gap: '8px',
   },
   input: {
     flex: 1,
     background: '#000',
     border: '1px solid #333',
     borderRadius: '8px',
-    padding: '10px 15px',
+    padding: '12px 15px',
     color: '#FFF',
     outline: 'none',
+    fontSize: '16px', // Prevents iOS zoom
   },
   sendButton: {
     background: '#FF0000',
