@@ -192,7 +192,7 @@ export default function LoadingScreen({ onSkip }) {
             background: "#ff3050",
             borderRadius: "2px",
             boxShadow: "0 0 15px #ff3050",
-            animation: "loadingBar 30s ease-in-out infinite"
+            animation: "loadingBar 5s ease-in-out infinite"
           }} />
         </div>
 
