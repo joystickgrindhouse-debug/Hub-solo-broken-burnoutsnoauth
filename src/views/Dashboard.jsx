@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ChatbotTour from "../components/ChatbotTour/ChatbotTour.jsx";
+import CoachsCorner from "../components/CoachsCorner/CoachsCorner.jsx";
 import soloImage from "/assets/images/solo.png";
 import burnoutsImage from "/assets/images/burnouts.png";
 import liveImage from "/assets/images/live.png";
@@ -101,6 +102,9 @@ export default function Dashboard({ user, userProfile }) {
             FITNESS REIMAGINED
           </h1>
         </div>
+        
+        <CoachsCorner />
+
         <div style={styles.tilesGrid}>
           {gameModes.map((mode) => (
             <div
