@@ -42,7 +42,7 @@ function registerChatRoutes(app) {
       res.setHeader("Connection", "keep-alive");
 
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-5",
         messages: [
           {
             role: "system",
@@ -74,7 +74,7 @@ TONE:
           ...chatMessages
         ],
         stream: true,
-        max_tokens: 1024,
+        max_completion_tokens: 2048,
       });
 
       let fullResponse = "";
