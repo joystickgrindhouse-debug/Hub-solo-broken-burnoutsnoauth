@@ -9,7 +9,7 @@ export default function Burnouts({ user, userProfile }) {
   const [token, setToken] = useState(null);
   const [sessionActive, setSessionActive] = useState(false);
   const navigate = useNavigate();
-  const externalAppUrl = "https://rivburnouts.netlify.app/";
+  const externalAppUrl = "https://rivalis-burnouts.netlify.app/";
 
   useEffect(() => {
     const getAuthToken = async () => {
@@ -32,6 +32,9 @@ export default function Burnouts({ user, userProfile }) {
         setSessionActive(true);
       } else if (event.data.type === "SESSION_STATS") {
         handleSessionEnd(event.data.stats);
+      } else if (event.data.type === "EXERCISE_SELECTED") {
+        // Trigger 3s loading for each mode selection
+        setLoading(true);
       }
     };
 
@@ -71,17 +74,17 @@ export default function Burnouts({ user, userProfile }) {
     }
   };
 
-  const handleLoad = () => {
+  const handleSkipLoading = () => {
     setLoading(false);
   };
 
   const iframeSrc = token 
-    ? `${externalAppUrl}?token=${token}`
+    ? `${externalAppUrl}?token=${token}&userId=${user?.uid || ""}&userEmail=${user?.email || ""}&displayName=${encodeURIComponent(userProfile?.nickname || user?.displayName || user?.email || "")}`
     : externalAppUrl;
 
   return (
     <div style={{ width: "100%", height: "calc(100vh - 64px)", position: "relative", overflow: "hidden", backgroundColor: "#000" }}>
-      {loading && <LoadingScreen />}
+      {loading && <LoadingScreen onSkip={handleSkipLoading} />}
       
       {/* End Session Button Overlay */}
       {sessionActive && (
@@ -116,7 +119,6 @@ export default function Burnouts({ user, userProfile }) {
         width="100%"
         height="100%"
         frameBorder="0"
-        onLoad={handleLoad}
         allow="camera; microphone; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         style={{ border: "none" }}
       />

@@ -20,8 +20,8 @@ const gameModes = [
     id: "burnouts",
     name: "Burnouts",
     image: burnoutsImage,
-    link: "https://burnout1.netlify.app",
-    external: true,
+    link: "/burnouts",
+    external: false,
   },
   {
     id: "live",
