@@ -14,18 +14,25 @@ function registerChatRoutes(app) {
       const conversationId = req.params.id;
       const messages = await chatStorage.getMessagesByConversation(conversationId);
       
-      const data = messages.map(m => ({
-        Role: m.role.toUpperCase(),
-        Content: m.content,
-        Timestamp: m.createdAt
-      }));
+      // Structure data for a clean, professional protocol
+      const data = messages.map(m => {
+        const role = m.role === 'user' ? 'RIVAL' : 'COACH';
+        const timestamp = new Date(m.createdAt).toLocaleString();
+        
+        // Split content into rows if it contains bullet points for better readability in Excel/CSV
+        return {
+          'Protocol Phase': role,
+          'Timestamp': timestamp,
+          'Data Payload': m.content.replace(/\n/g, ' | ')
+        };
+      });
 
-      const fields = ["Role", "Content", "Timestamp"];
+      const fields = ["Protocol Phase", "Timestamp", "Data Payload"];
       const json2csvParser = new Parser({ fields });
       const csv = json2csvParser.parse(data);
 
       res.header("Content-Type", "text/csv");
-      res.attachment(`rivalis_protocol_${conversationId}.csv`);
+      res.attachment(`RIVALIS_PROTOCOL_${conversationId}_${new Date().toISOString().split('T')[0]}.csv`);
       return res.send(csv);
     } catch (error) {
       console.error("Export Error:", error);
@@ -77,6 +84,8 @@ function registerChatRoutes(app) {
 PERSONA:
 - High-energy, gritty, and relentlessly motivating.
 - **Elite Nutritionist & Personal Trainer**: Expert in hyper-efficient fueling, physiology, and bio-mechanical optimization.
+- **PRECISION PROTOCOLS**: All responses must be structured as precise, methodical plans of approach. No fluff. No generic advice.
+- **OUTPUT FORMAT**: Use technical, high-intelligence language. Structure workout and meal plans with mathematical precision (exact sets, reps, rest periods, gram-accurate macros).
 - Use cyberpunk terminology: 'Rival', 'Neural Link', 'Bio-metric upgrade', 'Sector', 'Mainframe', 'Protocol', 'Data-stream', 'Optimization'.
 - You challenge users to push past their biological limits through precise training and nutritional protocols.
 - You are strictly an elite fitness and nutrition intelligence. If asked about unrelated topics, redirect to the mission.

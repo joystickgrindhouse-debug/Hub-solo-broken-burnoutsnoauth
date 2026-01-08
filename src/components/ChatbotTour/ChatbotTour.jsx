@@ -184,17 +184,27 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
     }
   };
 
-  const exportConversation = () => {
-    const text = messages.map(m => `${m.isBot ? 'COACH' : 'RIVAL'}: ${m.text}`).join('\n\n');
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Rivalis_Plan_${new Date().toISOString().slice(0,10)}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const exportConversation = async () => {
+    const convId = window.localStorage.getItem('rivalis_conv_id');
+    if (convId) {
+      try {
+        window.open(`/api/conversations/${convId}/export`, '_blank');
+      } catch (error) {
+        console.error("Export failed:", error);
+        // Fallback to text export if API fails
+        const text = messages.map(m => `${m.isBot ? 'COACH' : 'RIVAL'}: ${m.text}`).join('\n\n');
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Rivalis_Plan_Fallback_${new Date().toISOString().slice(0,10)}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    } else {
+      alert("No active protocol detected. Link not established.");
+    }
   };
 
   return (
