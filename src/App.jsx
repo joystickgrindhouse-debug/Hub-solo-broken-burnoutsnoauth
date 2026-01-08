@@ -182,9 +182,9 @@ export default function App() {
 
   // Render routes (public and protected)
   return (
-    <div style={{ background: '#000', minHeight: '100vh', color: '#fff' }}>
+    <div style={{ background: '#111', minHeight: '100vh', color: '#fff' }}>
       {user && <Navbar user={user} userProfile={userProfile} />}
-      <Suspense fallback={<div style={{ color: '#ff3050', padding: '20px', fontFamily: 'sans-serif' }}>LOADING ARENA...</div>}>
+      <Suspense fallback={<div style={{ color: '#ff3050', padding: '20px', textAlign: 'center' }}>LOADING ARENA...</div>}>
         <Routes>
           <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
           <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
