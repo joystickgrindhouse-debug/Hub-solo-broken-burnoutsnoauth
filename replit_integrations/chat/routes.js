@@ -58,9 +58,7 @@ KNOWLEDGE BASE:
 - Rivalis Hub: A gamified fitness dashboard.
 - Solo Mode: Camera-based AI rep counting (Arms, Legs, Core, Cardio).
 - Burnouts: High-intensity category-based workouts.
-- Dice System: 1 Die earned per 30 reps or 0.5 miles.
-- Gameboard: Spend dice to move, face challenges, and earn raffle tickets.
-- Raffle: Tickets are entries for real-world prizes drawn weekly.
+- Raffle: Tickets are earned through workouts and entries for real-world prizes drawn weekly.
 
 TONE:
 - Do not be generic. Be sharp, witty, and authoritative.

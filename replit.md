@@ -26,16 +26,14 @@ I prefer simple, clear explanations and want the agent to adopt an iterative dev
     - **Burnouts Mode:** Selection screen for workout type (Arms, Legs, Core, Full Body) with proper game logic filtering exercises by selected category.
     - **Playing Card UI:** Workout cards designed to look like authentic playing cards with corner values, center suit icons, and clear exercise names.
     - **Avatar Background System:** User's avatar displays as a blurred background (40% opacity) with green pose skeleton overlay on transparent canvas, providing visual feedback without showing actual camera feed.
-    - Dice reward system (1 dice per 30 reps).
+    - Raffle ticket reward system (1 ticket per 30 reps).
     - Wake lock support to prevent screen sleep.
     - Enhanced camera permission handling with specific error messages for different failure types.
-- **Gameboard Mode:**
-    - Interactive 40-space board game where users spend earned dice to roll and move.
-    - 6 unique space types (Challenge, Reward, Mystery, Boost, Plot Twist, Safe) with diverse events.
-    - Choice mechanics (Risk vs. Safe paths) and battle system (roll dice to defeat rivals).
-    - Special items (bonus dice, shields, free rolls, double points).
-    - Game progress (position, score, items, dice balance) tracked via Firestore.
-    - Dice balance saved immediately upon spending to prevent exploits.
+- **Raffle System:**
+    - Interactive raffle room where users can view their entries and prizes.
+    - Progress (position, score, items, tickets balance) tracked via Firestore.
+    - Tickets earned immediately upon workout completion.
+    - Weekly prize draws for high-performing Rivals.
 - **Leaderboard:** Aggregates scores across all game modes, filterable by mode or combined totals.
 - **User Profile & Avatar:**
     - Forced avatar and nickname creation for first-time users.
