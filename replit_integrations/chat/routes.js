@@ -1,5 +1,6 @@
 const OpenAI = require("openai");
 const { chatStorage } = require("./storage.js");
+const { Parser } = require("json2csv");
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -7,6 +8,31 @@ const openai = new OpenAI({
 });
 
 function registerChatRoutes(app) {
+  // Export conversation to CSV
+  app.get("/api/conversations/:id/export", async (req, res) => {
+    try {
+      const conversationId = req.params.id;
+      const messages = await chatStorage.getMessagesByConversation(conversationId);
+      
+      const data = messages.map(m => ({
+        Role: m.role.toUpperCase(),
+        Content: m.content,
+        Timestamp: m.createdAt
+      }));
+
+      const fields = ["Role", "Content", "Timestamp"];
+      const json2csvParser = new Parser({ fields });
+      const csv = json2csvParser.parse(data);
+
+      res.header("Content-Type", "text/csv");
+      res.attachment(`rivalis_protocol_${conversationId}.csv`);
+      return res.send(csv);
+    } catch (error) {
+      console.error("Export Error:", error);
+      res.status(500).json({ error: "Failed to export protocol" });
+    }
+  });
+
   app.get("/api/conversations", async (req, res) => {
     try {
       const conversations = await chatStorage.getAllConversations();
@@ -61,12 +87,13 @@ KNOWLEDGE BASE:
 - Raffle: Tickets are earned through workouts and entries for real-world prizes drawn weekly.
 
 PERSONALIZED WORKOUT PROTOCOL:
-- When a user requests a workout plan or expresses a goal, you MUST design a personalized protocol.
-- Align the plan with Rivalis Hub features: 
-    * Use 'Solo Mode' categories (Arms, Legs, Core, Cardio) for rep-based training.
-    * Use 'Burnouts' for high-intensity finishers.
-- Structure the plan in clear, punchy phases.
-- Ask ONE clarifying question to refine the plan (e.g., equipment access, injury history, or specific timeline).
+- When a user requests a workout plan or expresses a goal, you MUST design a sophisticated, multi-part protocol.
+- STRUCTURE:
+    1. EXERCISES: Specific movements, sets, reps, and alignment with Solo Mode/Burnouts.
+    2. NUTRITION: Hyper-efficient fueling, macros, and hydration tailored to the goal.
+- FORMATTING: Use clear headings and bullet points. Never send wall-of-text responses.
+- EXPORT: At the end of a finalized plan, you MUST include a specific command for the user: "PROTOCOL READY. Click 'EXPORT PLAN' to download your biometric data sheet."
+- ONE QUESTION AT A TIME: Ask exactly one clarifying question (equipment, injuries, etc.) before finalizing the full multi-part plan.
 - Maintain the cyberpunk persona while delivering elite-level physiological advice.
 
 COMMUNICATION PROTOCOL:
