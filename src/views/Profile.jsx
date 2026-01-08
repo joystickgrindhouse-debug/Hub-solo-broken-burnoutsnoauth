@@ -244,11 +244,12 @@ export default function Profile({ user, userProfile }) {
                 />
               </div>
             ) : (
-              <>
+              <div className="avatar-edit-section">
                 {avatarURL && (
                   <img 
                     src={avatarURL} 
                     alt={nickname} 
+                    className="avatar-image"
                     style={{ 
                       width: "120px", 
                       height: "120px", 
@@ -262,12 +263,13 @@ export default function Profile({ user, userProfile }) {
                 <h2 style={{ 
                   color: "#ff3050",
                   textShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
-                  margin: 0
+                  margin: "10px 0"
                 }}>
                   {displayNicknameValue}
                 </h2>
                 <button
                   onClick={() => setIsEditingAvatar(true)}
+                  className="avatar-edit-button"
                   style={{
                     padding: "6px 12px",
                     background: "#000000",
@@ -276,12 +278,14 @@ export default function Profile({ user, userProfile }) {
                     color: "#ff3050",
                     fontWeight: "bold",
                     cursor: "pointer",
-                    fontSize: "12px"
+                    fontSize: "12px",
+                    display: "block",
+                    margin: "0 auto"
                   }}
                 >
                   Edit Avatar
                 </button>
-              </>
+              </div>
             )}
           </div>
 
@@ -292,6 +296,7 @@ export default function Profile({ user, userProfile }) {
             }}>
               Identity Details
             </h3>
+            <div className="profile-bio-section">
             {isEditing ? (
               <div>
                 <div style={{ marginBottom: "1rem" }}>
@@ -456,6 +461,7 @@ export default function Profile({ user, userProfile }) {
                 </button>
               </div>
             )}
+            </div>
           </div>
         </div>
 

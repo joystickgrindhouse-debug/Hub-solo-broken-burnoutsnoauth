@@ -16,6 +16,32 @@ const TourStep = ({ step, onNext, onSkip }) => {
       highlight: ".profile-card, .stats-container"
     },
     { 
+      title: "IDENTITY: AVATAR", 
+      description: "NEURAL LINK CALIBRATION: Click the edit icon on your avatar to upload your own biometric image. Standing out in the sector is mandatory.",
+      route: "/profile",
+      highlight: ".avatar-edit-button, .avatar-image",
+      action: "highlight_only"
+    },
+    { 
+      title: "IDENTITY: BIO", 
+      description: "DATA STREAM: This is your about me bio area. Define your mission and tactical objectives for other Rivals to see.",
+      route: "/profile",
+      highlight: ".profile-bio-section",
+      action: "highlight_only"
+    },
+    { 
+      title: "DATA: ACHIEVEMENTS", 
+      description: "SCANNING LOWER SECTORS... These are the milestones and achievements to be earned through total dominance.",
+      route: "/profile",
+      action: "scroll_bottom"
+    },
+    { 
+      title: "NAVIGATION: HUB RETURN", 
+      description: "MAINFRAME ACCESS: Click the menu button then select Home. This is how you interface back with your dashboard at any time.",
+      route: "/profile",
+      action: "navigate_home_demo"
+    },
+    { 
       title: "SECTOR: SOLO MODE", 
       description: "Calibrating neural link... Our camera-based AI protocol. It tracks your bio-metrics in real-time with mathematical precision.",
       route: "/solo",
@@ -50,13 +76,58 @@ const TourStep = ({ step, onNext, onSkip }) => {
 
   useEffect(() => {
     if (currentStep && currentStep.route) {
-      navigate(currentStep.route);
+      if (window.location.pathname !== currentStep.route) {
+        navigate(currentStep.route);
+      }
       
+      // Handle special actions
+      if (currentStep.action === "scroll_bottom") {
+        setTimeout(() => {
+          const achievements = document.querySelector('.achievements-section');
+          if (achievements) {
+            achievements.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else {
+            window.scrollTo({
+              top: document.documentElement.scrollHeight,
+              behavior: 'smooth'
+            });
+          }
+        }, 800);
+      } else if (currentStep.action === "navigate_home_demo") {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => {
+          const menuBtn = document.querySelector('.menu-button') || document.querySelector('[aria-label="menu"]');
+          if (menuBtn) {
+            menuBtn.style.transition = 'all 0.3s ease';
+            menuBtn.style.boxShadow = '0 0 30px #FF0000';
+            menuBtn.style.border = '2px solid #FF0000';
+            
+            setTimeout(() => {
+              menuBtn.click();
+              setTimeout(() => {
+                const homeBtn = Array.from(document.querySelectorAll('button, a')).find(el => 
+                  el.textContent.toLowerCase().includes('home') || el.textContent.toLowerCase().includes('dashboard')
+                );
+                if (homeBtn) {
+                  homeBtn.style.transition = 'all 0.3s ease';
+                  homeBtn.style.boxShadow = '0 0 30px #FF0000';
+                  homeBtn.style.border = '2px solid #FF0000';
+                  setTimeout(() => {
+                    homeBtn.click();
+                  }, 1500);
+                }
+              }, 1000);
+            }, 1500);
+          }
+        }, 1000);
+      }
+
       // Flash highlight effect
       if (currentStep.highlight) {
         setTimeout(() => {
           const elements = document.querySelectorAll(currentStep.highlight);
           elements.forEach(el => {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             el.style.transition = 'all 0.3s ease';
             el.style.boxShadow = '0 0 30px #FF0000, inset 0 0 20px #FF0000';
             el.style.border = '2px solid #FF0000';
