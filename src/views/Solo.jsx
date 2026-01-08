@@ -1,47 +1,33 @@
-import React, { useState, useEffect } from "react";
-import LoadingScreen from "../components/LoadingScreen.jsx";
+import React, { useEffect } from "react";
 import { auth } from "../firebase.js";
 
 export default function Solo({ user }) {
-  const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(null);
-  const externalAppUrl = "https://solomode.netlify.app/";
+  const externalAppUrl = "https://rivalis-solo.netlify.app/";
 
   useEffect(() => {
-    const getAuthToken = async () => {
+    const redirectWithAuth = async () => {
       try {
+        let token = "";
         if (auth.currentUser) {
-          const idToken = await auth.currentUser.getIdToken(true);
-          setToken(idToken);
+          token = await auth.currentUser.getIdToken(true);
         }
+        
+        const authData = {
+          token: token,
+          userId: user?.uid || "",
+          userEmail: user?.email || "",
+          displayName: user?.displayName || user?.email || ""
+        };
+        
+        const params = new URLSearchParams(authData);
+        window.location.href = `${externalAppUrl}?${params.toString()}`;
       } catch (error) {
-        console.error("Error getting auth token:", error);
+        console.error("Error redirecting to Solo Mode:", error);
+        window.location.href = externalAppUrl;
       }
     };
-    getAuthToken();
-  }, []);
+    redirectWithAuth();
+  }, [user, externalAppUrl]);
 
-  const handleLoad = () => {
-    setLoading(false);
-  };
-
-  const iframeSrc = token 
-    ? `${externalAppUrl}?token=${token}&userId=${user?.uid || ""}&userEmail=${user?.email || ""}`
-    : externalAppUrl;
-
-  return (
-    <div style={{ width: "100%", height: "calc(100vh - 64px)", position: "relative", overflow: "hidden" }}>
-      {loading && <LoadingScreen />}
-      <iframe
-        src={iframeSrc}
-        title="Solo Mode"
-        width="100%"
-        height="100%"
-        frameBorder="0"
-        onLoad={handleLoad}
-        allow="camera; microphone; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        style={{ border: "none" }}
-      />
-    </div>
-  );
+  return null;
 }

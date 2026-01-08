@@ -13,7 +13,7 @@ const gameModes = [
     id: "solo",
     name: "Solo",
     image: soloImage,
-    link: "https://rivsolo.netlify.app",
+    link: "https://rivalis-solo.netlify.app/",
     external: true,
   },
   {
