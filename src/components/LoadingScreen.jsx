@@ -41,7 +41,7 @@ export default function LoadingScreen({ onSkip }) {
       width: "100vw",
       height: "100vh",
       overflow: "hidden",
-      backgroundColor: "#000",
+      backgroundColor: "#111",
       backgroundImage: "url('/loading-bg.png')",
       backgroundSize: "contain",
       backgroundPosition: "center",

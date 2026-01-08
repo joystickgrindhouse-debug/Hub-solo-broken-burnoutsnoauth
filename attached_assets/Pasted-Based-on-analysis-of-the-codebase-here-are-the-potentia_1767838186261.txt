@@ -1,0 +1,65 @@
+Based on analysis of the codebase, here are the potential causes and fixes for the black screen issue:
+
+Most Likely Causes and Solutions
+
+1. Asset Path Issue for Loading Background Image
+
+Location: src/components/LoadingScreen.jsx (around line 45)
+
+The loading screen uses a hardcoded path url('/loading-bg.png') for the background image. In production, this path may not resolve correctly.
+
+Fix: Import the image properly using Vite's asset handling:
+
+import loadingBg from '/public/loading-bg.png';
+// Then use: backgroundImage: `url('${loadingBg}')`
+Or move the image to the public folder root and ensure it's copied to the build output.
+
+2. All-Black Styling Masks Errors
+
+Location: assets/styles/main.css (lines 9-14, 22, 37-47)
+
+The entire page has background-color: #000000 applied to body, html, .hero-background, and .dashboard-background. If React fails to render, users see only black with no error indication.
+
+Fix: Add a temporary non-black fallback or loading indicator in index.html:
+
+<div id="root">
+  <div style="color: white; text-align: center; padding-top: 40vh;">Loading...</div>
+</div>
+This provides visual feedback while React loads, and gets replaced once the app mounts.
+
+3. ErrorBoundary Displays Black Background
+
+Location: src/components/ErrorBoundary.jsx (line 39)
+
+Even the error boundary renders with a black background, so errors appear as black screens too.
+
+Fix: Change the error boundary's fallback background to a different color (like dark gray #333) so errors are visually distinct from the loading screen.
+
+4. Long Loading Duration
+
+Location: src/App.jsx (lines 57, 76)
+
+The app enforces minimum loading times (MINIMUM_LOADING_TIME = 3000ms, plus the initialHype state). If the loading screen component fails silently, users stare at black for at least 5 seconds.
+
+Fix: Add console.log statements or use React Developer Tools to verify the LoadingScreen component is actually rendering.
+
+5. Image Import Paths for Dashboard
+
+Location: src/views/Dashboard.jsx (lines 4-8)
+
+Images are imported with absolute paths like /assets/images/solo.png. Vite should handle these, but if there's a mismatch, components may fail.
+
+Fix: Verify images exist at the expected paths and consider using relative imports or moving images to the public folder.
+
+Quick Debugging Steps
+
+Check browser console for JavaScript errors when loading the site
+Check Network tab in browser DevTools for failed asset requests (especially images and scripts)
+Temporarily change the body background in main.css to something visible like #333 to distinguish between "nothing rendered" vs "black content rendered"
+Add a fallback message in the #root div in index.html to confirm React is mounting
+Files to Modify
+
+src/components/LoadingScreen.jsx - Fix background image import
+assets/styles/main.css - Consider non-black fallback colors for debugging
+src/components/ErrorBoundary.jsx - Make error states visually distinct
+index.html - Add loading fallback inside #root
