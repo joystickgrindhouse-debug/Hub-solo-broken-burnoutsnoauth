@@ -19,17 +19,38 @@ import NutritionalCoach from './NutritionalCoach.jsx';
 const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
   const [messages, setMessages] = useState([]);
   const [tourStep, setTourStep] = useState(0);
-  const [showTour, setShowTour] = useState(true);
+  const [showTour, setShowTour] = useState(false);
   const [inputText, setInputText] = useState('');
   const chatEndRef = useRef(null);
 
+  const motivationalQuotes = [
+    "Biological limits are meant to be shattered, Rival.",
+    "Your neural link is primed. Time for a bio-metric upgrade.",
+    "The mainframe is watching. Show them what a Rival is made of.",
+    "Efficiency is the only currency in this sector. Earn it.",
+    "Pain is just data leaving the system. Process it."
+  ];
+
   useEffect(() => {
-    if (initialMessage) {
-      setMessages([{ id: 'init', text: initialMessage, isBot: true, timestamp: new Date() }]);
+    const hasCompletedTour = window.localStorage.getItem('rivalis_tour_completed');
+    if (!hasCompletedTour) {
+      setShowTour(true);
+      setMessages([{ 
+        id: 'init', 
+        text: "Welcome to the sector, Rival. I am your AI Coach. Let's begin the initialization tour.", 
+        isBot: true, 
+        timestamp: new Date() 
+      }]);
     } else {
-      setMessages([{ id: 'welcome', text: "Welcome back, Rival! Ready for your tour or a quick update?", isBot: true, timestamp: new Date() }]);
+      const quote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+      setMessages([{ 
+        id: 'welcome', 
+        text: `${quote} What can I do for you today, ${userProfile?.nickname || 'Rival'}? Have a killer workout!`, 
+        isBot: true, 
+        timestamp: new Date() 
+      }]);
     }
-  }, [initialMessage]);
+  }, [userProfile]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -42,6 +63,12 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
     const userMsg = { id: Date.now(), text: inputText, isBot: false, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
     setInputText('');
+
+    if (inputText.toLowerCase().includes('/tour') || inputText.toLowerCase().includes('/reboot')) {
+      setTourStep(0);
+      setShowTour(true);
+      return;
+    }
 
     try {
       // Create conversation if it doesn't exist
@@ -134,6 +161,7 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       setTourStep(prev => prev + 1);
     } else {
       setShowTour(false);
+      window.localStorage.setItem('rivalis_tour_completed', 'true');
       if (onTourComplete) onTourComplete();
     }
   };
