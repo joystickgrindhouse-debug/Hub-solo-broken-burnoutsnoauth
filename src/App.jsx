@@ -7,6 +7,7 @@ import LoadingScreen from "./components/LoadingScreen.jsx";
 import OnboardingSlides from "./components/OnboardingSlides.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Navbar from "./components/Navbar.jsx";
+import ChatbotTour from "./components/ChatbotTour/ChatbotTour.jsx";
 
 // Lazy load views for better performance
 const Login = lazy(() => import("./views/Login.jsx"));
@@ -36,6 +37,7 @@ export default function App() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isNewSignup, setIsNewSignup] = useState(false);
   const [initialHype, setInitialHype] = useState(false);
+  const [showBot, setShowBot] = useState(false);
   const location = useLocation();
 
   // Activity tracking
@@ -188,6 +190,29 @@ export default function App() {
   return (
     <div style={{ background: '#111', minHeight: '100vh', color: '#fff' }}>
       {user && <Navbar user={user} userProfile={userProfile} />}
+      
+      {user && !loading && !checkingSetup && profileLoaded && !initialHype && !showOnboarding && (
+        <>
+          <button 
+            onClick={() => setShowBot(!showBot)}
+            style={botStyles.botTrigger}
+          >
+            {showBot ? '✕' : '🤖 AI ASSISTANT'}
+          </button>
+
+          {showBot && (
+            <div style={botStyles.botContainer}>
+              <ChatbotTour 
+                user={user} 
+                userProfile={userProfile}
+                onTourComplete={() => console.log('Tour finished')}
+                initialMessage="Hey Rival! I'm your AI Fitness Coach. Ready to optimize?"
+              />
+            </div>
+          )}
+        </>
+      )}
+
       <Suspense fallback={<div style={{ color: '#ff3050', padding: '20px', textAlign: 'center' }}>LOADING ARENA...</div>}>
         <Routes>
           <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
@@ -300,3 +325,30 @@ export default function App() {
     </div>
   );
 }
+
+const botStyles = {
+  botTrigger: {
+    position: 'fixed',
+    bottom: '20px',
+    right: '20px',
+    background: '#FF0000',
+    color: '#FFF',
+    border: 'none',
+    borderRadius: '30px',
+    padding: '12px 24px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    boxShadow: '0 0 15px #FF0000',
+    zIndex: 10001,
+    fontSize: '14px',
+  },
+  botContainer: {
+    position: 'fixed',
+    bottom: '80px',
+    right: '20px',
+    width: '350px',
+    height: '500px',
+    zIndex: 10001,
+    boxShadow: '0 0 30px rgba(0,0,0,0.5)',
+  }
+};

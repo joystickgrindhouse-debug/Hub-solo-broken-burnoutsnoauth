@@ -121,25 +121,6 @@ export default function Dashboard({ user, userProfile }) {
         </div>
       </div>
 
-      {/* Floating Chatbot Trigger */}
-      <button 
-        onClick={() => setShowBot(!showBot)}
-        style={styles.botTrigger}
-      >
-        {showBot ? '✕' : '🤖 AI ASSISTANT'}
-      </button>
-
-      {showBot && (
-        <div style={styles.botContainer}>
-          <ChatbotTour 
-            user={user} 
-            userProfile={userProfile}
-            onTourComplete={() => console.log('Tour finished')}
-            initialMessage="Hey Rival! I'm your new AI Fitness Coach. Ready for a quick tour?"
-          />
-        </div>
-      )}
-
       <style>{`
         @keyframes breathing {
           0%, 100% { 
@@ -242,29 +223,5 @@ const styles = {
     color: "#fff",
     margin: "0",
     textShadow: "2px 2px 4px rgba(0, 0, 0, 0.8)",
-  },
-  botTrigger: {
-    position: 'fixed',
-    bottom: '20px',
-    right: '20px',
-    background: '#FF0000',
-    color: '#FFF',
-    border: 'none',
-    borderRadius: '30px',
-    padding: '12px 24px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    boxShadow: '0 0 15px #FF0000',
-    zIndex: 1000,
-    fontSize: '14px',
-  },
-  botContainer: {
-    position: 'fixed',
-    bottom: '80px',
-    right: '20px',
-    width: '350px',
-    height: '500px',
-    zIndex: 1000,
-    boxShadow: '0 0 30px rgba(0,0,0,0.5)',
   }
 };
