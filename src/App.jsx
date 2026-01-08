@@ -27,15 +27,15 @@ const AdminDashboard = lazy(() => import("./views/AdminDashboard.jsx"));
 export default function App() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
-  const [checkingSetup, setCheckingSetup] = useState(true);
-  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [checkingSetup, setCheckingSetup] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(true);
   const [loadingStartTime] = useState(Date.now());
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isNewSignup, setIsNewSignup] = useState(false);
-  const [initialHype, setInitialHype] = useState(true);
+  const [initialHype, setInitialHype] = useState(false);
   const location = useLocation();
 
   // Activity tracking
