@@ -261,7 +261,7 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       <div style={styles.header}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={styles.statusDot}></div>
-          <span style={styles.headerTitle}>RIVALIS CHATBOT AI</span>
+          <span style={styles.headerTitle}>RIVALIS COACH</span>
         </div>
         <button 
           onClick={exportConversation}

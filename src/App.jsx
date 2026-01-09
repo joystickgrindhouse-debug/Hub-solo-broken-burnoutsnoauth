@@ -196,8 +196,9 @@ export default function App() {
           <button 
             onClick={() => setShowBot(!showBot)}
             style={botStyles.botTrigger}
+            aria-label="Rivalis Coach"
           >
-            {showBot ? '✕' : '🤖 AI ASSISTANT'}
+            {showBot ? '✕' : '🦾'}
           </button>
 
           {showBot && (
@@ -206,7 +207,7 @@ export default function App() {
                 user={user} 
                 userProfile={userProfile}
                 onTourComplete={() => console.log('Tour finished')}
-                initialMessage="Hey Rival! I'm your AI Fitness Coach. Ready to optimize?"
+                initialMessage="Hey Rival! I'm Rivalis Coach. Ready to optimize?"
               />
             </div>
           )}
@@ -338,22 +339,27 @@ export default function App() {
 const botStyles = {
   botTrigger: {
     position: 'fixed',
-    bottom: '20px',
+    bottom: '85px',
     right: '20px',
     background: '#FF0000',
     color: '#FFF',
     border: 'none',
-    borderRadius: '30px',
-    padding: '12px 24px',
+    borderRadius: '50%',
+    width: '50px',
+    height: '50px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     fontWeight: 'bold',
     cursor: 'pointer',
     boxShadow: '0 0 15px #FF0000',
     zIndex: 10001,
-    fontSize: '14px',
+    fontSize: '20px',
+    transition: 'all 0.3s ease',
   },
   botContainer: {
     position: 'fixed',
-    bottom: '80px',
+    bottom: '145px',
     right: '20px',
     width: '350px',
     height: '500px',
