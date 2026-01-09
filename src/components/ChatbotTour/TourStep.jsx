@@ -40,7 +40,8 @@ const TourStep = ({ step, onNext, onSkip }) => {
       title: "NAVIGATION: HUB RETURN", 
       description: "MAINFRAME ACCESS: Click the menu button then select Home. This is how you interface back with your dashboard at any time.",
       route: "/profile",
-      action: "navigate_home_demo"
+      highlight: ".menu-button, [aria-label='menu']",
+      action: "highlight_only"
     },
     { 
       title: "SECTOR: SOLO MODE", 
