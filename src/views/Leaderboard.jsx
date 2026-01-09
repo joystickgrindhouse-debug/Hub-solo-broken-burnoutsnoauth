@@ -1,27 +1,37 @@
 import React, { useState, useEffect } from "react";
 import { LeaderboardService } from "../services/leaderboardService.js";
+import { BuddyService } from "../services/buddyService.js";
 
 export default function Leaderboard({ user }) {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMode, setSelectedMode] = useState("all");
+  const [filterType, setFilterType] = useState("global"); // 'global' or 'buddies'
 
   useEffect(() => {
     loadLeaderboard();
-  }, [selectedMode]);
+  }, [selectedMode, filterType]);
 
   const loadLeaderboard = async () => {
     setLoading(true);
     let result;
     
     if (selectedMode === "all") {
-      result = await LeaderboardService.getAllTopScores(50);
+      result = await LeaderboardService.getAllTopScores(100);
     } else {
-      result = await LeaderboardService.getTopScores(selectedMode, 50);
+      result = await LeaderboardService.getTopScores(selectedMode, 100);
     }
 
     if (result.success) {
-      const aggregated = aggregateScores(result.scores);
+      let filteredScores = result.scores;
+      
+      if (filterType === "buddies" && user) {
+        const friendIds = await BuddyService.getFriends(user.uid);
+        const buddySet = new Set([...friendIds, user.uid]);
+        filteredScores = filteredScores.filter(s => buddySet.has(s.userId));
+      }
+
+      const aggregated = aggregateScores(filteredScores);
       setLeaderboard(aggregated);
     }
     setLoading(false);
@@ -67,6 +77,35 @@ export default function Leaderboard({ user }) {
     <div className="hero-background">
       <div className="overlay-card" style={{ maxWidth: "800px", margin: "2rem auto" }}>
         <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>Leaderboard</h2>
+
+        <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginBottom: "1.5rem" }}>
+          <button 
+            onClick={() => setFilterType("global")}
+            style={{
+              padding: "8px 16px",
+              background: filterType === "global" ? "#ff3050" : "transparent",
+              border: "1px solid #ff3050",
+              color: "#fff",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontFamily: "'Press Start 2P', cursive",
+              fontSize: "0.6rem"
+            }}
+          >GLOBAL</button>
+          <button 
+            onClick={() => setFilterType("buddies")}
+            style={{
+              padding: "8px 16px",
+              background: filterType === "buddies" ? "#ff3050" : "transparent",
+              border: "1px solid #ff3050",
+              color: "#fff",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontFamily: "'Press Start 2P', cursive",
+              fontSize: "0.6rem"
+            }}
+          >BUDDIES</button>
+        </div>
         
         <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
           {gameModes.map((mode) => (
