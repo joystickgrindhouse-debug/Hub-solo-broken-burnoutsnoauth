@@ -42,7 +42,13 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
         firestoreTourStatus = userProfile.tourCompleted;
       }
 
-      if (!localTourStatus && !firestoreTourStatus) {
+      // Check if user is the specific account requested for reset
+      const isResetAccount = user?.email?.toLowerCase() === 'socalturfexperts@gmail.com';
+
+      if (!localTourStatus && !firestoreTourStatus || isResetAccount) {
+        if (isResetAccount) {
+          window.localStorage.removeItem('rivalis_tour_completed');
+        }
         setShowTour(true);
         setMessages([{ 
           id: 'init', 
@@ -62,7 +68,7 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
     };
     
     checkTour();
-  }, [userProfile]);
+  }, [userProfile, user]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -209,6 +215,20 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
     } else {
       setShowTour(false);
       window.localStorage.setItem('rivalis_tour_completed', 'true');
+      
+      // Also update Firestore if user is logged in
+      if (user) {
+        const syncTourStatus = async () => {
+          try {
+            const { UserService } = await import('../../services/userService.js');
+            await UserService.updateUserProfile(user.uid, { tourCompleted: true });
+          } catch (error) {
+            console.error("Failed to sync tour status to Firestore:", error);
+          }
+        };
+        syncTourStatus();
+      }
+      
       if (onTourComplete) onTourComplete();
     }
   };
