@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { BuddyService } from "../services/buddyService.js";
 import ChatbotTour from "../components/ChatbotTour/ChatbotTour.jsx";
 import CoachsCorner from "../components/CoachsCorner/CoachsCorner.jsx";
 import soloImage from "/assets/images/solo.png";
@@ -57,6 +58,13 @@ const gameModes = [
 export default function Dashboard({ user, userProfile }) {
   const navigate = useNavigate();
   const [showBot, setShowBot] = useState(false);
+  const [activeChallenges, setActiveChallenges] = useState([]);
+
+  useEffect(() => {
+    if (user) {
+      BuddyService.getActiveChallenges(user.uid).then(setActiveChallenges);
+    }
+  }, [user]);
 
   const handleTileClick = async (mode) => {
     if (mode.external) {
@@ -104,6 +112,27 @@ export default function Dashboard({ user, userProfile }) {
         </div>
         
         <CoachsCorner />
+
+        {activeChallenges.length > 0 && (
+          <div style={{
+            marginBottom: "2rem",
+            padding: "1.5rem",
+            background: "rgba(255, 48, 80, 0.1)",
+            border: "2px solid #ff3050",
+            borderRadius: "12px",
+            boxShadow: "0 0 20px rgba(255, 48, 80, 0.2)"
+          }}>
+            <h3 style={{ color: "#ff3050", marginBottom: "1rem", fontFamily: "'Press Start 2P', cursive", fontSize: "0.8rem" }}>ACTIVE BUDDY CHALLENGES</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
+              {activeChallenges.map(challenge => (
+                <div key={challenge.id} style={{ background: "#000", padding: "1rem", borderRadius: "8px", border: "1px solid rgba(255, 48, 80, 0.3)" }}>
+                  <div style={{ color: "#ff3050", fontWeight: "bold", marginBottom: "0.5rem" }}>{challenge.type.toUpperCase()} GOAL: {challenge.goal}</div>
+                  <div style={{ fontSize: "0.8rem", color: "#ccc" }}>Status: {challenge.status}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div style={styles.tilesGrid}>
           {gameModes.map((mode) => (

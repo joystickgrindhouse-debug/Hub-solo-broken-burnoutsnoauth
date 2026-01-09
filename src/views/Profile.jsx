@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { UserService } from "../services/userService.js";
-import { storage } from "../firebase.js";
+import { BuddyService } from "../services/buddyService.js";
+import { db, storage } from "../firebase.js";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
 import WaitingForUpload from "./WaitingForUpload.jsx";
@@ -51,6 +53,51 @@ export default function Profile({ user, userProfile }) {
   const [achievements, setAchievements] = useState([]);
   const [fitnessGoals, setFitnessGoals] = useState(userProfile?.fitnessGoals || []);
   const [appSeeking, setAppSeeking] = useState(userProfile?.appSeeking || "");
+  const [friends, setFriends] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [searchEmail, setSearchEmail] = useState("");
+  const [activeChallenges, setActiveChallenges] = useState([]);
+
+  useEffect(() => {
+    if (user) {
+      loadBuddyData();
+    }
+  }, [user]);
+
+  const loadBuddyData = async () => {
+    try {
+      const friendIds = await BuddyService.getFriends(user.uid);
+      const friendProfiles = await Promise.all(friendIds.map(id => UserService.getUserProfile(id)));
+      setFriends(friendProfiles.filter(p => p.success).map(p => p.profile));
+      
+      const requests = await BuddyService.getPendingRequests(user.uid);
+      setPendingRequests(requests);
+
+      const challenges = await BuddyService.getActiveChallenges(user.uid);
+      setActiveChallenges(challenges);
+    } catch (error) {
+      console.error("Error loading buddy data:", error);
+    }
+  };
+
+  const handleSendFriendRequest = async () => {
+    if (!searchEmail) return;
+    const q = query(collection(db, "users"), where("email", "==", searchEmail));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      const targetUserId = snapshot.docs[0].id;
+      await BuddyService.sendFriendRequest(user.uid, targetUserId);
+      alert("Request sent!");
+      setSearchEmail("");
+    } else {
+      alert("User not found.");
+    }
+  };
+
+  const handleAcceptRequest = async (requestId) => {
+    await BuddyService.respondToRequest(requestId, "accepted");
+    loadBuddyData();
+  };
 
   const fitnessGoalOptions = [
     "Build Muscle",
@@ -289,6 +336,7 @@ export default function Profile({ user, userProfile }) {
             )}
           </div>
 
+          <div style={{ flex: 1, minWidth: "300px" }}>
             <h3 style={{ 
               color: "#ff3050",
               textShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
@@ -579,6 +627,52 @@ export default function Profile({ user, userProfile }) {
           </div>
         )}
 
+        {/* Workout Buddy System */}
+        <div style={{
+          marginTop: "2rem",
+          padding: "1.5rem",
+          background: "rgba(255, 48, 80, 0.05)",
+          border: "1px solid #ff3050",
+          borderRadius: "12px",
+          marginBottom: "2rem"
+        }}>
+          <h3 style={{ color: "#ff3050", marginBottom: "1rem", fontFamily: "'Press Start 2P', cursive", fontSize: "0.8rem" }}>WORKOUT BUDDIES</h3>
+          
+          <div style={{ display: "flex", gap: "10px", marginBottom: "1.5rem" }}>
+            <input 
+              type="text" 
+              placeholder="Enter friend's email..." 
+              value={searchEmail}
+              onChange={(e) => setSearchEmail(e.target.value)}
+              style={{ flex: 1, padding: "8px", background: "#000", border: "1px solid #ff3050", color: "#fff", borderRadius: "4px" }}
+            />
+            <button onClick={handleSendFriendRequest} style={{ background: "#ff3050", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "4px", cursor: "pointer" }}>Add Buddy</button>
+          </div>
+
+          {pendingRequests.length > 0 && (
+            <div style={{ marginBottom: "1rem" }}>
+              <h4 style={{ color: "#ff3050", fontSize: "0.7rem", marginBottom: "0.5rem" }}>PENDING REQUESTS</h4>
+              {pendingRequests.map(req => (
+                <div key={req.id} style={{ display: "flex", justifyContent: "space-between", background: "#111", padding: "10px", marginBottom: "5px", borderRadius: "4px" }}>
+                  <span>Request from {req.from}</span>
+                  <button onClick={() => handleAcceptRequest(req.id)} style={{ background: "#4CAF50", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px" }}>Accept</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <h4 style={{ color: "#ff3050", fontSize: "0.7rem", marginBottom: "0.5rem" }}>YOUR BUDDIES</h4>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: "1rem" }}>
+            {friends.map(friend => (
+              <div key={friend.userId} style={{ textAlign: "center" }}>
+                <img src={friend.avatarURL} alt={friend.nickname} style={{ width: "50px", height: "50px", borderRadius: "50%", border: "2px solid #ff3050" }} />
+                <div style={{ fontSize: "0.7rem", marginTop: "5px" }}>{friend.nickname}</div>
+              </div>
+            ))}
+            {friends.length === 0 && <div style={{ fontSize: "0.8rem", color: "#666" }}>No buddies yet.</div>}
+          </div>
+        </div>
+
         <div>
           <h3 style={{ 
             color: "#ff3050",
@@ -587,50 +681,38 @@ export default function Profile({ user, userProfile }) {
           }}>
             🏆 Achievements
           </h3>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
-            gap: "1rem"
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", 
+            gap: "1.5rem" 
           }}>
-            {defaultAchievements.map((achievement) => (
-              <div
+            {defaultAchievements.map(achievement => (
+              <div 
                 key={achievement.id}
+                className={`achievement-card ${achievement.unlocked ? 'unlocked' : 'locked'}`}
                 style={{
-                  background: achievement.unlocked 
-                    ? "rgba(255, 48, 80, 0.2)" 
-                    : "rgba(0, 0, 0, 0.3)",
-                  border: `2px solid ${achievement.unlocked ? "#ff3050" : "rgba(255, 48, 80, 0.3)"}`,
+                  background: achievement.unlocked ? "rgba(255, 48, 80, 0.15)" : "rgba(255, 255, 255, 0.05)",
+                  border: `2px solid ${achievement.unlocked ? "#ff3050" : "#333"}`,
                   borderRadius: "12px",
-                  padding: "1rem",
-                  opacity: achievement.unlocked ? 1 : 0.5,
-                  transition: "all 0.3s",
-                  boxShadow: achievement.unlocked 
-                    ? "0 0 20px rgba(255, 48, 80, 0.4)" 
-                    : "none"
+                  padding: "1.5rem",
+                  textAlign: "center",
+                  opacity: achievement.unlocked ? 1 : 0.6,
+                  transition: "all 0.3s ease",
+                  boxShadow: achievement.unlocked ? "0 0 15px rgba(255, 48, 80, 0.3)" : "none",
+                  filter: achievement.unlocked ? "none" : "grayscale(100%)"
                 }}
               >
-                <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
-                  {achievement.icon}
-                </div>
-                <div style={{ 
-                  color: "#ff3050", 
-                  fontWeight: "bold",
-                  marginBottom: "0.25rem",
-                  textShadow: achievement.unlocked ? "0 0 10px rgba(255, 48, 80, 0.8)" : "none"
-                }}>
-                  {achievement.name}
-                </div>
-                <div style={{ color: "#fff", fontSize: "0.85rem" }}>
-                  {achievement.description}
-                </div>
-                {achievement.unlocked && (
+                <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>{achievement.icon}</div>
+                <h4 style={{ color: achievement.unlocked ? "#ff3050" : "#999", marginBottom: "0.5rem", fontSize: "1rem" }}>{achievement.name}</h4>
+                <p style={{ fontSize: "0.8rem", color: "#ccc" }}>{achievement.description}</p>
+                {!achievement.unlocked && (
                   <div style={{ 
-                    marginTop: "0.5rem",
-                    color: "#00ff00",
-                    fontSize: "0.8rem",
-                    fontWeight: "bold"
+                    marginTop: "1rem", 
+                    fontSize: "0.7rem", 
+                    color: "#ff3050",
+                    fontFamily: "'Press Start 2P', cursive"
                   }}>
-                    ✓ Unlocked
+                    LOCKED
                   </div>
                 )}
               </div>
@@ -638,5 +720,6 @@ export default function Profile({ user, userProfile }) {
           </div>
         </div>
       </div>
+    </div>
   );
 }
