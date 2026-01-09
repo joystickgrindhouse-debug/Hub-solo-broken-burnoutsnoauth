@@ -266,7 +266,7 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       </div>
 
       {showTour && (
-        <div style={styles.tourOverlay}>
+        <div style={styles.tourOverlay} onClick={(e) => e.stopPropagation()}>
           <TourStep 
             step={tourStep} 
             onNext={nextTourStep} 

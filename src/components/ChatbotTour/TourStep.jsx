@@ -31,9 +31,10 @@ const TourStep = ({ step, onNext, onSkip }) => {
     },
     { 
       title: "DATA: ACHIEVEMENTS", 
-      description: "SCANNING LOWER SECTORS... These are the milestones and achievements to be earned through total dominance.",
+      description: "SCANNING LOWER SECTORS... I'm highlighting your current optimization milestones. These data points represent your initial tactical victories in the field.",
       route: "/profile",
-      action: "scroll_bottom"
+      highlight: ".achievement-badge, .milestone-card",
+      action: "highlight_only"
     },
     { 
       title: "NAVIGATION: HUB RETURN", 
