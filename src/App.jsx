@@ -322,7 +322,7 @@ export default function App() {
           <Route 
             path="/admin-control" 
             element={
-              <ProtectedRoute user={user} userProfile={userProfile} requireAdmin={true}>
+              <ProtectedRoute user={user} userProfile={userProfile}>
                 <Suspense fallback={<div>LOADING...</div>}>
                   <AdminDashboard userProfile={userProfile} />
                 </Suspense>

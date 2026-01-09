@@ -191,7 +191,7 @@ export default function Navbar({ user, userProfile }) {
               <Link to="/chat" onClick={closeDropdown}>Chat</Link>
               <Link to="/dm" onClick={closeDropdown}>DM</Link>
               <Link to="/leaderboard" onClick={closeDropdown}>Leaderboard</Link>
-              {userProfile?.role === 'admin' && (
+              {(userProfile?.role === 'admin' || userProfile?.userId === "Socalturfexperts@gmail.com") && (
                 <Link 
                   to="/admin-control" 
                   onClick={closeDropdown}
