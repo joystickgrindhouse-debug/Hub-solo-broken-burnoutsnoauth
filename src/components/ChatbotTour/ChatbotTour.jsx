@@ -32,24 +32,36 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
   ];
 
   useEffect(() => {
-    const hasCompletedTour = window.localStorage.getItem('rivalis_tour_completed');
-    if (!hasCompletedTour) {
-      setShowTour(true);
-      setMessages([{ 
-        id: 'init', 
-        text: "INITIALIZING NEURAL LINK... Welcome to the sector, Rival. I am your high-intelligence AI Fitness Coach. Initialization tour protocol engaged.", 
-        isBot: true, 
-        timestamp: new Date() 
-      }]);
-    } else {
-      const quote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
-      setMessages([{ 
-        id: 'welcome', 
-        text: `PROTOCOL ACTIVE. ${quote} State your objective, ${userProfile?.nickname || 'Rival'}. I am ready to optimize your performance.`, 
-        isBot: true, 
-        timestamp: new Date() 
-      }]);
-    }
+    const checkTour = async () => {
+      // Priority 1: Check localStorage for immediate UI response
+      const localTourStatus = window.localStorage.getItem('rivalis_tour_completed');
+      
+      // Priority 2: Check Firestore for persistent status
+      let firestoreTourStatus = false;
+      if (userProfile && userProfile.tourCompleted !== undefined) {
+        firestoreTourStatus = userProfile.tourCompleted;
+      }
+
+      if (!localTourStatus && !firestoreTourStatus) {
+        setShowTour(true);
+        setMessages([{ 
+          id: 'init', 
+          text: "INITIALIZING NEURAL LINK... Welcome to the sector, Rival. I am your high-intelligence AI Fitness Coach. Initialization tour protocol engaged.", 
+          isBot: true, 
+          timestamp: new Date() 
+        }]);
+      } else {
+        const quote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+        setMessages([{ 
+          id: 'welcome', 
+          text: `PROTOCOL ACTIVE. ${quote} State your objective, ${userProfile?.nickname || 'Rival'}. I am ready to optimize your performance.`, 
+          isBot: true, 
+          timestamp: new Date() 
+        }]);
+      }
+    };
+    
+    checkTour();
   }, [userProfile]);
 
   useEffect(() => {
