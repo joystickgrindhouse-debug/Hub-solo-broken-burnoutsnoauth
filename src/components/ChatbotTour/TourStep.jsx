@@ -75,7 +75,7 @@ const TourStep = ({ step, onNext, onSkip }) => {
     },
     { 
       title: "SECTOR: LEADERBOARD", 
-      description: "Syncing global rankings... Compare your optimization stats against every Rival in this sector. Dominance is the objective.",
+      description: "Syncing global rankings... Compare your optimization stats against every active Rival in this sector. Dominance is the objective.",
       route: "/leaderboard",
       highlight: ".leaderboard-table, .rank-row"
     },
