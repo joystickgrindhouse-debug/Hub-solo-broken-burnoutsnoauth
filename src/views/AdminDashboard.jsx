@@ -14,6 +14,12 @@ const AdminDashboard = ({ userProfile }) => {
   const [activeTab, setActiveTab] = useState("users");
   const [loading, setLoading] = useState(true);
 
+  const globalStats = {
+    totalUsers: users.length,
+    totalReps: users.reduce((acc, u) => acc + (u.totalReps || 0), 0),
+    totalMiles: users.reduce((acc, u) => acc + (u.totalMiles || 0), 0)
+  };
+
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -168,9 +174,23 @@ const AdminDashboard = ({ userProfile }) => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 border-b border-zinc-800 pb-6 gap-6">
           <div>
             <h1 className="text-4xl font-black text-red-600 tracking-tighter uppercase italic">Command Center</h1>
-            <div className="flex items-center gap-2 mt-2">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">System Link Active: {user?.email || "EXTERNAL"}</p>
+            <div className="flex items-center gap-4 mt-2">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">System Link Active: {user?.email || "EXTERNAL"}</p>
+              </div>
+              <div className="h-4 w-[1px] bg-zinc-800" />
+              <div className="flex gap-4">
+                <p className="text-[10px] text-zinc-400 font-mono uppercase tracking-widest">
+                  <span className="text-red-500">Users:</span> {globalStats.totalUsers}
+                </p>
+                <p className="text-[10px] text-zinc-400 font-mono uppercase tracking-widest">
+                  <span className="text-red-500">Reps:</span> {globalStats.totalReps}
+                </p>
+                <p className="text-[10px] text-zinc-400 font-mono uppercase tracking-widest">
+                  <span className="text-red-500">Miles:</span> {globalStats.totalMiles.toFixed(1)}
+                </p>
+              </div>
             </div>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar w-full md:w-auto">
@@ -220,6 +240,9 @@ const AdminDashboard = ({ userProfile }) => {
                         <p className={`text-[10px] font-bold uppercase tracking-widest ${isUserLive(u) ? "text-green-400" : "text-zinc-600"}`}>
                           {u.currentActivity ? `Status: ${u.currentActivity}` : "Idle"}
                         </p>
+                        <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">
+                          💪 {u.totalReps || 0} Reps | 🏃 {u.totalMiles?.toFixed(1) || 0} mi | 🎟️ {u.ticketBalance || 0}
+                        </span>
                         {u.isBanned && <span className="text-[9px] text-red-500 font-black uppercase tracking-widest">[ Banned ]</span>}
                         {u.isMuted && <span className="text-[9px] text-yellow-500 font-black uppercase tracking-widest">[ Muted ]</span>}
                       </div>
