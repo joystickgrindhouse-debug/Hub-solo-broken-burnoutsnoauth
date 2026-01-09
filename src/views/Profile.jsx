@@ -57,12 +57,27 @@ export default function Profile({ user, userProfile }) {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [searchEmail, setSearchEmail] = useState("");
   const [activeChallenges, setActiveChallenges] = useState([]);
+  const [lookingForBuddy, setLookingForBuddy] = useState(userProfile?.lookingForBuddy || false);
+  const [potentialBuddies, setPotentialBuddies] = useState([]);
+
+  useEffect(() => {
+    if (userProfile) {
+      setLookingForBuddy(userProfile.lookingForBuddy || false);
+    }
+  }, [userProfile]);
 
   useEffect(() => {
     if (user) {
       loadBuddyData();
+      UserService.getUsersLookingForBuddy().then(setPotentialBuddies);
     }
   }, [user]);
+
+  const handleToggleLooking = async () => {
+    const newValue = !lookingForBuddy;
+    setLookingForBuddy(newValue);
+    await UserService.updateUserProfile(user.uid, { lookingForBuddy: newValue });
+  };
 
   const loadBuddyData = async () => {
     try {
@@ -648,6 +663,44 @@ export default function Profile({ user, userProfile }) {
             />
             <button onClick={handleSendFriendRequest} style={{ background: "#ff3050", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "4px", cursor: "pointer" }}>Add Buddy</button>
           </div>
+
+          <div style={{ marginBottom: "1.5rem", padding: "10px", background: "rgba(255, 48, 80, 0.1)", borderRadius: "8px", border: "1px dashed #ff3050" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "0.7rem", color: "#fff" }}>LOOKING FOR BUDDY?</span>
+              <button 
+                onClick={handleToggleLooking}
+                style={{ 
+                  background: lookingForBuddy ? "#4CAF50" : "#333", 
+                  color: "#fff", 
+                  border: "none", 
+                  padding: "4px 12px", 
+                  borderRadius: "20px",
+                  fontSize: "0.6rem",
+                  cursor: "pointer"
+                }}
+              >
+                {lookingForBuddy ? "ON" : "OFF"}
+              </button>
+            </div>
+          </div>
+
+          {potentialBuddies.length > 0 && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <h4 style={{ color: "#ff3050", fontSize: "0.7rem", marginBottom: "0.5rem" }}>DISCOVER BUDDIES</h4>
+              <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "10px" }}>
+                {potentialBuddies.filter(b => b.userId !== user.uid).map(buddy => (
+                  <div key={buddy.userId} style={{ minWidth: "80px", textAlign: "center", background: "#111", padding: "8px", borderRadius: "8px" }}>
+                    <img src={buddy.avatarURL} style={{ width: "40px", height: "40px", borderRadius: "50%" }} />
+                    <div style={{ fontSize: "0.5rem", color: "#fff", marginTop: "4px", whiteSpace: "nowrap", overflow: "hidden" }}>{buddy.nickname}</div>
+                    <button 
+                      onClick={() => { setSearchEmail(buddy.email); handleSendFriendRequest(); }}
+                      style={{ background: "#ff3050", border: "none", color: "#fff", fontSize: "0.5rem", padding: "2px 6px", borderRadius: "4px", marginTop: "4px" }}
+                    >Add</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {pendingRequests.length > 0 && (
             <div style={{ marginBottom: "1rem" }}>

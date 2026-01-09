@@ -115,6 +115,24 @@ export const UserService = {
     }
   },
 
+  async getUsersLookingForBuddy() {
+    try {
+      const q = query(
+        collection(db, "users"),
+        where("lookingForBuddy", "==", true),
+        limit(20)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({
+        userId: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error("Error fetching users looking for buddies:", error);
+      return [];
+    }
+  },
+
   async updateHeartbeat(userId, currentActivity = "idle") {
     try {
       const userDocRef = doc(db, "users", userId);
