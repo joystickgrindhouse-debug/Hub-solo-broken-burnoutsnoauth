@@ -3,7 +3,7 @@ import { db, auth } from "../firebase";
 import { collection, doc, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
-const AdminDashboard = () => {
+const AdminDashboard = ({ userProfile }) => {
   const [user, setUser] = useState(null);
   const [users, setUsers] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -119,6 +119,10 @@ const AdminDashboard = () => {
 
   if (loading) {
     return <div className="min-h-screen bg-black flex items-center justify-center text-red-600 font-mono">LOADING SYSTEM...</div>;
+  }
+
+  if (userProfile?.role !== 'admin') {
+    return <div className="min-h-screen bg-black flex items-center justify-center text-red-600 font-mono">ACCESS DENIED: UNAUTHORIZED PERSONNEL ONLY</div>;
   }
 
   if (!isAuthorized) {

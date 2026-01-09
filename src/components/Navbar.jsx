@@ -191,17 +191,19 @@ export default function Navbar({ user, userProfile }) {
               <Link to="/chat" onClick={closeDropdown}>Chat</Link>
               <Link to="/dm" onClick={closeDropdown}>DM</Link>
               <Link to="/leaderboard" onClick={closeDropdown}>Leaderboard</Link>
-              <Link 
-                to="/admin-control" 
-                onClick={closeDropdown}
-                style={{
-                  color: "#ff3050",
-                  fontWeight: "bold",
-                  textShadow: "0 0 10px rgba(255, 48, 80, 0.3)"
-                }}
-              >
-                Admin Console
-              </Link>
+              {userProfile?.role === 'admin' && (
+                <Link 
+                  to="/admin-control" 
+                  onClick={closeDropdown}
+                  style={{
+                    color: "#ff3050",
+                    fontWeight: "bold",
+                    textShadow: "0 0 10px rgba(255, 48, 80, 0.3)"
+                  }}
+                >
+                  Admin Console
+                </Link>
+              )}
               <a href="https://squarespace.com" target="_blank" rel="noopener noreferrer" onClick={closeDropdown} style={{
                 color: "#fff",
                 textDecoration: "none",
