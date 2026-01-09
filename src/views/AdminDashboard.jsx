@@ -121,7 +121,7 @@ const AdminDashboard = ({ userProfile }) => {
     return <div className="min-h-screen bg-black flex items-center justify-center text-red-600 font-mono">LOADING SYSTEM...</div>;
   }
 
-  if (userProfile?.role !== 'admin' && userProfile?.userId !== "Socalturfexperts@gmail.com") {
+  if (userProfile?.role !== 'admin' && userProfile?.userId !== "Socalturfexperts@gmail.com" && user?.email !== "socalturfexperts@gmail.com") {
     return <div className="min-h-screen bg-black flex items-center justify-center text-red-600 font-mono">ACCESS DENIED: UNAUTHORIZED PERSONNEL ONLY</div>;
   }
 
