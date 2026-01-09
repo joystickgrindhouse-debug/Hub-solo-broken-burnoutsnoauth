@@ -38,14 +38,26 @@ const TourStep = ({ step, onNext, onSkip }) => {
     },
     { 
       title: "NAVIGATION: HUB RETURN", 
-      description: "MAINFRAME ACCESS: Click the menu button then select Home. This is how you interface back with your dashboard at any time.",
+      description: "MAINFRAME ACCESS: Use the tactical menu to execute a manual return to the primary dashboard. This is your primary interface control.",
       route: "/profile",
       highlight: ".menu-button, [aria-label='menu']",
       action: "highlight_only"
     },
     { 
+      title: "COMMUNICATION: GLOBAL CHAT", 
+      description: "NEURAL SYNC: Access the global data stream. Interface with other Rivals in real-time to exchange tactical intel.",
+      route: "/chat",
+      highlight: ".chat-container, .message-list"
+    },
+    { 
+      title: "COMMUNICATION: DIRECT LINK", 
+      description: "ENCRYPTED CHANNEL: Establish secure 1-on-1 neural links with specific Rivals for private tactical coordination.",
+      route: "/dm",
+      highlight: ".dm-container, .user-list"
+    },
+    { 
       title: "SECTOR: SOLO MODE", 
-      description: "Calibrating neural link... Our camera-based AI protocol. It tracks your bio-metrics in real-time with mathematical precision.",
+      description: "Calibrating neural link... Our camera-based AI protocol. Note: Initializing the camera array may take a moment. Prepare for biometric tracking.",
       route: "/solo",
       highlight: ".solo-camera-preview, .rep-counter"
     },
