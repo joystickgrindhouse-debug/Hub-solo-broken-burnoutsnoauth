@@ -198,8 +198,18 @@ const AdminDashboard = ({ userProfile }) => {
                 <div key={u.id} className="bg-zinc-900/40 p-5 rounded-xl border border-zinc-800/60 flex justify-between items-center backdrop-blur-md transition-all hover:border-red-900/30 hover:bg-zinc-900/60">
                   <div className="flex items-center gap-5">
                     <div className="relative">
-                      <div className={`w-3.5 h-3.5 rounded-full ${isUserLive(u) ? "bg-green-500 shadow-[0_0_12px_#22c55e]" : "bg-zinc-800"}`} />
-                      {isUserLive(u) && <div className="absolute inset-0 w-3.5 h-3.5 rounded-full bg-green-500 animate-ping opacity-30" />}
+                      {u.avatarURL ? (
+                        <img 
+                          src={u.avatarURL} 
+                          alt={u.nickname} 
+                          className="w-12 h-12 rounded-full border-2 border-red-600/50 object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-zinc-800 border-2 border-zinc-700 flex items-center justify-center text-zinc-600 text-xs">
+                          NO AV
+                        </div>
+                      )}
+                      <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-zinc-900 ${isUserLive(u) ? "bg-green-500" : "bg-zinc-800"}`} />
                     </div>
                     <div>
                       <h3 className="font-black text-xl flex items-center gap-3 tracking-tight">
