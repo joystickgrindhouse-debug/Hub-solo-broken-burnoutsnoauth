@@ -2,10 +2,21 @@ const OpenAI = require("openai");
 const { chatStorage } = require("./storage.js");
 const { Parser } = require("json2csv");
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+let openai = null;
+
+function getOpenAIClient() {
+  if (!openai) {
+    const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("OpenAI API key not configured. Please set up the OpenAI integration.");
+    }
+    openai = new OpenAI({
+      apiKey: apiKey,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+  }
+  return openai;
+}
 
 function registerChatRoutes(app) {
   // Export conversation to CSV
@@ -74,7 +85,7 @@ function registerChatRoutes(app) {
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
 
-      const stream = await openai.chat.completions.create({
+      const stream = await getOpenAIClient().chat.completions.create({
         model: "gpt-5",
         messages: [
           {
