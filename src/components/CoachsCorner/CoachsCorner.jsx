@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const CoachsCorner = () => {
   const [tip, setTip] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
 
   const tips = [
     "RE-FUELING PROTOCOL: High-intensity sectors require immediate glycogen replenishment. Aim for 30g protein within 30 minutes of session termination.",
@@ -16,69 +16,126 @@ const CoachsCorner = () => {
   ];
 
   useEffect(() => {
-    // Simulate AI generation or fetch from backend
-    const randomTip = tips[Math.floor(Math.random() * tips.length)];
-    setTip(randomTip);
-    setLoading(false);
+    const lastShown = localStorage.getItem('coach_tip_timestamp');
+    const now = Date.now();
+    // Show if never shown or it's been more than 4 hours
+    if (!lastShown || now - parseInt(lastShown) > 4 * 60 * 60 * 1000) {
+      const randomTip = tips[Math.floor(Math.random() * tips.length)];
+      setTip(randomTip);
+      setIsVisible(true);
+      localStorage.setItem('coach_tip_timestamp', now.toString());
+    }
   }, []);
 
-  if (loading) return null;
+  if (!isVisible) return null;
 
   return (
-    <div style={styles.container}>
-      <h3 style={styles.title}>COACH'S CORNER</h3>
-      <div style={styles.content}>
-        <p style={styles.tipText}>{tip}</p>
+    <div style={styles.overlay} onClick={() => setIsVisible(false)}>
+      <div style={styles.container} onClick={(e) => e.stopPropagation()}>
+        <button style={styles.closeBtn} onClick={() => setIsVisible(false)}>×</button>
+        <h3 style={styles.title}>COACH'S CORNER</h3>
+        <div style={styles.content}>
+          <p style={styles.tipText}>{tip}</p>
+        </div>
+        <div style={styles.footer}>
+          <span style={styles.status}>AI STATUS: OPTIMIZING</span>
+        </div>
+        <button 
+          style={styles.actionBtn} 
+          onClick={() => setIsVisible(false)}
+        >
+          ACKNOWLEDGED
+        </button>
       </div>
-      <div style={styles.footer}>
-        <span style={styles.status}>AI STATUS: OPTIMIZING</span>
-      </div>
+      <style>{`
+        @keyframes popup-glow {
+          from { box-shadow: 0 0 20px rgba(255, 48, 80, 0.2); }
+          to { box-shadow: 0 0 40px rgba(255, 48, 80, 0.5); }
+        }
+      `}</style>
     </div>
   );
 };
 
 const styles = {
+  overlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 20000,
+    backdropFilter: 'blur(5px)',
+  },
   container: {
-    background: '#111',
+    background: '#0a0a0a',
     border: '2px solid #FF3050',
-    borderRadius: '12px',
-    padding: '15px',
-    marginTop: '20px',
-    boxShadow: '0 0 15px rgba(255, 48, 80, 0.3)',
+    borderRadius: '16px',
+    padding: '25px',
+    maxWidth: '400px',
+    width: '90%',
+    boxShadow: '0 0 30px rgba(255, 48, 80, 0.4)',
     position: 'relative',
-    overflow: 'hidden',
+    animation: 'popup-glow 2s infinite alternate',
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: '10px',
+    right: '15px',
+    background: 'none',
+    border: 'none',
+    color: '#FF3050',
+    fontSize: '24px',
+    cursor: 'pointer',
+    fontFamily: 'serif',
   },
   title: {
     color: '#FF3050',
     fontFamily: "'Press Start 2P', cursive",
     fontSize: '0.8rem',
-    margin: '0 0 15px 0',
-    textShadow: '0 0 5px #FF3050',
+    margin: '10px 0 20px 0',
+    textAlign: 'center',
+    textShadow: '0 0 8px #FF3050',
   },
   content: {
-    background: 'rgba(255, 48, 80, 0.05)',
+    background: 'rgba(255, 48, 80, 0.08)',
     borderLeft: '4px solid #FF3050',
-    padding: '10px 15px',
-    marginBottom: '10px',
+    padding: '15px',
+    marginBottom: '20px',
   },
   tipText: {
     color: '#FFF',
-    fontSize: '0.9rem',
-    lineHeight: '1.4',
+    fontSize: '1rem',
+    lineHeight: '1.5',
     margin: 0,
     fontFamily: 'system-ui, -apple-system, sans-serif',
   },
   footer: {
     display: 'flex',
-    justifyContent: 'flex-end',
-    borderTop: '1px solid rgba(255, 48, 80, 0.2)',
-    paddingTop: '10px',
+    justifyContent: 'center',
+    paddingBottom: '15px',
   },
   status: {
     color: '#FF3050',
     fontSize: '0.6rem',
     fontFamily: "'Press Start 2P', cursive",
     opacity: 0.7,
+  },
+  actionBtn: {
+    width: '100%',
+    background: '#FF3050',
+    color: '#FFF',
+    border: 'none',
+    padding: '12px',
+    borderRadius: '8px',
+    fontFamily: "'Press Start 2P', cursive",
+    fontSize: '0.7rem',
+    cursor: 'pointer',
+    boxShadow: '0 0 10px rgba(255, 48, 80, 0.3)',
   }
 };
 
