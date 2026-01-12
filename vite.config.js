@@ -33,9 +33,6 @@ export default defineConfig({
       '/objects': 'http://localhost:3000'
     },
     hmr: {
-      clientPort: 443,
-      protocol: 'wss',
-      host: '0.0.0.0',
       timeout: 30000
     },
     headers: {
