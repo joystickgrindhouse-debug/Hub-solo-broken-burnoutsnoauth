@@ -118,6 +118,8 @@ const AdminDashboard = ({ userProfile }) => {
   const handleUserAction = (userId, action, value, message) => adminAction("user-action", { userId, action, data: { value, message } });
   const handleDeleteMessage = (messageId) => adminAction("delete-message", { messageId, collection: "globalChat" });
   const handleSetLivePerk = (perk) => adminAction("live-perk", { perk });
+  const handleSetArenaEvent = (event) => adminAction("arena-event", { event });
+  const handleBroadcastMessage = (message) => adminAction("broadcast", { message });
 
   const isUserLive = (user) => {
     const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
@@ -227,6 +229,56 @@ const AdminDashboard = ({ userProfile }) => {
                     ))}
                   </div>
                 </div>
+
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div>
+                    <label className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em] mb-4 block">Arena Directives</label>
+                    <div className="space-y-3">
+                      {[
+                        { id: "low_grav", name: "Low Gravity Reps", icon: "🚀" },
+                        { id: "turbo", name: "Turbo Mode", icon: "⚡" },
+                        { id: "zen", name: "Zen Focus", icon: "🧘" },
+                        { id: "chaos", name: "Chaos Theory", icon: "🌀" }
+                      ].map(event => (
+                        <button 
+                          key={event.id}
+                          onClick={() => handleSetArenaEvent(event.id)}
+                          className="w-full flex items-center justify-between bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-[11px] font-bold hover:border-red-600 transition-all group"
+                        >
+                          <span className="flex items-center gap-3">
+                            <span className="text-lg">{event.icon}</span>
+                            <span className="uppercase tracking-widest">{event.name}</span>
+                          </span>
+                          <span className="text-[8px] text-zinc-600 group-hover:text-red-600 uppercase">Deploy</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <label className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em] mb-4 block">System Broadcast</label>
+                    <div className="flex-1 bg-black border border-zinc-800 rounded-xl p-4 flex flex-col gap-4">
+                      <textarea 
+                        id="broadcast-input"
+                        placeholder="ENTER MESSAGE TO ALL ARENAS..."
+                        className="flex-1 bg-transparent border-none text-zinc-300 text-xs font-mono resize-none focus:ring-0 outline-none"
+                      />
+                      <button 
+                        onClick={() => {
+                          const msg = document.getElementById('broadcast-input').value;
+                          if (msg) {
+                            handleBroadcastMessage(msg);
+                            document.getElementById('broadcast-input').value = '';
+                          }
+                        }}
+                        className="bg-red-600 text-white font-black py-3 rounded-lg text-[9px] uppercase tracking-[0.2em] hover:bg-red-500 transition-all"
+                      >
+                        Transmit Globally
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="p-6 bg-red-950/10 border border-red-900/30 rounded-2xl">
                   <p className="text-[10px] text-red-500 font-black uppercase mb-2 tracking-widest">Administrator Notice:</p>
                   <p className="text-[11px] text-red-400 italic">Directive changes are broadcasted globally to all active arenas and take effect immediately on next match initialization.</p>
