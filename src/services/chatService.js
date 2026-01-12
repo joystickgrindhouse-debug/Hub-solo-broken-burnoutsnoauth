@@ -97,6 +97,47 @@ export const ChatService = {
     });
   },
 
+  async sendRoomMessage({ roomId, userId, nickname, avatarURL, text }) {
+    try {
+      const messageData = {
+        roomId,
+        userId,
+        nickname,
+        avatarURL,
+        text,
+        timestamp: Timestamp.now(),
+        createdAt: new Date().toISOString()
+      };
+
+      const docRef = await addDoc(collection(db, "roomChat"), messageData);
+      return { success: true, id: docRef.id };
+    } catch (error) {
+      console.error("Error sending room message:", error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  subscribeToRoomMessages(roomId, callback, messageLimit = 50) {
+    const q = query(
+      collection(db, "roomChat"),
+      where("roomId", "==", roomId),
+      orderBy("timestamp", "desc"),
+      limit(messageLimit)
+    );
+
+    return onSnapshot(q, (querySnapshot) => {
+      const messages = [];
+      querySnapshot.forEach((doc) => {
+        messages.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      messages.reverse();
+      callback(messages);
+    });
+  },
+
   async sendDirectMessage({ fromUserId, fromNickname, fromAvatarURL, toUserId, toNickname, text }) {
     try {
       const messageData = {

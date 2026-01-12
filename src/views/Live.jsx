@@ -218,7 +218,7 @@ export default function Live({ user, userProfile }) {
           <div style={{ position: "absolute", top: "15px", left: "20px", zIndex: 10 }}>
              <h2 style={{ fontFamily: "'Press Start 2P', cursive", color: "white", fontSize: "14px", margin: 0 }}>LOBBY CHAT</h2>
           </div>
-          <GlobalChat user={user} userProfile={userProfile} hideNavbar={true} />
+          <GlobalChat user={user} userProfile={userProfile} hideNavbar={true} roomId={currentRoomId || "live-lobby"} />
         </div>
       </div>
     );

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { ChatService } from "../services/chatService.js";
 import CustomEmojiPicker from "../components/CustomEmojiPicker.jsx";
 
-export default function GlobalChat({ user, userProfile, hideNavbar }) {
+export default function GlobalChat({ user, userProfile, hideNavbar, roomId }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -11,22 +11,32 @@ export default function GlobalChat({ user, userProfile, hideNavbar }) {
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribe = ChatService.subscribeToGlobalMessages((fetchedMessages) => {
-      setMessages(fetchedMessages);
-    }, 50);
+    const unsubscribe = roomId 
+      ? ChatService.subscribeToRoomMessages(roomId, (fetchedMessages) => {
+          setMessages(fetchedMessages);
+        }, 50)
+      : ChatService.subscribeToGlobalMessages((fetchedMessages) => {
+          setMessages(fetchedMessages);
+        }, 50);
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, roomId]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    await ChatService.sendGlobalMessage({
+    const messageData = {
       userId: user.uid,
       nickname: userProfile?.nickname || user.displayName || user.email,
       avatarURL: userProfile?.avatarURL || user.photoURL || "",
       text: input.trim()
-    });
+    };
+
+    if (roomId) {
+      await ChatService.sendRoomMessage({ ...messageData, roomId });
+    } else {
+      await ChatService.sendGlobalMessage(messageData);
+    }
 
     setInput("");
   };
