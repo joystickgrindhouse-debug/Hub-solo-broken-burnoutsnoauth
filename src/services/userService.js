@@ -9,7 +9,8 @@ import {
   query,
   where,
   getDocs,
-  limit
+  limit,
+  onSnapshot
 } from "firebase/firestore";
 
 export const UserService = {
