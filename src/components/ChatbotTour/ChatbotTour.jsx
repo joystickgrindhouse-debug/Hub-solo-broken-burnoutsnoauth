@@ -200,9 +200,25 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
 
     } catch (error) {
       console.error("AI Error:", error);
+      
+      // Notify Admin via push-style notification in Firestore
+      try {
+        await addDoc(collection(db, 'admin_notifications'), {
+          type: 'CHATBOT_ERROR',
+          userId: user.uid,
+          userName: userProfile?.nickname || user.email,
+          error: error.message,
+          timestamp: Timestamp.now(),
+          status: 'pending',
+          message: `Internal error in Rivalis Coach for user ${userProfile?.nickname || user.email}. Assistance required.`
+        });
+      } catch (notifyErr) {
+        console.error("Failed to notify admin of error:", notifyErr);
+      }
+
       setMessages(prev => [...prev, { 
         id: Date.now() + 2, 
-        text: `My neural link is flickering, Rival. (Error: ${error.message}). Try again in a moment.`, 
+        text: "My neural link is flickering, Rival. An internal error has occurred. A member of our support team will be with you shortly. Please tell us as much information as possible so we can better assist you.", 
         isBot: true, 
         timestamp: new Date() 
       }]);

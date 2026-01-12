@@ -207,7 +207,7 @@ export default function App() {
                 user={user} 
                 userProfile={userProfile}
                 onTourComplete={() => console.log('Tour finished')}
-                initialMessage="Hey Rival! I'm Rivalis Coach. Ready to optimize?"
+                initialMessage="Hey Rival! I'm Rivalis Coach. Ready to optimize? Let's take the tour!"
               />
             </div>
           )}

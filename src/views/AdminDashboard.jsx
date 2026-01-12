@@ -9,6 +9,7 @@ const AdminDashboard = ({ userProfile }) => {
   const [messages, setMessages] = useState([]);
   const [raffleWinners, setRaffleWinners] = useState([]);
   const [logs, setLogs] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [adminKey, setAdminKey] = useState("");
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [activeTab, setActiveTab] = useState("users");
@@ -63,6 +64,22 @@ const AdminDashboard = ({ userProfile }) => {
         setRaffleWinners(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       });
 
+      // Real-time listener for Admin Notifications
+      const unsubscribeNotifications = onSnapshot(collection(db, "admin_notifications"), (snapshot) => {
+        const newNotes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setNotifications(newNotes.sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds));
+        
+        // Push notification simulation (browser alert for priority items)
+        const latest = newNotes[0];
+        if (latest && latest.status === 'pending' && latest.timestamp?.seconds > Date.now()/1000 - 10) {
+          if (!("Notification" in window)) {
+            alert(`PRIORITY ALERT: ${latest.message}`);
+          } else if (Notification.permission === "granted") {
+            new Notification("RIVALIS COMMAND", { body: latest.message });
+          }
+        }
+      });
+
       if (activeTab === "logs") {
         fetchSystemLogs();
       }
@@ -71,6 +88,7 @@ const AdminDashboard = ({ userProfile }) => {
         unsubscribeUsers();
         unsubscribeChat();
         unsubscribeWinners();
+        unsubscribeNotifications();
       };
     }
   }, [isAuthorized, activeTab]);
@@ -128,6 +146,16 @@ const AdminDashboard = ({ userProfile }) => {
   const handleSetLivePerk = (perk) => adminAction("live-perk", { perk });
   const handleSetArenaEvent = (event) => adminAction("arena-event", { event });
   const handleBroadcastMessage = (message) => adminAction("broadcast", { message });
+  
+  const handleResolveNotification = async (id) => {
+    try {
+      const { db } = await import("../firebase");
+      const { doc, updateDoc } = await import("firebase/firestore");
+      await updateDoc(doc(db, "admin_notifications", id), { status: 'resolved' });
+    } catch (err) {
+      console.error("Failed to resolve note:", err);
+    }
+  };
 
   const isUserLive = (user) => {
     const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
@@ -205,14 +233,14 @@ const AdminDashboard = ({ userProfile }) => {
             </div>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar w-full md:w-auto">
-            {["users", "chat", "logs", "live", "raffle"].map((tab) => (
+            {["users", "chat", "logs", "live", "raffle", "alerts"].map((tab) => (
               <button 
                 key={tab}
                 type="button" 
                 onClick={() => setActiveTab(tab)} 
                 className={`px-6 py-2.5 rounded-md flex-shrink-0 transition-all font-black text-[10px] uppercase tracking-widest border ${activeTab === tab ? "bg-red-600 text-white border-red-600 shadow-[0_0_20px_rgba(255,48,80,0.3)]" : "bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-700 hover:text-zinc-300"}`}
               >
-                {tab === "users" ? "Arena Roster" : tab === "chat" ? "Comms Log" : tab === "logs" ? "System Core" : tab === "live" ? "Live Rules" : "Raffle Protocol"}
+                {tab === "users" ? "Arena Roster" : tab === "chat" ? "Comms Log" : tab === "logs" ? "System Core" : tab === "live" ? "Live Rules" : tab === "alerts" ? "Tactical Alerts" : "Raffle Protocol"}
               </button>
             ))}
           </div>
@@ -292,6 +320,37 @@ const AdminDashboard = ({ userProfile }) => {
                   <p className="text-[11px] text-red-400 italic">Directive changes are broadcasted globally to all active arenas and take effect immediately on next match initialization.</p>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "alerts" && (
+          <div className="bg-zinc-900/30 p-6 rounded-2xl border border-zinc-800/50 max-h-[75vh] overflow-y-auto custom-scrollbar backdrop-blur-xl animate-in fade-in zoom-in-95 duration-300">
+            <h2 className="text-red-600 text-[10px] font-black tracking-[0.2em] mb-6 px-2 uppercase border-l-2 border-red-600 pl-4">Tactical Alerts & Escalations</h2>
+            <div className="space-y-3">
+              {notifications.map(n => (
+                <div key={n.id} className={`p-5 rounded-xl border flex justify-between items-center transition-all ${n.status === 'pending' ? 'bg-red-950/20 border-red-600/50' : 'bg-zinc-900/40 border-zinc-800'}`}>
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className={`text-[8px] px-2 py-0.5 rounded font-black uppercase tracking-widest ${n.type === 'CHATBOT_ERROR' ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'}`}>
+                        {n.type}
+                      </span>
+                      <p className="text-[9px] text-zinc-500 font-mono">{new Date(n.timestamp?.seconds * 1000).toLocaleString()}</p>
+                    </div>
+                    <p className="text-sm font-bold text-zinc-200">{n.message}</p>
+                    {n.error && <p className="text-[10px] text-red-400 mt-1 font-mono italic">Trace: {n.error}</p>}
+                  </div>
+                  {n.status === 'pending' && (
+                    <button 
+                      onClick={() => handleResolveNotification(n.id)}
+                      className="bg-zinc-800 hover:bg-green-600 text-white text-[9px] px-4 py-2 rounded font-black uppercase tracking-widest transition-all"
+                    >
+                      Resolve
+                    </button>
+                  )}
+                </div>
+              ))}
+              {notifications.length === 0 && <p className="text-center text-zinc-700 py-20 font-mono italic uppercase tracking-widest">Scanning... System Clear.</p>}
             </div>
           </div>
         )}
