@@ -74,13 +74,74 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const [profileData, setProfileData] = useState({
+    gender: '',
+    age: '',
+    height: '',
+    weight: '',
+    goals: '',
+    interests: '',
+    reason: ''
+  });
+
+  const tourQuestions = [
+    { field: 'gender', question: "COACH: State your biological gender for biometric baseline.", options: ['Male', 'Female', 'Non-Binary', 'Redacted'] },
+    { field: 'age', question: "COACH: Input your current biological age cycle.", type: 'number' },
+    { field: 'height', question: "COACH: Specify your vertical stature (height).", type: 'text' },
+    { field: 'weight', question: "COACH: Record your current mass (weight).", type: 'text' },
+    { field: 'goals', question: "COACH: What is your primary optimization objective?", options: ['Mass Gain', 'Fat Loss', 'Endurance', 'General Health'] },
+    { field: 'interests', question: "COACH: Identify your secondary interests/hobbies.", options: ['Gaming', 'Tech/AI', 'Outdoor Combat', 'Mental Strategy'] },
+    { field: 'reason', question: "COACH: What brought you to the Rivalis Mainframe?", options: ['A) The Rivalry', 'B) To better myself', 'C) Data Optimization', 'D) Tactical training'] }
+  ];
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!inputText.trim()) return;
 
     const userMsg = { id: Date.now(), text: inputText, isBot: false, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
+    const currentInput = inputText;
     setInputText('');
+
+    // Handle profile intake during tour
+    if (showTour && tourStep >= 3 && tourStep < 3 + tourQuestions.length) {
+      const qIdx = tourStep - 3;
+      const currentQ = tourQuestions[qIdx];
+      
+      const newProfile = { ...profileData, [currentQ.field]: currentInput };
+      setProfileData(newProfile);
+
+      if (qIdx < tourQuestions.length - 1) {
+        const nextQ = tourQuestions[qIdx + 1];
+        setMessages(prev => [...prev, { 
+          id: Date.now() + 1, 
+          text: nextQ.question + (nextQ.options ? ` (${nextQ.options.join(' / ')})` : ''), 
+          isBot: true, 
+          timestamp: new Date() 
+        }]);
+        setTourStep(prev => prev + 1);
+      } else {
+        // Final intake step
+        setMessages(prev => [...prev, { 
+          id: Date.now() + 1, 
+          text: "BIOMETRICS RECORDED. Synchronizing with bio-sector... Now, Rival, define your personal mission statement. Fill in your BIO to complete initialization.", 
+          isBot: true, 
+          timestamp: new Date() 
+        }]);
+        
+        // Sync to Firestore
+        if (user) {
+          try {
+            const { UserService } = await import('../../services/userService.js');
+            await UserService.updateUserProfile(user.uid, { ...newProfile });
+          } catch (err) {
+            console.error("Failed to sync biometrics:", err);
+          }
+        }
+        setTourStep(prev => prev + 1);
+      }
+      return;
+    }
 
     if (inputText.toLowerCase().includes('/tour') || inputText.toLowerCase().includes('/reboot')) {
       setTourStep(0);
@@ -226,8 +287,18 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
   };
 
   const nextTourStep = () => {
-    if (tourStep < 6) {
+    if (tourStep < 14) {
       setTourStep(prev => prev + 1);
+      
+      // Trigger question if entering intake
+      if (tourStep + 1 === 4) {
+        setMessages(prev => [...prev, { 
+          id: Date.now() + 5, 
+          text: tourQuestions[0].question + ` (${tourQuestions[0].options.join(' / ')})`, 
+          isBot: true, 
+          timestamp: new Date() 
+        }]);
+      }
     } else {
       setShowTour(false);
       window.localStorage.setItem('rivalis_tour_completed', 'true');

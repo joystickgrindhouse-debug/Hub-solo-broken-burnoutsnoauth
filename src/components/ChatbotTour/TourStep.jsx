@@ -23,8 +23,14 @@ const TourStep = ({ step, onNext, onSkip }) => {
       action: "highlight_only"
     },
     { 
+      title: "BIOMETRIC INTAKE", 
+      description: "COACH: I require additional data points to optimize your training path. Answer the questions in the chat terminal below.",
+      route: "/profile",
+      action: "highlight_only"
+    },
+    { 
       title: "IDENTITY: BIO", 
-      description: "DATA STREAM: This is your about me bio area. Define your mission and tactical objectives for other Rivals to see.",
+      description: "DATA STREAM: This is your mission statement area. Define your tactical objectives here. This is the final step of identity calibration.",
       route: "/profile",
       highlight: ".profile-bio-section",
       action: "highlight_only"
