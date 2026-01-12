@@ -110,10 +110,38 @@ export const LiveService = {
   async startMatch(roomId) {
     try {
       const roomRef = doc(db, "liveRooms", roomId);
+      const jokers = [
+        { id: "j1", type: "positive", effect: "Double Points (Next 30s)", value: 2 },
+        { id: "j2", type: "positive", effect: "Skip Next Exercise", value: 0 },
+        { id: "j3", type: "negative", effect: "Half Points (Next 30s)", value: 0.5 },
+        { id: "j4", type: "negative", effect: "Extra 10 Reps", value: 10 }
+      ].sort(() => Math.random() - 0.5);
+
       await updateDoc(roomRef, { 
         status: "playing",
-        startTime: Timestamp.now()
+        startTime: Timestamp.now(),
+        jokers: jokers,
+        currentJokerIndex: -1
       });
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  async triggerJoker(roomId) {
+    try {
+      const roomRef = doc(db, "liveRooms", roomId);
+      const roomSnap = await getDocs(query(collection(db, "liveRooms"), where("__name__", "==", roomId)));
+      const roomData = roomSnap.docs[0].data();
+      const nextIndex = (roomData.currentJokerIndex || -1) + 1;
+      
+      if (nextIndex < roomData.jokers.length) {
+        await updateDoc(roomRef, {
+          currentJokerIndex: nextIndex,
+          jokerActiveUntil: Timestamp.fromMillis(Date.now() + 30000)
+        });
+      }
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };

@@ -111,12 +111,29 @@ export default function Live({ user, userProfile }) {
     }
   };
 
-  const handleCardComplete = () => {
+  const handleCardComplete = async () => {
     if (activePlayerId !== user.uid || isEliminated || lobbyStatus !== "ACTIVE") return;
-    const nextIndex = (currentCardIndex + 1) % selectedShowdown.exercises.length;
     
-    // In a real live mode, we'd update the room state to pass the turn
-    setScore(s => s + 10);
+    // Chance to trigger joker on completion
+    if (Math.random() > 0.7 && roomData.currentJokerIndex < 3) {
+      await LiveService.triggerJoker(currentRoomId);
+    }
+
+    const nextIndex = (currentCardIndex + 1) % selectedShowdown.exercises.length;
+    let points = 10;
+
+    // Apply joker effects
+    if (roomData.currentJokerIndex >= 0) {
+      const activeJoker = roomData.jokers[roomData.currentJokerIndex];
+      const jokerActive = roomData.jokerActiveUntil?.toMillis() > Date.now();
+      
+      if (jokerActive) {
+        if (activeJoker.effect.includes("Double")) points *= 2;
+        if (activeJoker.effect.includes("Half")) points *= 0.5;
+      }
+    }
+    
+    setScore(s => s + points);
     setCurrentCardIndex(nextIndex);
     setIsFlipping(true);
     setTimeout(() => setIsFlipping(false), 600);
@@ -210,9 +227,16 @@ export default function Live({ user, userProfile }) {
   const isMyTurn = activePlayerId === user.uid;
   const currentExercise = selectedShowdown.exercises[currentCardIndex % selectedShowdown.exercises.length];
   const myPlayerData = roomData?.players?.find(p => p.userId === user.uid);
+  const activeJoker = roomData?.jokers && roomData.currentJokerIndex >= 0 ? roomData.jokers[roomData.currentJokerIndex] : null;
+  const jokerActive = activeJoker && roomData.jokerActiveUntil?.toMillis() > Date.now();
 
   return (
     <div className="live-arena" style={{ height: "calc(100vh - 64px)", background: "black", display: "flex", flexDirection: "column" }}>
+      {jokerActive && (
+        <div style={{ background: activeJoker.type === "positive" ? "#0f0" : "#ff3050", color: "#000", padding: "10px", textAlign: "center", fontFamily: "'Press Start 2P', cursive", fontSize: "10px", animation: "blink 1s infinite" }}>
+          JOKER ACTIVE: {activeJoker.effect}
+        </div>
+      )}
       <div style={{ padding: "15px", borderBottom: "2px solid #ff3050", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
           <span style={{ color: "#ff3050", fontFamily: "'Press Start 2P', cursive", fontSize: "12px" }}>{selectedShowdown.name}</span>
