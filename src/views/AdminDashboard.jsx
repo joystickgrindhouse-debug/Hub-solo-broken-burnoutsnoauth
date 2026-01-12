@@ -117,6 +117,7 @@ const AdminDashboard = ({ userProfile }) => {
   const handleDrawRaffle = () => adminAction("raffle-draw", {});
   const handleUserAction = (userId, action, value, message) => adminAction("user-action", { userId, action, data: { value, message } });
   const handleDeleteMessage = (messageId) => adminAction("delete-message", { messageId, collection: "globalChat" });
+  const handleSetLivePerk = (perk) => adminAction("live-perk", { perk });
 
   const isUserLive = (user) => {
     const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
@@ -194,18 +195,46 @@ const AdminDashboard = ({ userProfile }) => {
             </div>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar w-full md:w-auto">
-            {["users", "chat", "logs", "raffle"].map((tab) => (
+            {["users", "chat", "logs", "live", "raffle"].map((tab) => (
               <button 
                 key={tab}
                 type="button" 
                 onClick={() => setActiveTab(tab)} 
                 className={`px-6 py-2.5 rounded-md flex-shrink-0 transition-all font-black text-[10px] uppercase tracking-widest border ${activeTab === tab ? "bg-red-600 text-white border-red-600 shadow-[0_0_20px_rgba(255,48,80,0.3)]" : "bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-700 hover:text-zinc-300"}`}
               >
-                {tab === "users" ? "Arena Roster" : tab === "chat" ? "Comms Log" : tab === "logs" ? "System Core" : "Raffle Protocol"}
+                {tab === "users" ? "Arena Roster" : tab === "chat" ? "Comms Log" : tab === "logs" ? "System Core" : tab === "live" ? "Live Rules" : "Raffle Protocol"}
               </button>
             ))}
           </div>
         </div>
+
+        {activeTab === "live" && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-zinc-900/40 p-10 rounded-3xl border border-zinc-800/60 backdrop-blur-xl">
+              <h2 className="text-red-600 text-[10px] font-black tracking-[0.3em] mb-8 uppercase italic">Live Arena Directives</h2>
+              <div className="space-y-8">
+                <div>
+                  <label className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em] mb-4 block">Active Perk / Event</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {["Standard", "Double XP", "Infinite Jokers", "High Stakes", "Nightmare Mode"].map(perk => (
+                      <button 
+                        key={perk}
+                        onClick={() => handleSetLivePerk(perk)}
+                        className="bg-black border border-zinc-800 p-4 rounded-xl text-[10px] font-mono hover:border-red-600 transition-all uppercase tracking-widest"
+                      >
+                        {perk}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="p-6 bg-red-950/10 border border-red-900/30 rounded-2xl">
+                  <p className="text-[10px] text-red-500 font-black uppercase mb-2 tracking-widest">Administrator Notice:</p>
+                  <p className="text-[11px] text-red-400 italic">Directive changes are broadcasted globally to all active arenas and take effect immediately on next match initialization.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {activeTab === "users" && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">

@@ -599,4 +599,3 @@ export default function Live({ user, userProfile }) {
     </div>
   );
 }
-}
