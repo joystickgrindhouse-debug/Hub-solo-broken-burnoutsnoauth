@@ -199,5 +199,60 @@ app.post("/api/admin/delete-message", async (req, res) => {
   }
 });
 
+app.post("/api/admin/live-perk", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader !== `Bearer ${process.env.ADMIN_SECRET}`) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+  const { perk } = req.body;
+  try {
+    const { db } = require('./src/firebase_server');
+    await db.collection('system_config').doc('live_mode').set({ 
+      activePerk: perk,
+      updatedAt: new Date()
+    }, { merge: true });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/admin/arena-event", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader !== `Bearer ${process.env.ADMIN_SECRET}`) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+  const { event } = req.body;
+  try {
+    const { db } = require('./src/firebase_server');
+    await db.collection('system_config').doc('live_mode').set({ 
+      activeEvent: event,
+      updatedAt: new Date()
+    }, { merge: true });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/admin/broadcast", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader !== `Bearer ${process.env.ADMIN_SECRET}`) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+  const { message } = req.body;
+  try {
+    const { db } = require('./src/firebase_server');
+    await db.collection('global_broadcasts').add({
+      message,
+      timestamp: new Date(),
+      expiresAt: new Date(Date.now() + 3600 * 1000) // 1 hour
+    });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

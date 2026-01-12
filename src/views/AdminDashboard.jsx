@@ -103,11 +103,19 @@ const AdminDashboard = ({ userProfile }) => {
         },
         body: JSON.stringify(body)
       });
-      const data = await response.json();
+      
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        throw new Error("Invalid server response: " + text.substring(0, 50));
+      }
+
       if (data.success) {
         alert("Action successful");
       } else {
-        alert("Failed: " + data.error);
+        alert("Failed: " + (data.error || "Unknown error"));
       }
     } catch (error) {
       alert("Error: " + error.message);
