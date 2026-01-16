@@ -25,7 +25,7 @@ const RaffleRoom = lazy(() => import("./views/RaffleRoom.jsx"));
 const WaitingForUpload = lazy(() => import("./views/WaitingForUpload.jsx"));
 const AdminDashboard = lazy(() => import("./views/AdminDashboard.jsx"));
 const OtherApps = lazy(() => import("./views/OtherApps.jsx"));
-const BoxingArena = lazy(() => import("./boxing/pages/Arena.jsx"));
+const BoxingArena = lazy(() => import("./boxing/pages/Arena.tsx"));
 
 export default function App() {
   const navigate = useNavigate();
