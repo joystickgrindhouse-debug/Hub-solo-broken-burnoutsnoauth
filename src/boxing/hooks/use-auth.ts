@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * Shared Auth Hook for Rivalis Boxing
  * Integrated with Hub authentication state
  */
 export function useAuth() {
-  const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 

@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { PoseTracker } from "@/game/pose";
-import { SkeletonRenderer } from "@/game/skeletonRenderer";
-import { CombatEngine } from "@/game/combatEngine";
-import { HUD } from "@/components/game/HUD";
-import { useCreateMatch } from "@/hooks/use-matches";
-import { Button } from "@/components/ui/button";
+import { PoseTracker } from "../game/pose";
+import { SkeletonRenderer } from "../game/skeletonRenderer";
+import { CombatEngine } from "../game/combatEngine";
+import { HUD } from "../components/game/HUD";
+import { Button } from "../../components/ui/Button";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
