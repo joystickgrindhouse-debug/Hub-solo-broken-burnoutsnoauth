@@ -60,6 +60,7 @@ export default function OtherApps() {
         <div style={styles.tilesGrid}>
           {otherApps.map((app) => (
               <div 
+                key={app.id}
                 style={styles.tile}
                 onClick={() => app.link !== "#" && navigate(app.link)}
               >

@@ -29,7 +29,7 @@ export default function Arena() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [engine] = useState(() => new CombatEngine());
   const [loading, setLoading] = useState(true);
-  const [gameState, setGameState] = useState(engine.state);
+  const [gameState, setGameState] = useState<any>(engine.state);
   
   const tracker = useRef(new PoseTracker());
   const renderer = useRef(new SkeletonRenderer());
@@ -78,9 +78,9 @@ export default function Arena() {
       // However, we need to clear canvas once per frame.
     };
 
-    requestRef.current = requestAnimationFrame(loop);
+    requestRef.current = requestAnimationFrame((time: number) => loop(time));
 
-    tracker.current.onResults((results) => {
+    tracker.current.onResults((results: any) => {
       if (!canvasRef.current || !videoRef.current) return;
       const ctx = canvasRef.current.getContext('2d');
       if (!ctx) return;
