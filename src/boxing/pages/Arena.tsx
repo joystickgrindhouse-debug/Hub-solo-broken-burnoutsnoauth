@@ -3,9 +3,26 @@ import { PoseTracker } from "../game/pose";
 import { SkeletonRenderer } from "../game/skeletonRenderer";
 import { CombatEngine } from "../game/combatEngine";
 import { HUD } from "../components/game/HUD";
-import { Button } from "../../components/ui/Button";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+
+const HubButton = ({ onClick, children, variant, size }: any) => (
+  <button 
+    onClick={onClick}
+    style={{
+      background: "rgba(255,255,255,0.1)",
+      border: "1px solid rgba(255,255,255,0.2)",
+      color: "white",
+      padding: "10px 20px",
+      borderRadius: "8px",
+      cursor: "pointer",
+      fontFamily: "'Press Start 2P', cursive",
+      fontSize: "0.7rem"
+    }}
+  >
+    {children}
+  </button>
+);
 
 export default function Arena() {
   const navigate = useNavigate();
@@ -18,7 +35,7 @@ export default function Arena() {
   const tracker = useRef(new PoseTracker());
   const renderer = useRef(new SkeletonRenderer());
   const requestRef = useRef<number>();
-  const createMatch = { mutate: (data: any) => console.log('Match saved:', data) }; // Placeholder for match creation
+  const createMatch = { mutate: (data: any) => console.log('Match saved:', data) }; 
 
   useEffect(() => {
     const init = async () => {
@@ -130,9 +147,9 @@ export default function Arena() {
       
       {/* Back Button (only when game over or strictly needed) */}
       <div className="absolute top-4 right-4 z-40">
-        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+        <HubButton onClick={() => navigate("/dashboard")}>
           EXIT ARENA
-        </Button>
+        </HubButton>
       </div>
     </div>
   );
