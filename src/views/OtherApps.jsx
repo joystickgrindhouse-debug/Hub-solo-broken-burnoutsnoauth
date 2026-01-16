@@ -1,8 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import boxingImage from "/assets/images/boxing.png";
+import nutritionImage from "/assets/images/nutrition.png";
 import golfImage from "/assets/images/golf.png";
 import danceImage from "/assets/images/dance.png";
+import baseballImage from "/assets/images/baseball.png";
 
 const otherApps = [
   {
@@ -11,6 +13,13 @@ const otherApps = [
     image: boxingImage,
     link: "#",
     status: "Active"
+  },
+  {
+    id: "nutrition",
+    name: "Rivalis Nutrition",
+    image: nutritionImage,
+    link: "#",
+    status: "Coming Soon"
   },
   {
     id: "golf",
@@ -23,6 +32,13 @@ const otherApps = [
     id: "dance",
     name: "Rivalis Dance",
     image: danceImage,
+    link: "#",
+    status: "Coming Soon"
+  },
+  {
+    id: "baseball",
+    name: "Rivalis Baseball",
+    image: baseballImage,
     link: "#",
     status: "Coming Soon"
   }
@@ -44,7 +60,16 @@ export default function OtherApps() {
         <div style={styles.tilesGrid}>
           {otherApps.map((app) => (
             <div key={app.id} style={styles.tile}>
-              <div style={styles.imagePlaceholder}>
+              <img 
+                src={app.image} 
+                alt={app.name} 
+                style={styles.tileImage}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div style={{...styles.imagePlaceholder, display: 'none'}}>
                 {app.name.charAt(8)}
               </div>
               <div style={styles.tileOverlay}>
@@ -91,6 +116,11 @@ const styles = {
     overflow: "hidden",
     border: "2px solid rgba(255,255,255,0.1)",
     background: "#111"
+  },
+  tileImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover"
   },
   imagePlaceholder: {
     width: "100%",
