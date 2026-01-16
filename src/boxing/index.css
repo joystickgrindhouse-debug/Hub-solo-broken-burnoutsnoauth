@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Neon Red & Black Theme */
+  --background: 240 10% 4%;
+  --foreground: 0 0% 95%;
+  
+  --primary: 345 100% 50%; /* Neon Red */
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 240 5% 10%;
+  --secondary-foreground: 0 0% 80%;
+  
+  --muted: 240 5% 15%;
+  --muted-foreground: 240 5% 60%;
+  
+  --accent: 345 100% 50%;
+  --accent-foreground: 0 0% 100%;
+  
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 0 0% 100%;
+  
+  --border: 240 5% 20%;
+  --input: 240 5% 20%;
+  --ring: 345 100% 50%;
+  
+  --radius: 0.25rem;
+
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Rajdhani', sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased font-body selection:bg-primary/30 selection:text-primary;
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(255, 0, 50, 0.15), transparent 40%),
+      linear-gradient(to bottom, #050505, #0a0a0a);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-wider;
+  }
+}
+
+@layer utilities {
+  .text-neon {
+    text-shadow: 0 0 10px rgba(255, 0, 85, 0.7), 0 0 20px rgba(255, 0, 85, 0.5);
+  }
+  
+  .box-neon {
+    box-shadow: 0 0 10px rgba(255, 0, 85, 0.3), inset 0 0 20px rgba(255, 0, 85, 0.1);
+    border: 1px solid rgba(255, 0, 85, 0.5);
+  }
+
+  .scanline {
+    background: linear-gradient(
+      to bottom,
+      rgba(255,255,255,0),
+      rgba(255,255,255,0) 50%,
+      rgba(0,0,0,0.2) 50%,
+      rgba(0,0,0,0.2)
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}

@@ -11,7 +11,7 @@ const otherApps = [
     id: "boxing",
     name: "Rivalis Boxing",
     image: boxingImage,
-    link: "#",
+    link: "/boxing",
     status: "Active"
   },
   {
@@ -59,16 +59,19 @@ export default function OtherApps() {
 
         <div style={styles.tilesGrid}>
           {otherApps.map((app) => (
-            <div key={app.id} style={styles.tile}>
-              <img 
-                src={app.image} 
-                alt={app.name} 
-                style={styles.tileImage}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
-              />
+              <div 
+                style={styles.tile}
+                onClick={() => app.link !== "#" && navigate(app.link)}
+              >
+                <img 
+                  src={app.image} 
+                  alt={app.name} 
+                  style={styles.tileImage}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
               <div style={{...styles.imagePlaceholder, display: 'none'}}>
                 {app.name.charAt(8)}
               </div>
