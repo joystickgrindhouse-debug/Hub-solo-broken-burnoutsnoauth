@@ -27,6 +27,7 @@
     "google-auth-library": "^10.5.0",
     "json2csv": "^6.0.0-alpha.2",
     "leaflet": "^1.9.4",
+    "lucide-react": "^0.562.0",
     "openai": "^6.16.0",
     "p-limit": "^7.2.0",
     "p-retry": "^7.1.1",

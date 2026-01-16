@@ -4,7 +4,6 @@ import { SkeletonRenderer } from "../game/skeletonRenderer";
 import { CombatEngine } from "../game/combatEngine";
 import { HUD } from "../components/game/HUD";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 
 const HubButton = ({ onClick, children, variant, size }: any) => (
   <button 
@@ -136,7 +135,7 @@ export default function Arena() {
       {loading && (
         <div className="absolute inset-0 bg-black z-50 flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="w-16 h-16 text-primary animate-spin mx-auto mb-4" />
+            <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#ff3050] border-t-transparent"></div>
             <h2 className="text-2xl font-display text-white">INITIALIZING NEURAL LINK...</h2>
           </div>
         </div>
