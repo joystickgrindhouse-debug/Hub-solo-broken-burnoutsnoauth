@@ -24,6 +24,7 @@ const Run = lazy(() => import("./views/Run.jsx"));
 const RaffleRoom = lazy(() => import("./views/RaffleRoom.jsx"));
 const WaitingForUpload = lazy(() => import("./views/WaitingForUpload.jsx"));
 const AdminDashboard = lazy(() => import("./views/AdminDashboard.jsx"));
+const OtherApps = lazy(() => import("./views/OtherApps.jsx"));
 
 export default function App() {
   const navigate = useNavigate();
@@ -327,6 +328,14 @@ export default function App() {
                 <Suspense fallback={<div>LOADING...</div>}>
                   <AdminDashboard userProfile={userProfile} />
                 </Suspense>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/other-apps" 
+            element={
+              <ProtectedRoute user={user} userProfile={userProfile}>
+                <OtherApps />
               </ProtectedRoute>
             } 
           />

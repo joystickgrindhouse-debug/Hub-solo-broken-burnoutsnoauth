@@ -148,6 +148,12 @@ export default function Dashboard({ user, userProfile }) {
             </div>
           ))}
         </div>
+
+        <div style={styles.otherAppsSection}>
+          <button style={styles.otherAppsButton} onClick={() => navigate("/other-apps")}>
+            TRY OUR OTHER APPS
+          </button>
+        </div>
       </div>
 
       <style>{`
@@ -252,5 +258,24 @@ const styles = {
     color: "#fff",
     margin: "0",
     textShadow: "2px 2px 4px rgba(0, 0, 0, 0.8)",
+  },
+  otherAppsSection: {
+    marginTop: "40px",
+    textAlign: "center",
+    padding: "20px",
+  },
+  otherAppsButton: {
+    background: "linear-gradient(45deg, #ff3050 0%, #ff6b6b 100%)",
+    color: "white",
+    border: "none",
+    padding: "15px 40px",
+    fontSize: "18px",
+    fontWeight: "bold",
+    borderRadius: "30px",
+    cursor: "pointer",
+    boxShadow: "0 0 20px rgba(255, 48, 80, 0.3)",
+    transition: "all 0.3s ease",
+    fontFamily: "'Press Start 2P', cursive",
+    fontSize: "0.8rem"
   }
 };
