@@ -148,6 +148,20 @@ export default function Dashboard({ user, userProfile }) {
             </div>
           ))}
         </div>
+
+        <div style={styles.otherAppsSection}>
+          <button style={styles.otherAppsButton} onClick={() => window.open('https://rivalis.app', '_blank')}>
+            TRY OUR OTHER APPS
+          </button>
+          <div style={styles.otherAppsList}>
+            <span style={styles.appName}>Rivalis Boxing</span>
+            <span style={styles.divider}>----------</span>
+            <span style={styles.appName}>Rivalis Golf <span style={styles.comingSoon}>{"Coming Soon"}</span></span>
+            <span style={styles.divider}>------------</span>
+            <span style={styles.appName}>Rivalis Dance <span style={styles.comingSoon}>{"Coming Soon"}</span></span>
+            <span style={styles.divider}>---------</span>
+          </div>
+        </div>
       </div>
 
       <style>{`
@@ -252,5 +266,49 @@ const styles = {
     color: "#fff",
     margin: "0",
     textShadow: "2px 2px 4px rgba(0, 0, 0, 0.8)",
+  },
+  otherAppsSection: {
+    marginTop: "40px",
+    textAlign: "center",
+    padding: "20px",
+    background: "rgba(0, 0, 0, 0.5)",
+    borderRadius: "16px",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
+  },
+  otherAppsButton: {
+    background: "linear-gradient(45deg, #667eea 0%, #764ba2 100%)",
+    color: "white",
+    border: "none",
+    padding: "15px 40px",
+    fontSize: "20px",
+    fontWeight: "bold",
+    borderRadius: "30px",
+    cursor: "pointer",
+    marginBottom: "20px",
+    boxShadow: "0 4px 15px rgba(102, 126, 234, 0.4)",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+    fontFamily: "'Arial Black', sans-serif",
+  },
+  otherAppsList: {
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "10px",
+    color: "#fff",
+    fontSize: "14px",
+    opacity: "0.8",
+  },
+  appName: {
+    fontWeight: "600",
+  },
+  divider: {
+    color: "rgba(255, 255, 255, 0.3)",
+  },
+  comingSoon: {
+    fontSize: "10px",
+    color: "#ff4081",
+    marginLeft: "5px",
+    verticalAlign: "middle",
   }
 };
