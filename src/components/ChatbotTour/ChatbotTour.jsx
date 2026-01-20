@@ -388,13 +388,17 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
           style={styles.resumeTab} 
           onClick={() => setIsMinimized(false)}
         >
+          <div style={styles.tourHint}>
+            <div style={styles.tourArrow}>➤</div>
+            <div style={styles.tourHintText}>TOUR HERE</div>
+          </div>
           <span style={styles.resumeText}>RESUME TOUR</span>
           <div style={styles.resumePulse}></div>
         </div>
       )}
 
       {!showTour && (!userProfile?.tourCompleted) && (
-        <div style={styles.tourHint}>
+        <div style={{...styles.tourHint, top: '-60px', right: '20px'}}>
           <div style={styles.tourArrow}>➤</div>
           <div style={styles.tourHintText}>TOUR HERE</div>
         </div>
@@ -575,8 +579,9 @@ const styles = {
   },
   tourHint: {
     position: 'absolute',
-    top: '-60px',
-    right: '20px',
+    top: '-50px',
+    left: '50%',
+    transform: 'translateX(-50%)',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
