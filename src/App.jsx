@@ -49,6 +49,10 @@ export default function App() {
     document.body.classList.remove("theme-red-black", "theme-white-black", "theme-black-white");
     document.body.classList.add(`theme-${theme}`);
     localStorage.setItem("theme", theme);
+    // Explicitly set default theme for new users or if class is missing
+    if (!document.body.classList.contains(`theme-${theme}`)) {
+      document.body.classList.add(`theme-${theme}`);
+    }
   }, [theme]);
 
   const cycleTheme = () => {

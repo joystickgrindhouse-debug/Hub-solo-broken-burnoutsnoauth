@@ -122,8 +122,8 @@ export default function Login() {
         )}
         {error && <p style={{color:"#ff3050", fontWeight: "bold", marginTop: "1rem"}}>{error}</p>}
         {message && <p style={{color:"#00ff00", fontWeight: "bold", marginTop: "1rem"}}>{message}</p>}
-        <p style={{marginTop:"1rem", color: "#ff3050"}}>
-          <button onClick={() => setIsSignup(!isSignup)} style={{color: "#ff3050"}}>
+        <p style={{marginTop:"1rem", color: "var(--text-color)"}}>
+          <button onClick={() => setIsSignup(!isSignup)} style={{color: "var(--text-color)"}}>
             {isSignup ? "Already have an account? Login" : "Don't have an account? Sign Up"}
           </button>
         </p>

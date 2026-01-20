@@ -17,7 +17,7 @@ body, html {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-:root {
+body.theme-red-black {
   /* Theme 1: Black and Red (Original) */
   --bg-color: #000000;
   --card-bg: rgba(0, 0, 0, 0.6);
@@ -43,7 +43,7 @@ body.theme-black-white {
   /* Theme 3: Black on white */
   --bg-color: #ffffff;
   --card-bg: rgba(245, 245, 245, 0.9);
-  --text-color: #000000;
+  --text-color: #ffffff;
   --accent-color: #000000;
   --nav-bg: #ffffff;
   --brightness: 1;
