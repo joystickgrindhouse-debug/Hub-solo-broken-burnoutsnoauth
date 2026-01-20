@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { auth } from "../firebase.js";
 
-export default function Navbar({ user, userProfile, isDarkMode, toggleTheme }) {
+export default function Navbar({ user, userProfile, theme, cycleTheme }) {
   const [open, setOpen] = useState(false);
   const [profileSubmenuOpen, setProfileSubmenuOpen] = useState(false);
 
@@ -24,7 +24,7 @@ export default function Navbar({ user, userProfile, isDarkMode, toggleTheme }) {
       <div className="logo">RIVALIS Hub</div>
       <div className="nav-right">
         <button 
-          onClick={toggleTheme}
+          onClick={cycleTheme}
           style={{
             background: "none",
             border: "none",
@@ -34,11 +34,11 @@ export default function Navbar({ user, userProfile, isDarkMode, toggleTheme }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            filter: "drop-shadow(0 0 5px rgba(255, 48, 80, 0.5))"
+            filter: "drop-shadow(0 0 5px var(--accent-color, #ff3050))"
           }}
-          title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          title="Cycle Theme"
         >
-          {isDarkMode ? "☀️" : "🌙"}
+          {theme === "red-black" ? "🔴" : theme === "white-black" ? "⚪" : "⚫"}
         </button>
         {hasCompletedSetup && (
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>

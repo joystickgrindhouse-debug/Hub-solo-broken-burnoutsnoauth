@@ -40,21 +40,25 @@ export default function App() {
   const [isNewSignup, setIsNewSignup] = useState(false);
   const [initialHype, setInitialHype] = useState(false);
   const [showBot, setShowBot] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    return localStorage.getItem("theme") !== "light";
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem("theme") || "red-black";
   });
   const location = useLocation();
 
   useEffect(() => {
-    if (!isDarkMode) {
-      document.body.classList.add("light-mode");
-    } else {
-      document.body.classList.remove("light-mode");
-    }
-    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
-  }, [isDarkMode]);
+    document.body.classList.remove("theme-red-black", "theme-white-black", "theme-black-white");
+    document.body.classList.add(`theme-${theme}`);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
-  const toggleTheme = () => setIsDarkMode(!isDarkMode);
+  const cycleTheme = () => {
+    const themes = ["red-black", "white-black", "theme-black-white"]; // Using requested names
+    setTheme(prev => {
+      if (prev === "red-black") return "white-black";
+      if (prev === "white-black") return "black-white";
+      return "red-black";
+    });
+  };
 
   // Activity tracking
   useEffect(() => {
@@ -205,29 +209,31 @@ export default function App() {
   // Render routes (public and protected)
   return (
     <div style={{ background: 'var(--bg-color, #111)', minHeight: '100vh', color: 'var(--text-color, #fff)' }}>
-      {user && <Navbar user={user} userProfile={userProfile} isDarkMode={isDarkMode} toggleTheme={toggleTheme} />}
+      {user && <Navbar user={user} userProfile={userProfile} theme={theme} cycleTheme={cycleTheme} />}
       
       {!user && location.pathname === "/login" && (
         <button 
-          onClick={toggleTheme}
+          onClick={cycleTheme}
           style={{
             position: "fixed",
             top: "1rem",
             right: "1rem",
             zIndex: 10002,
             background: "rgba(0,0,0,0.3)",
-            border: "1px solid #ff3050",
+            border: "1px solid var(--accent-color, #ff3050)",
             borderRadius: "50%",
             width: "40px",
             height: "40px",
-            color: "#ff3050",
+            color: "var(--accent-color, #ff3050)",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center"
+            justifyContent: "center",
+            fontSize: "1.2rem"
           }}
+          title="Cycle Themes"
         >
-          {isDarkMode ? "☀️" : "🌙"}
+          {theme === "red-black" ? "🔴" : theme === "white-black" ? "⚪" : "⚫"}
         </button>
       )}
       

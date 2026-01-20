@@ -17,17 +17,33 @@ body, html {
 }
 
 :root {
+  /* Theme 1: Black and Red (Original) */
   --bg-color: #000000;
   --card-bg: rgba(0, 0, 0, 0.6);
   --text-color: #ffffff;
   --accent-color: #ff3050;
+  --nav-bg: #000000;
+  --brightness: 1.8;
 }
 
-body.light-mode {
-  --bg-color: #f0f0f0;
-  --card-bg: rgba(255, 255, 255, 0.9);
-  --text-color: #1a1a1a;
-  --accent-color: #d62842;
+body.theme-white-black {
+  /* Theme 2: White text everything white text on top of black background */
+  --bg-color: #000000;
+  --card-bg: rgba(20, 20, 20, 0.8);
+  --text-color: #ffffff;
+  --accent-color: #ffffff;
+  --nav-bg: #111111;
+  --brightness: 1.5;
+}
+
+body.theme-black-white {
+  /* Theme 3: Black on white */
+  --bg-color: #ffffff;
+  --card-bg: rgba(245, 245, 245, 0.9);
+  --text-color: #000000;
+  --accent-color: #000000;
+  --nav-bg: #eeeeee;
+  --brightness: 1;
 }
 
 .hero-background {
@@ -43,11 +59,10 @@ body.light-mode {
   align-items: center;
   flex-direction: column;
   padding: 1rem;
-  filter: brightness(var(--brightness, 1.8));
+  filter: brightness(var(--brightness));
 }
 
-body.light-mode .hero-background {
-  --brightness: 1;
+body.theme-black-white .hero-background {
   background-image: none;
 }
 
