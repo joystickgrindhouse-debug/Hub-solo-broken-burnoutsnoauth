@@ -80,10 +80,11 @@ body.theme-black-white {
   font-family: 'Press Start 2P', cursive;
   font-size: 1.2rem;
   font-weight: normal;
-  color: var(--accent-color);
+  color: #ffffff !important;
   text-shadow: 0 0 10px var(--accent-color);
   letter-spacing: 2px;
   text-transform: uppercase;
+  animation: flicker 3s infinite;
 }
 
 input {
