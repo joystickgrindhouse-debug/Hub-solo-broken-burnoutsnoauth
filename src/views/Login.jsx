@@ -9,15 +9,15 @@ const styles = {
     fontFamily: "'Press Start 2P', cursive",
     fontSize: "clamp(1.5rem, 6vw, 2.5rem)",
     fontWeight: "normal",
-    color: "#ffffff",
+    color: "var(--logo-color)",
     textTransform: "uppercase",
     letterSpacing: "2px",
     margin: "0 0 1.5rem 0",
     textShadow: `
-      0 0 10px rgba(255, 255, 255, 0.8),
-      0 0 20px rgba(255, 255, 255, 0.6),
-      0 0 30px rgba(255, 255, 255, 0.4),
-      0 0 40px rgba(255, 255, 255, 0.2)
+      0 0 10px var(--accent-shadow),
+      0 0 20px var(--accent-shadow),
+      0 0 30px var(--accent-shadow),
+      0 0 40px var(--accent-shadow)
     `,
     animation: "slamIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards, pulse 2s ease-in-out 0.8s infinite",
     transformOrigin: "center center",
@@ -30,7 +30,7 @@ const styles = {
   },
   tagline: {
     fontSize: "0.75rem",
-    color: "#ffffff",
+    color: "var(--text-color)",
     margin: "0 0 1.5rem 0",
     opacity: 0,
     animation: "fadeIn 0.5s ease-in 0.6s forwards",
@@ -42,7 +42,7 @@ const styles = {
   forgotPassword: {
     background: "none",
     border: "none",
-    color: "#ffffff",
+    color: "var(--text-color)",
     fontSize: "0.7rem",
     marginTop: "0.5rem",
     cursor: "pointer",
@@ -120,8 +120,8 @@ export default function Login() {
             Forgot Password?
           </button>
         )}
-        {error && <p style={{color:"#ffffff", fontWeight: "bold", marginTop: "1rem"}}>{error}</p>}
-        {message && <p style={{color:"#ffffff", fontWeight: "bold", marginTop: "1rem"}}>{message}</p>}
+        {error && <p style={{color:"var(--text-color)", fontWeight: "bold", marginTop: "1rem"}}>{error}</p>}
+        {message && <p style={{color:"var(--text-color)", fontWeight: "bold", marginTop: "1rem"}}>{message}</p>}
         <p style={{marginTop:"1rem", color: "var(--text-color)"}}>
           <button onClick={() => setIsSignup(!isSignup)} style={{color: "var(--text-color)"}}>
             {isSignup ? "Already have an account? Login" : "Don't have an account? Sign Up"}
@@ -145,19 +145,19 @@ export default function Login() {
         @keyframes pulse {
           0%, 100% {
             text-shadow: 
-              0 0 10px rgba(255, 255, 255, 0.8),
-              0 0 20px rgba(255, 255, 255, 0.6),
-              0 0 30px rgba(255, 255, 255, 0.4),
-              0 0 40px rgba(255, 255, 255, 0.2);
+              0 0 10px var(--accent-shadow),
+              0 0 20px var(--accent-shadow),
+              0 0 30px var(--accent-shadow),
+              0 0 40px var(--accent-shadow);
             transform: scale(1);
           }
           50% {
             text-shadow: 
-              0 0 20px rgba(255, 255, 255, 1),
-              0 0 30px rgba(255, 255, 255, 0.8),
-              0 0 40px rgba(255, 255, 255, 0.6),
-              0 0 50px rgba(255, 255, 255, 0.4),
-              0 0 60px rgba(255, 255, 255, 0.2);
+              0 0 20px var(--accent-shadow),
+              0 0 30px var(--accent-shadow),
+              0 0 40px var(--accent-shadow),
+              0 0 50px var(--accent-shadow),
+              0 0 60px var(--accent-shadow);
             transform: scale(1.05);
           }
         }

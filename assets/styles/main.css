@@ -21,11 +21,13 @@ body.theme-red-black {
   /* Theme 1: Black and Red (Original) */
   --bg-color: #000000;
   --card-bg: rgba(0, 0, 0, 0.6);
-  --text-color: #ffffff;
+  --text-color: #ff3050;
   --accent-color: #ff3050;
   --nav-bg: #000000;
   --brightness: 1.8;
   --border-color: #ff3050;
+  --logo-color: #ff3050;
+  --accent-shadow: rgba(255, 48, 80, 0.8);
 }
 
 body.theme-white-black {
@@ -37,6 +39,8 @@ body.theme-white-black {
   --nav-bg: #000000;
   --brightness: 1.5;
   --border-color: #ffffff;
+  --logo-color: #ffffff;
+  --accent-shadow: rgba(255, 255, 255, 0.8);
 }
 
 body.theme-black-white {
@@ -48,6 +52,8 @@ body.theme-black-white {
   --nav-bg: #ffffff;
   --brightness: 1;
   --border-color: #000000;
+  --logo-color: #ffffff;
+  --accent-shadow: rgba(0, 0, 0, 0.8);
 }
 
 .overlay-card {
@@ -104,39 +110,6 @@ button {
   font-weight: bold;
   cursor: pointer;
   border: 2px solid var(--border-color);
-}
-
-input, button {
-  width: 100%;
-  margin: 0.5rem 0;
-  padding: 0.75rem;
-  font-size: 1rem;
-  border-radius: 8px;
-  border: none;
-}
-
-input {
-  background-color: transparent;
-  border: 2px solid rgba(255, 48, 80, 0.5);
-  color: #ff3050;
-}
-
-input::placeholder {
-  color: rgba(255, 48, 80, 0.5);
-}
-
-input:focus {
-  outline: none;
-  border-color: #ff3050;
-  box-shadow: 0 0 15px rgba(255, 48, 80, 0.3);
-}
-
-button {
-  background-color: #1a1a1a;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  border: 2px solid #333;
 }
 
 button:hover {
