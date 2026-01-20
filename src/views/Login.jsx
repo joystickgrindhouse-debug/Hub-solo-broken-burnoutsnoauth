@@ -14,7 +14,7 @@ const styles = {
     letterSpacing: "2px",
     margin: "0 0 1.5rem 0",
     textShadow: "none",
-    animation: "slamIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards",
+    animation: "slamIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards, pulse 2s ease-in-out 0.8s infinite",
     transformOrigin: "center center",
     lineHeight: "1.5",
     wordBreak: "keep-all",
