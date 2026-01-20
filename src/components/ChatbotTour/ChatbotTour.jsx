@@ -20,6 +20,7 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
   const [messages, setMessages] = useState([]);
   const [tourStep, setTourStep] = useState(0);
   const [showTour, setShowTour] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const [inputText, setInputText] = useState('');
   const chatEndRef = useRef(null);
 
@@ -287,6 +288,7 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
   };
 
   const nextTourStep = () => {
+    setIsMinimized(true);
     if (tourStep < 14) {
       setTourStep(prev => prev + 1);
       
@@ -385,12 +387,35 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       </div>
 
       {showTour && (
-        <div style={styles.tourOverlay} onClick={(e) => e.stopPropagation()}>
-          <TourStep 
-            step={tourStep} 
-            onNext={nextTourStep} 
-            onSkip={() => setShowTour(false)} 
-          />
+        <div 
+          style={{
+            ...styles.tourOverlay,
+            ...(isMinimized ? styles.tourMinimized : {})
+          }} 
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isMinimized) setIsMinimized(false);
+          }}
+        >
+          {isMinimized ? (
+            <div style={styles.resumeTab}>
+              <span style={styles.resumeText}>RESUME TOUR</span>
+              <div style={styles.resumePulse}></div>
+            </div>
+          ) : (
+            <TourStep 
+              step={tourStep} 
+              onNext={nextTourStep} 
+              onSkip={() => setShowTour(false)} 
+            />
+          )}
+        </div>
+      )}
+
+      {!showTour && (!userProfile?.tourCompleted) && (
+        <div style={styles.tourHint}>
+          <div style={styles.tourArrow}>➤</div>
+          <div style={styles.tourHintText}>TOUR HERE</div>
         </div>
       )}
 
@@ -452,6 +477,19 @@ const styles = {
     gap: '10px',
     WebkitOverflowScrolling: 'touch',
   },
+  '@keyframes slideUp': {
+    from: { transform: 'translateY(100%)' },
+    to: { transform: 'translateY(0)' },
+  },
+  '@keyframes pulse': {
+    '0%': { transform: 'scale(0.8)', opacity: 0.5 },
+    '50%': { transform: 'scale(1.2)', opacity: 1 },
+    '100%': { transform: 'scale(0.8)', opacity: 0.5 },
+  },
+  '@keyframes bounce': {
+    '0%, 100%': { transform: 'translateY(0)' },
+    '50%': { transform: 'translateY(-10px)' },
+  },
   inputArea: {
     padding: '10px',
     background: '#111',
@@ -493,6 +531,65 @@ const styles = {
     justifyContent: 'center',
     zIndex: 10,
     padding: '20px',
+  },
+  tourMinimized: {
+    background: 'transparent',
+    pointerEvents: 'none',
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
+    padding: '20px',
+  },
+  resumeTab: {
+    background: '#FF0000',
+    padding: '10px 20px',
+    borderRadius: '20px 20px 0 0',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    boxShadow: '0 0 15px #FF0000',
+    pointerEvents: 'auto',
+    position: 'absolute',
+    bottom: '0',
+    right: '20px',
+    animation: 'slideUp 0.3s ease-out',
+  },
+  resumeText: {
+    color: '#FFF',
+    fontSize: '10px',
+    fontFamily: "'Press Start 2P', cursive",
+  },
+  resumePulse: {
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    background: '#FFF',
+    animation: 'pulse 1.5s infinite',
+  },
+  tourHint: {
+    position: 'absolute',
+    top: '-60px',
+    right: '20px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '5px',
+    animation: 'bounce 2s infinite',
+    zIndex: 100,
+    pointerEvents: 'none',
+  },
+  tourArrow: {
+    color: '#FF0000',
+    fontSize: '24px',
+    transform: 'rotate(90deg)',
+    textShadow: '0 0 10px #FF0000',
+  },
+  tourHintText: {
+    color: '#FF0000',
+    fontSize: '10px',
+    fontFamily: "'Press Start 2P', cursive",
+    textShadow: '0 0 10px #FF0000',
+    whiteSpace: 'nowrap',
   }
 };
 

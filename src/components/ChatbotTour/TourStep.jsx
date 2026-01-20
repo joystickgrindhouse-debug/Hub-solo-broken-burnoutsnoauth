@@ -182,13 +182,15 @@ const TourStep = ({ step, onNext, onSkip }) => {
 
 const styles = {
   container: {
-    padding: '20px',
-    background: 'rgba(0, 0, 0, 0.9)',
+    padding: '15px',
+    background: 'rgba(0, 0, 0, 0.95)',
     border: '2px solid #FF0000',
     borderRadius: '12px',
-    boxShadow: '0 0 15px #FF0000',
+    boxShadow: '0 0 20px #FF0000',
     color: '#FFF',
-    maxWidth: '300px',
+    maxWidth: '280px',
+    width: '90%',
+    margin: '0 auto',
   },
   title: {
     color: '#FF0000',
