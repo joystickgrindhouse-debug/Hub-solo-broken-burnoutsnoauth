@@ -346,7 +346,10 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
   };
 
   return (
-    <div style={styles.container}>
+    <div style={{
+      ...styles.container,
+      ...(showTour && isMinimized ? styles.containerMinimized : {})
+    }}>
       <div style={styles.header}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={styles.statusDot}></div>
@@ -370,45 +373,23 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
         </button>
       </div>
 
-      <div style={styles.chatArea}>
-        {messages.map(msg => (
-          <ChatBubble key={msg.id} message={msg.text} isBot={msg.isBot} />
-        ))}
-        
-        {/* Special widgets based on bot responses */}
-        {messages.some(m => m.text.includes('visualized')) && (
-          <LogsGraph type="weight" />
-        )}
-        {messages.some(m => m.text.includes('Nutritional')) && (
-          <NutritionalCoach />
-        )}
-        
-        <div ref={chatEndRef} />
-      </div>
+      {showTour && !isMinimized && (
+        <div style={styles.tourOverlay} onClick={(e) => e.stopPropagation()}>
+          <TourStep 
+            step={tourStep} 
+            onNext={nextTourStep} 
+            onSkip={() => setShowTour(false)} 
+          />
+        </div>
+      )}
 
-      {showTour && (
+      {showTour && isMinimized && (
         <div 
-          style={{
-            ...styles.tourOverlay,
-            ...(isMinimized ? styles.tourMinimized : {})
-          }} 
-          onClick={(e) => {
-            e.stopPropagation();
-            if (isMinimized) setIsMinimized(false);
-          }}
+          style={styles.resumeTab} 
+          onClick={() => setIsMinimized(false)}
         >
-          {isMinimized ? (
-            <div style={styles.resumeTab}>
-              <span style={styles.resumeText}>RESUME TOUR</span>
-              <div style={styles.resumePulse}></div>
-            </div>
-          ) : (
-            <TourStep 
-              step={tourStep} 
-              onNext={nextTourStep} 
-              onSkip={() => setShowTour(false)} 
-            />
-          )}
+          <span style={styles.resumeText}>RESUME TOUR</span>
+          <div style={styles.resumePulse}></div>
         </div>
       )}
 
@@ -419,16 +400,36 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
         </div>
       )}
 
-      <form onSubmit={handleSendMessage} style={styles.inputArea}>
-        <input 
-          type="text" 
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          placeholder="Ask me anything..."
-          style={styles.input}
-        />
-        <button type="submit" style={styles.sendButton}>➤</button>
-      </form>
+      {!showTour && (
+        <>
+          <div style={styles.chatArea}>
+            {messages.map(msg => (
+              <ChatBubble key={msg.id} message={msg.text} isBot={msg.isBot} />
+            ))}
+            
+            {/* Special widgets based on bot responses */}
+            {messages.some(m => m.text.includes('visualized')) && (
+              <LogsGraph type="weight" />
+            )}
+            {messages.some(m => m.text.includes('Nutritional')) && (
+              <NutritionalCoach />
+            )}
+            
+            <div ref={chatEndRef} />
+          </div>
+
+          <form onSubmit={handleSendMessage} style={styles.inputArea}>
+            <input 
+              type="text" 
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Ask me anything..."
+              style={styles.input}
+            />
+            <button type="submit" style={styles.sendButton}>➤</button>
+          </form>
+        </>
+      )}
     </div>
   );
 };
@@ -443,6 +444,12 @@ const styles = {
     borderRadius: '12px',
     overflow: 'hidden',
     position: 'relative',
+    transition: 'all 0.3s ease',
+  },
+  containerMinimized: {
+    height: '45px',
+    background: 'transparent',
+    border: 'none',
   },
   header: {
     padding: '10px 15px',
