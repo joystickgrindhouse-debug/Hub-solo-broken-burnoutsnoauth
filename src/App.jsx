@@ -208,7 +208,7 @@ export default function App() {
 
   // Render routes (public and protected)
   return (
-    <div style={{ background: 'var(--bg-color, #111)', minHeight: '100vh', color: 'var(--text-color, #fff)' }}>
+    <div style={{ background: 'var(--bg-color, #111)', minHeight: '100vh', color: 'var(--text-color, #fff)', transition: 'color 0.3s ease' }}>
       {user && <Navbar user={user} userProfile={userProfile} theme={theme} cycleTheme={cycleTheme} />}
       
       {!user && location.pathname === "/login" && (
