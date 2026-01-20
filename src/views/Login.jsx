@@ -1,6 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { auth } from "../firebase.js";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  sendPasswordResetEmail,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence 
+} from "firebase/auth";
 import { UserService } from "../services/userService.js";
 import { useNavigate } from "react-router-dom";
 
@@ -51,9 +58,16 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignup, setIsSignup] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [clickCount, setClickCount] = useState(0);
+
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("rivalis_remembered_email");
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleTitleClick = () => {
     const newCount = clickCount + 1;
@@ -71,6 +85,7 @@ export default function Login() {
     setMessage("");
     try {
       if (isSignup) {
+        await setPersistence(auth, browserLocalPersistence);
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         
         const tempNickname = `User${userCredential.user.uid.slice(0, 6)}`;
@@ -79,7 +94,14 @@ export default function Login() {
           avatarURL: "" // User will set this in customizer
         });
       } else {
+        await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
         await signInWithEmailAndPassword(auth, email, password);
+        
+        if (rememberMe) {
+          localStorage.setItem("rivalis_remembered_email", email);
+        } else {
+          localStorage.removeItem("rivalis_remembered_email");
+        }
       }
     } catch (err) {
       setError(err.message);
@@ -108,6 +130,29 @@ export default function Login() {
         <form onSubmit={handleSubmit}>
           <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
           <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            margin: "1rem 0",
+            cursor: "pointer",
+            fontFamily: "'Press Start 2P', cursive",
+            fontSize: "0.6rem",
+            color: "var(--text-color)"
+          }} onClick={() => setRememberMe(!rememberMe)}>
+            <div style={{
+              width: "14px",
+              height: "14px",
+              border: "1px solid var(--text-color)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: rememberMe ? "var(--logo-color)" : "transparent"
+            }}>
+              {rememberMe && "✓"}
+            </div>
+            <span>REMEMBER ME</span>
+          </div>
           <button type="submit">{isSignup ? "Sign Up" : "Login"}</button>
         </form>
         {!isSignup && (
