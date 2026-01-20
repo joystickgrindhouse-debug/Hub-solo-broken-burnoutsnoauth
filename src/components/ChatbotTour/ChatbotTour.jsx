@@ -319,6 +319,9 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       }
       
       if (onTourComplete) onTourComplete();
+      
+      // Navigate to home screen
+      window.location.href = '/';
     }
   };
 
