@@ -28,6 +28,7 @@ body.theme-red-black {
   --border-color: #ff3050;
   --logo-color: #ff3050;
   --accent-shadow: rgba(255, 48, 80, 0.8);
+  --bg-image: url('/assets/images/background.png');
 }
 
 body.theme-white-black {
@@ -41,6 +42,7 @@ body.theme-white-black {
   --border-color: #ffffff;
   --logo-color: #ffffff;
   --accent-shadow: rgba(255, 255, 255, 0.8);
+  --bg-image: url('/assets/images/background.png');
 }
 
 body.theme-black-white {
@@ -54,6 +56,44 @@ body.theme-black-white {
   --border-color: #000000;
   --logo-color: #ffffff;
   --accent-shadow: rgba(0, 0, 0, 0.8);
+  --bg-image: none;
+}
+
+.hero-background {
+  background-image: var(--bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: var(--bg-color);
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 1rem;
+  filter: brightness(var(--brightness));
+}
+
+.theme-toggle-btn {
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--accent-color, #ff3050);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.5rem;
+  box-shadow: 0 0 15px var(--accent-color, #ff3050);
+  z-index: 10002;
+}
+
+.theme-toggle-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 25px var(--accent-color, #ff3050);
 }
 
 .overlay-card {

@@ -46,13 +46,10 @@ export default function App() {
   const location = useLocation();
 
   useEffect(() => {
-    document.body.classList.remove("theme-red-black", "theme-white-black", "theme-black-white");
-    document.body.classList.add(`theme-${theme}`);
+    const body = document.body;
+    body.classList.remove("theme-red-black", "theme-white-black", "theme-black-white");
+    body.classList.add(`theme-${theme}`);
     localStorage.setItem("theme", theme);
-    // Explicitly set default theme for new users or if class is missing
-    if (!document.body.classList.contains(`theme-${theme}`)) {
-      document.body.classList.add(`theme-${theme}`);
-    }
   }, [theme]);
 
   const cycleTheme = () => {
@@ -218,22 +215,11 @@ export default function App() {
       {!user && location.pathname === "/login" && (
         <button 
           onClick={cycleTheme}
+          className="theme-toggle-btn"
           style={{
             position: "fixed",
-            top: "1rem",
-            right: "1rem",
-            zIndex: 10002,
-            background: "rgba(0,0,0,0.3)",
-            border: "1px solid var(--accent-color, #ff3050)",
-            borderRadius: "50%",
-            width: "40px",
-            height: "40px",
-            color: "var(--accent-color, #ff3050)",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "1.2rem"
+            top: "1.5rem",
+            right: "1.5rem",
           }}
           title="Cycle Themes"
         >

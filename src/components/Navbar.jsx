@@ -25,16 +25,11 @@ export default function Navbar({ user, userProfile, theme, cycleTheme }) {
       <div className="nav-right">
         <button 
           onClick={cycleTheme}
+          className="theme-toggle-btn"
           style={{
-            background: "none",
-            border: "none",
+            width: "40px",
+            height: "40px",
             fontSize: "1.2rem",
-            cursor: "pointer",
-            padding: "0.5rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            filter: "drop-shadow(0 0 5px var(--accent-color, #ff3050))"
           }}
           title="Cycle Theme"
         >
