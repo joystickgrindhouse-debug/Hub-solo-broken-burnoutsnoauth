@@ -45,20 +45,6 @@ body.theme-white-black {
   --bg-image: url('/assets/images/background.png');
 }
 
-body.theme-black-white {
-  /* Theme 3: Black on white */
-  --bg-color: #ffffff;
-  --card-bg: rgba(245, 245, 245, 0.9);
-  --text-color: #ffffff;
-  --accent-color: #000000;
-  --nav-bg: #ffffff;
-  --brightness: 1;
-  --border-color: #000000;
-  --logo-color: #ffffff;
-  --accent-shadow: rgba(0, 0, 0, 0.8);
-  --bg-image: none;
-}
-
 .hero-background {
   background-image: var(--bg-image);
   background-size: cover;

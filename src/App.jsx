@@ -53,10 +53,8 @@ export default function App() {
   }, [theme]);
 
   const cycleTheme = () => {
-    const themes = ["red-black", "white-black", "theme-black-white"]; // Using requested names
     setTheme(prev => {
       if (prev === "red-black") return "white-black";
-      if (prev === "white-black") return "black-white";
       return "red-black";
     });
   };
