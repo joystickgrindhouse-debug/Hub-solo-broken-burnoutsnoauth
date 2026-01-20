@@ -1,29 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { auth } from "../firebase.js";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { UserService } from "../services/userService.js";
 import { useNavigate } from "react-router-dom";
-import { Sun, Moon } from "lucide-react";
 
 const styles = {
-  themeToggle: {
-    position: "absolute",
-    top: "1rem",
-    right: "1rem",
-    background: "rgba(0,0,0,0.2)",
-    border: "1px solid #ff3050",
-    borderRadius: "50%",
-    width: "40px",
-    height: "40px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    color: "#ff3050",
-    zIndex: 10,
-    transition: "all 0.3s ease"
-  },
-  // ... existing styles ...
   rivalisTitle: {
     fontFamily: "'Press Start 2P', cursive",
     fontSize: "clamp(1.5rem, 6vw, 2.5rem)",
@@ -78,27 +59,6 @@ export default function Login() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [clickCount, setClickCount] = useState(0);
-  const [isDarkMode, setIsDarkMode] = useState(true);
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "light") {
-      setIsDarkMode(false);
-      document.body.classList.add("light-mode");
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const newDarkMode = !isDarkMode;
-    setIsDarkMode(newDarkMode);
-    if (newDarkMode) {
-      document.body.classList.remove("light-mode");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.body.classList.add("light-mode");
-      localStorage.setItem("theme", "light");
-    }
-  };
 
   const handleTitleClick = () => {
     const newCount = clickCount + 1;
@@ -147,9 +107,6 @@ export default function Login() {
 
   return (
     <div className="hero-background">
-      <button style={styles.themeToggle} onClick={toggleTheme} aria-label="Toggle dark mode">
-        {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-      </button>
       <div className="overlay-card">
         <h1 style={styles.rivalisTitle} onClick={handleTitleClick}>RIVALIS</h1>
         <p style={styles.tagline}>GET HOOKED.{'\n'}OUT-TRAIN.{'\n'}OUT-RIVAL.</p>

@@ -40,7 +40,21 @@ export default function App() {
   const [isNewSignup, setIsNewSignup] = useState(false);
   const [initialHype, setInitialHype] = useState(false);
   const [showBot, setShowBot] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem("theme") !== "light";
+  });
   const location = useLocation();
+
+  useEffect(() => {
+    if (!isDarkMode) {
+      document.body.classList.add("light-mode");
+    } else {
+      document.body.classList.remove("light-mode");
+    }
+    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
+
+  const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
   // Activity tracking
   useEffect(() => {
@@ -190,8 +204,32 @@ export default function App() {
 
   // Render routes (public and protected)
   return (
-    <div style={{ background: '#111', minHeight: '100vh', color: '#fff' }}>
-      {user && <Navbar user={user} userProfile={userProfile} />}
+    <div style={{ background: 'var(--bg-color, #111)', minHeight: '100vh', color: 'var(--text-color, #fff)' }}>
+      {user && <Navbar user={user} userProfile={userProfile} isDarkMode={isDarkMode} toggleTheme={toggleTheme} />}
+      
+      {!user && location.pathname === "/login" && (
+        <button 
+          onClick={toggleTheme}
+          style={{
+            position: "fixed",
+            top: "1rem",
+            right: "1rem",
+            zIndex: 10002,
+            background: "rgba(0,0,0,0.3)",
+            border: "1px solid #ff3050",
+            borderRadius: "50%",
+            width: "40px",
+            height: "40px",
+            color: "#ff3050",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          {isDarkMode ? "☀️" : "🌙"}
+        </button>
+      )}
       
       {user && !loading && !checkingSetup && profileLoaded && !initialHype && !showOnboarding && (
         <>

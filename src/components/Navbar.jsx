@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { auth } from "../firebase.js";
 
-export default function Navbar({ user, userProfile }) {
+export default function Navbar({ user, userProfile, isDarkMode, toggleTheme }) {
   const [open, setOpen] = useState(false);
   const [profileSubmenuOpen, setProfileSubmenuOpen] = useState(false);
 
@@ -21,8 +21,25 @@ export default function Navbar({ user, userProfile }) {
   
   return (
     <nav className="navbar">
-      <div className="logo">Rivalis Hub</div>
+      <div className="logo">RIVALIS Hub</div>
       <div className="nav-right">
+        <button 
+          onClick={toggleTheme}
+          style={{
+            background: "none",
+            border: "none",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+            padding: "0.5rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            filter: "drop-shadow(0 0 5px rgba(255, 48, 80, 0.5))"
+          }}
+          title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {isDarkMode ? "☀️" : "🌙"}
+        </button>
         {hasCompletedSetup && (
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             {avatarURL && (
