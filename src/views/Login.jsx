@@ -13,13 +13,8 @@ const styles = {
     textTransform: "uppercase",
     letterSpacing: "2px",
     margin: "0 0 1.5rem 0",
-    textShadow: `
-      0 0 10px var(--accent-shadow),
-      0 0 20px var(--accent-shadow),
-      0 0 30px var(--accent-shadow),
-      0 0 40px var(--accent-shadow)
-    `,
-    animation: "slamIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards, pulse 2s ease-in-out 0.8s infinite",
+    textShadow: "none",
+    animation: "slamIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards",
     transformOrigin: "center center",
     lineHeight: "1.5",
     wordBreak: "keep-all",
@@ -144,20 +139,9 @@ export default function Login() {
         }
         @keyframes pulse {
           0%, 100% {
-            text-shadow: 
-              0 0 10px var(--accent-shadow),
-              0 0 20px var(--accent-shadow),
-              0 0 30px var(--accent-shadow),
-              0 0 40px var(--accent-shadow);
             transform: scale(1);
           }
           50% {
-            text-shadow: 
-              0 0 20px var(--accent-shadow),
-              0 0 30px var(--accent-shadow),
-              0 0 40px var(--accent-shadow),
-              0 0 50px var(--accent-shadow),
-              0 0 60px var(--accent-shadow);
             transform: scale(1.05);
           }
         }
