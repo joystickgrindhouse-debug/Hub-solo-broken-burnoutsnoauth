@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { auth } from "../firebase.js";
-import AdBanner from "./AdBanner";
 
 export default function Navbar({ user, userProfile, theme, cycleTheme }) {
   const [open, setOpen] = useState(false);
@@ -21,10 +20,8 @@ export default function Navbar({ user, userProfile, theme, cycleTheme }) {
   const hasCompletedSetup = userProfile?.hasCompletedSetup || false;
   
   return (
-    <>
-      <AdBanner />
-      <nav className="navbar">
-        <div className="logo">RIVALIS Hub</div>
+    <nav className="navbar">
+      <div className="logo">RIVALIS Hub</div>
       <div className="nav-right">
         <button 
           onClick={cycleTheme}
@@ -231,6 +228,6 @@ export default function Navbar({ user, userProfile, theme, cycleTheme }) {
           )}
         </div>
       </div>
-    </>
+    </nav>
   );
 }
