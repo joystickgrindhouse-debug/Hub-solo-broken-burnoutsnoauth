@@ -37,6 +37,20 @@ export default function Solo({ user, userProfile }) {
 
   const handleSessionEnd = async (stats) => {
     if (!user || !stats) return;
+    
+    // Check if we are in live mode
+    const urlParams = new URLSearchParams(window.location.search);
+    const isLive = urlParams.get('mode') === 'live';
+
+    if (isLive) {
+      // In live mode, we just post message back to LiveMode.jsx
+      window.parent.postMessage({
+        type: "SESSION_STATS",
+        stats: stats
+      }, window.location.origin);
+      return;
+    }
+
     try {
       await LeaderboardService.submitScore({
         userId: user.uid,
