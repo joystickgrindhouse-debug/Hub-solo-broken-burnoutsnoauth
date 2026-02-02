@@ -9,6 +9,20 @@ const CONFIG = {
     visibilityThreshold: 0.2, // Extremely low threshold to maintain tracking
 };
 
+const MASTER_THRESHOLDS = {
+    pushup: { down: 110, up: 140, type: 'rep' },
+    squats: { down: 110, up: 145, type: 'rep' },
+    plank: { hold: 165, type: 'timed', interval: 5 },
+    jumpingjacks: { hands: 0.1, feet: 0.4, type: 'rep' },
+    lunge: { down: 115, up: 145, type: 'rep' },
+    crunches: { in: 1.3, out: 1.5, type: 'rep' },
+    highknees: { height: 0.08, type: 'rep' },
+    burpees: { horizontal: 0.25, vertical: 0.25, type: 'rep' },
+    shouldertap: { dist: 0.25, type: 'rep' },
+    calfraise: { up: 0.03, down: 0.01, type: 'rep' },
+    russiantwists: { tilt: 0.05, type: 'rep' }
+};
+
 const STATE = {
     isCameraRunning: false,
     currentExercise: 'pushup',
@@ -79,6 +93,7 @@ class BaseExercise {
 
 class PushUp extends BaseExercise {
     update(landmarks) {
+        const threshold = MASTER_THRESHOLDS.pushup;
         const leftShoulder = this.get(landmarks, 11);
         const leftElbow = this.get(landmarks, 13);
         const leftWrist = this.get(landmarks, 15);
@@ -100,14 +115,14 @@ class PushUp extends BaseExercise {
         if (angle === -1) return { feedback: 'Align side to camera' };
         
         // Final broad thresholds for guaranteed detection
-        if (angle > 140) { // Up position (Extension) - Very forgiving
+        if (angle > threshold.up) { // Up position (Extension) - Very forgiving
             if (this.state === 'DOWN') {
                 this.state = 'UP';
                 return { repIncrement: 1, state: 'UP', feedback: 'Good rep!' };
             }
             return { state: 'UP', feedback: 'Go down' };
         } 
-        if (angle < 110) { // Down position (Compression) - Very forgiving
+        if (angle < threshold.down) { // Down position (Compression) - Very forgiving
             this.state = 'DOWN';
             return { state: 'DOWN', feedback: 'Push up!' };
         }
@@ -117,6 +132,7 @@ class PushUp extends BaseExercise {
 
 class Squats extends BaseExercise {
     update(landmarks) {
+        const threshold = MASTER_THRESHOLDS.squats;
         const leftHip = this.get(landmarks, 23);
         const leftKnee = this.get(landmarks, 25);
         const leftAnkle = this.get(landmarks, 27);
@@ -135,14 +151,14 @@ class Squats extends BaseExercise {
         }
 
         if (angle === -1) return { feedback: 'Legs out of view' };
-        if (angle > 145) {
+        if (angle > threshold.up) {
             if (this.state === 'DOWN') {
                 this.state = 'UP';
                 return { repIncrement: 1, state: 'UP', feedback: 'Good!' };
             }
             return { state: 'UP', feedback: 'Squat down' };
         }
-        if (angle < 110) {
+        if (angle < threshold.down) {
             this.state = 'DOWN';
             return { state: 'DOWN', feedback: 'Drive up!' };
         }
@@ -154,12 +170,13 @@ class Plank extends BaseExercise {
     constructor() { super(); this.startTime = null; }
     reset() { this.startTime = null; }
     update(landmarks) {
+        const threshold = MASTER_THRESHOLDS.plank;
         const shoulder = this.get(landmarks, 11);
         const hip = this.get(landmarks, 23);
         const ankle = this.get(landmarks, 27);
         const hipAngle = calculateAngle(shoulder, hip, ankle);
         if (hipAngle === -1) return { feedback: 'Body out of view' };
-        if (hipAngle > 165) {
+        if (hipAngle > threshold.hold) {
             if (!this.startTime) this.startTime = Date.now();
             const seconds = Math.floor((Date.now() - this.startTime) / 1000);
             STATE.reps = seconds;

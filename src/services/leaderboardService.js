@@ -41,9 +41,15 @@ export const LeaderboardService = {
       const now = new Date();
       const windowStart = getRaffleWindowStart();
       
-      // Generate unique ticket reference numbers: 1 ticket per 30 score (reps/distance)
+      // Generate unique ticket reference numbers: 1 ticket per rep, 1 per 5s for timed
       const ticketRefs = [];
-      const ticketCount = Math.floor(score / 30);
+      let ticketCount = 0;
+      
+      if (gameMode === 'solo' && metadata.exercise === 'plank') {
+        ticketCount = Math.floor(score / 5);
+      } else {
+        ticketCount = Math.floor(score); // 1 ticket per rep
+      }
       
       for (let i = 0; i < ticketCount; i++) {
         const ref = `RIV-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
