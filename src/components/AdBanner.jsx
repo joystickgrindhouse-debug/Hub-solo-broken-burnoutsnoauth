@@ -2,56 +2,53 @@ import React, { useEffect } from "react";
 
 /**
  * AdBanner Component
- * Integrates two ads side-by-side.
+ * Integrates two ads side-by-side with unique handling.
  */
 const AdBanner = () => {
   useEffect(() => {
     // Ad 1 (468x60)
-    const atOptionsScript1 = document.createElement("script");
-    atOptionsScript1.type = "text/javascript";
-    atOptionsScript1.innerHTML = `
-      atOptions = {
-        'key' : '69c3ae6b085d581d286b14b236fb4787',
-        'format' : 'iframe',
-        'height' : 60,
-        'width' : 468,
-        'params' : {}
-      };
-    `;
-    document.body.appendChild(atOptionsScript1);
+    const container1 = document.getElementById("ad-container-69c3ae6b085d581d286b14b236fb4787");
+    if (container1) {
+      const script1 = document.createElement("script");
+      script1.type = "text/javascript";
+      script1.innerHTML = `
+        atOptions = {
+          'key' : '69c3ae6b085d581d286b14b236fb4787',
+          'format' : 'iframe',
+          'height' : 60,
+          'width' : 468,
+          'params' : {}
+        };
+      `;
+      container1.appendChild(script1);
 
-    const invokeScript1 = document.createElement("script");
-    invokeScript1.type = "text/javascript";
-    invokeScript1.src = "https://enoughprosperabsorbed.com/69c3ae6b085d581d286b14b236fb4787/invoke.js";
-    document.body.appendChild(invokeScript1);
+      const invoke1 = document.createElement("script");
+      invoke1.type = "text/javascript";
+      invoke1.src = "https://enoughprosperabsorbed.com/69c3ae6b085d581d286b14b236fb4787/invoke.js";
+      container1.appendChild(invoke1);
+    }
 
     // Ad 2 (320x50)
-    const atOptionsScript2 = document.createElement("script");
-    atOptionsScript2.type = "text/javascript";
-    atOptionsScript2.innerHTML = `
-      atOptions = {
-        'key' : '216b83ae1cc7be8e80e9273c5ce952d9',
-        'format' : 'iframe',
-        'height' : 50,
-        'width' : 320,
-        'params' : {}
-      };
-    `;
-    document.body.appendChild(atOptionsScript2);
+    const container2 = document.getElementById("ad-container-216b83ae1cc7be8e80e9273c5ce952d9");
+    if (container2) {
+      const script2 = document.createElement("script");
+      script2.type = "text/javascript";
+      script2.innerHTML = `
+        atOptions = {
+          'key' : '216b83ae1cc7be8e80e9273c5ce952d9',
+          'format' : 'iframe',
+          'height' : 50,
+          'width' : 320,
+          'params' : {}
+        };
+      `;
+      container2.appendChild(script2);
 
-    const invokeScript2 = document.createElement("script");
-    invokeScript2.type = "text/javascript";
-    invokeScript2.src = "https://enoughprosperabsorbed.com/216b83ae1cc7be8e80e9273c5ce952d9/invoke.js";
-    document.body.appendChild(invokeScript2);
-
-    return () => {
-      // Cleanup
-      [atOptionsScript1, invokeScript1, atOptionsScript2, invokeScript2].forEach(script => {
-        if (document.body.contains(script)) {
-          document.body.removeChild(script);
-        }
-      });
-    };
+      const invoke2 = document.createElement("script");
+      invoke2.type = "text/javascript";
+      invoke2.src = "https://enoughprosperabsorbed.com/216b83ae1cc7be8e80e9273c5ce952d9/invoke.js";
+      container2.appendChild(invoke2);
+    }
   }, []);
 
   return (
@@ -61,7 +58,7 @@ const AdBanner = () => {
       flexWrap: "wrap",
       justifyContent: "center", 
       alignItems: "center",
-      gap: "10px",
+      gap: "20px",
       margin: "15px 0",
       minHeight: "60px" 
     }}>
