@@ -13,7 +13,9 @@ const PopUnderAd = () => {
     document.head.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
     };
   }, []);
 
