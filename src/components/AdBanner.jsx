@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 
 /**
  * AdBanner Component
- * Integrates the enoughprosperabsorbed ad script (300x250).
+ * Integrates the enoughprosperabsorbed ad script (468x60).
  */
 const AdBanner = () => {
   useEffect(() => {
@@ -11,10 +11,10 @@ const AdBanner = () => {
     atOptionsScript.type = "text/javascript";
     atOptionsScript.innerHTML = `
       atOptions = {
-        'key' : '38ce9df69c690693704a9ca7a12af52a',
+        'key' : '69c3ae6b085d581d286b14b236fb4787',
         'format' : 'iframe',
-        'height' : 250,
-        'width' : 300,
+        'height' : 60,
+        'width' : 468,
         'params' : {}
       };
     `;
@@ -23,7 +23,7 @@ const AdBanner = () => {
     // We create the invoke script
     const invokeScript = document.createElement("script");
     invokeScript.type = "text/javascript";
-    invokeScript.src = "https://enoughprosperabsorbed.com/38ce9df69c690693704a9ca7a12af52a/invoke.js";
+    invokeScript.src = "https://enoughprosperabsorbed.com/69c3ae6b085d581d286b14b236fb4787/invoke.js";
     document.body.appendChild(invokeScript);
 
     return () => {
@@ -43,9 +43,9 @@ const AdBanner = () => {
       display: "flex", 
       justifyContent: "center", 
       margin: "15px 0",
-      minHeight: "250px" 
+      minHeight: "60px" 
     }}>
-      <div id="ad-container-38ce9df69c690693704a9ca7a12af52a"></div>
+      <div id="ad-container-69c3ae6b085d581d286b14b236fb4787"></div>
     </div>
   );
 };
