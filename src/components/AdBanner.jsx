@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 
 /**
  * AdBanner Component
- * Integrates the highperformanceformat ad script.
+ * Integrates the enoughprosperabsorbed ad script (300x250).
  */
 const AdBanner = () => {
   useEffect(() => {
@@ -11,10 +11,10 @@ const AdBanner = () => {
     atOptionsScript.type = "text/javascript";
     atOptionsScript.innerHTML = `
       atOptions = {
-        'key' : '216b83ae1cc7be8e80e9273c5ce952d9',
+        'key' : '38ce9df69c690693704a9ca7a12af52a',
         'format' : 'iframe',
-        'height' : 50,
-        'width' : 320,
+        'height' : 250,
+        'width' : 300,
         'params' : {}
       };
     `;
@@ -23,13 +23,17 @@ const AdBanner = () => {
     // We create the invoke script
     const invokeScript = document.createElement("script");
     invokeScript.type = "text/javascript";
-    invokeScript.src = "https://www.highperformanceformat.com/216b83ae1cc7be8e80e9273c5ce952d9/invoke.js";
+    invokeScript.src = "https://enoughprosperabsorbed.com/38ce9df69c690693704a9ca7a12af52a/invoke.js";
     document.body.appendChild(invokeScript);
 
     return () => {
-      // Cleanup if needed (though ad scripts usually stick around)
-      document.body.removeChild(atOptionsScript);
-      document.body.removeChild(invokeScript);
+      // Cleanup
+      if (document.body.contains(atOptionsScript)) {
+        document.body.removeChild(atOptionsScript);
+      }
+      if (document.body.contains(invokeScript)) {
+        document.body.removeChild(invokeScript);
+      }
     };
   }, []);
 
@@ -38,11 +42,10 @@ const AdBanner = () => {
       width: "100%", 
       display: "flex", 
       justifyContent: "center", 
-      margin: "10px 0",
-      minHeight: "50px" 
+      margin: "15px 0",
+      minHeight: "250px" 
     }}>
-      {/* The ad will be injected here or as an iframe by the script */}
-      <div id="ad-container-216b83ae1cc7be8e80e9273c5ce952d9"></div>
+      <div id="ad-container-38ce9df69c690693704a9ca7a12af52a"></div>
     </div>
   );
 };
