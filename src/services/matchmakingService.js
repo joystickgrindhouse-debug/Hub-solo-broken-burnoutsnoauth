@@ -111,8 +111,8 @@ export const MatchmakingService = {
       update.deck2Count = (currentMatch.deck2Count || 0) + 1;
     }
 
-    // Check for win condition (2 decks completed = 10 cards each approx)
-    if (update.deck1Count >= 10 && update.deck2Count >= 10) {
+    // Win condition: 2 full standard decks (52 cards each) completed
+    if (update.deck1Count >= 52 && update.deck2Count >= 52) {
       update.status = "completed";
     }
 

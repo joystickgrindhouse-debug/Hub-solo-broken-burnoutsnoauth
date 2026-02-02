@@ -55,8 +55,8 @@ export default function LiveMode({ user, userProfile }) {
       <h2 className="text-2xl mb-4 font-bold neon-text">{match.player1Name} vs {match.player2Name}</h2>
       <div className="bg-zinc-900 p-4 rounded-xl border-2 border-red-600 w-full max-w-4xl">
         <div className="flex justify-between mb-4 px-4 font-bold text-red-500">
-          <span>{match.player1Name}: {match.deck1Count}/10</span>
-          <span>{match.player2Name}: {match.deck2Count}/10</span>
+          <span>{match.player1Name}: {match.deck1Count}/52</span>
+          <span>{match.player2Name}: {match.deck2Count}/52</span>
         </div>
         
         {match.status === "completed" ? (
