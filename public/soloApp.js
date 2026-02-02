@@ -84,7 +84,39 @@ function updateFeedbackUI() {
 }
 
 function flipCard() {
-    const keys = Object.keys(EXERCISES);
+    const urlParams = new URLSearchParams(window.location.search);
+    const category = urlParams.get('category') || 'full';
+    
+    // Exercise filtering for live mode categories
+    const categoryMap = {
+        'arms': ['push_up', 'pike_pushup', 'shoulder_tap', 'crunches'], // simplified for solo keys
+        'legs': ['squats', 'lunge', 'calfraise'],
+        'core': ['crunches', 'plank'],
+        'full': Object.keys(EXERCISES)
+    };
+    
+    // Convert ref names to exercise keys for soloApp
+    const refToKey = {
+        'push_up': 'pushup',
+        'squat': 'squats',
+        'jumping_jack': 'jumpingjacks',
+        'lunge': 'lunge',
+        'crunch': 'crunches',
+        'high_knee': 'highknees',
+        'burpee': 'burpees',
+        'calf_raise': 'calfraise'
+    };
+
+    let keys = Object.keys(EXERCISES);
+    if (category !== 'full') {
+        const allowedRefs = categoryMap[category] || [];
+        keys = keys.filter(k => {
+            const ref = EXERCISES[k].ref;
+            return allowedRefs.includes(ref);
+        });
+        if (keys.length === 0) keys = Object.keys(EXERCISES); // Fallback
+    }
+
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
     const exercise = EXERCISES[randomKey];
     const value = Math.floor(Math.random() * 10) + 5; // 5 to 15 reps

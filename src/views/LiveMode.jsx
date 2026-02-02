@@ -7,9 +7,9 @@ export default function LiveMode({ user, userProfile }) {
   const [searching, setSearching] = useState(false);
   const [role, setRole] = useState(null);
 
-  const startMatchmaking = async () => {
+  const startMatchmaking = async (category) => {
     setSearching(true);
-    const result = await MatchmakingService.joinQueue(user.uid, userProfile?.nickname || user.email);
+    const result = await MatchmakingService.joinQueue(user.uid, userProfile?.nickname || user.email, category);
     setRole(result.role);
     MatchmakingService.listenToMatch(result.matchId, (data) => {
       setMatch(data);
@@ -21,14 +21,27 @@ export default function LiveMode({ user, userProfile }) {
 
   if (!match) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-white bg-black p-4">
-        <h1 className="text-4xl font-bold mb-8 neon-text">LIVE MATCHUP</h1>
-        <p className="mb-8 text-center">Test your limits against real rivals (or elite bots) in a turn-based battle.</p>
+      <div className="flex flex-col items-center justify-center h-full text-white bg-black p-4 overflow-y-auto">
+        <h1 className="text-4xl font-bold mb-4 neon-text">LIVE MATCHUP</h1>
+        <p className="mb-6 text-center text-zinc-400">Select your workout focus for this battle.</p>
+        
+        <div className="grid grid-cols-2 gap-4 w-full max-w-md mb-8">
+          {['Arms', 'Legs', 'Core', 'Full'].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => startMatchmaking(cat.toLowerCase())}
+              className="bg-zinc-900 hover:bg-red-600 border-2 border-red-900 text-white font-bold py-4 rounded-lg transition-all"
+            >
+              {cat === 'Full' ? 'Full Body' : cat}
+            </button>
+          ))}
+        </div>
+
         <button 
-          onClick={startMatchmaking}
-          className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-lg border-2 border-white shadow-[0_0_15px_rgba(255,0,0,0.5)]"
+          onClick={() => startMatchmaking('full')}
+          className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-12 rounded-lg border-2 border-white shadow-[0_0_20px_rgba(255,0,0,0.4)] animate-pulse"
         >
-          ENTER ARENA
+          QUICK START (FULL BODY)
         </button>
       </div>
     );
@@ -69,7 +82,7 @@ export default function LiveMode({ user, userProfile }) {
             <h3 className="text-xl text-green-400 mb-4">YOUR TURN!</h3>
             <div style={{ width: "100%", height: "500px", position: "relative" }}>
                <iframe
-                src={`/solo.html?mode=live&matchId=${match.id || match.matchId}`}
+                src={`/solo.html?mode=live&category=${match.category || 'full'}&matchId=${match.id || match.matchId}`}
                 title="Live Turn"
                 width="100%"
                 height="100%"

@@ -16,10 +16,14 @@ import {
 const BOT_NAMES = ["IronWill", "ShadowFlex", "NeonRunner", "TitanGrip", "CyberCore", "ZenMaster", "VoltViper", "PixelPulse"];
 
 export const MatchmakingService = {
-  async joinQueue(userId, userName) {
+  async joinQueue(userId, userName, category = 'full') {
     const queueRef = collection(db, "matchmaking_queue");
-    // Check for existing users in queue
-    const q = query(queueRef, where("userId", "!=", userId), Timestamp.now());
+    // Check for existing users in queue with same category
+    const q = query(
+      queueRef, 
+      where("userId", "!=", userId), 
+      where("category", "==", category)
+    );
     const querySnapshot = await getDocs(q);
     
     if (!querySnapshot.empty) {
@@ -36,6 +40,7 @@ export const MatchmakingService = {
         player2Name: userName,
         currentTurn: opponent.userId,
         status: "active",
+        category,
         deck1Count: 0,
         deck2Count: 0,
         lastAction: Timestamp.now(),
@@ -50,6 +55,7 @@ export const MatchmakingService = {
       const docRef = await addDoc(queueRef, {
         userId,
         userName,
+        category,
         joinedAt: Timestamp.now()
       });
       
@@ -60,7 +66,7 @@ export const MatchmakingService = {
           const snap = await getDocs(query(queueRef, where("userId", "==", userId)));
           if (!snap.empty) {
             await deleteDoc(doc(db, "matchmaking_queue", docRef.id));
-            const botMatch = await this.createBotMatch(userId, userName);
+            const botMatch = await this.createBotMatch(userId, userName, category);
             resolve(botMatch);
           }
         }, 5000); // 5 seconds wait for real user
@@ -68,7 +74,7 @@ export const MatchmakingService = {
     }
   },
 
-  async createBotMatch(userId, userName) {
+  async createBotMatch(userId, userName, category = 'full') {
     const botName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
     const matchId = `match_bot_${Date.now()}`;
     const matchData = {
@@ -78,6 +84,7 @@ export const MatchmakingService = {
       player2Name: botName,
       currentTurn: userId,
       status: "active",
+      category,
       deck1Count: 0,
       deck2Count: 0,
       lastAction: Timestamp.now(),
