@@ -72,6 +72,12 @@ export default function LiveMode({ user, userProfile }) {
           <span>{match.player2Name}: {match.deck2Count}/52</span>
         </div>
         
+        {match.wildcardMessage && (
+          <div className="bg-red-900/50 border border-red-500 p-3 mb-4 rounded animate-bounce text-center">
+            <span className="text-white font-bold">⚠️ {match.wildcardMessage}</span>
+          </div>
+        )}
+        
         {match.status === "completed" ? (
           <div className="text-center py-10">
             <h3 className="text-3xl text-yellow-400 mb-4">MATCH COMPLETE!</h3>
@@ -82,7 +88,7 @@ export default function LiveMode({ user, userProfile }) {
             <h3 className="text-xl text-green-400 mb-4">YOUR TURN!</h3>
             <div style={{ width: "100%", height: "500px", position: "relative" }}>
                <iframe
-                src={`/solo.html?mode=live&category=${match.category || 'full'}&matchId=${match.id || match.matchId}`}
+                src={`/solo.html?mode=live&category=${match.category || 'full'}&matchId=${match.id || match.matchId}&effect=${match.pendingEffect?.id || ''}`}
                 title="Live Turn"
                 width="100%"
                 height="100%"

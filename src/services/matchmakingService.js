@@ -106,10 +106,20 @@ export const MatchmakingService = {
     const isPlayer1 = currentMatch.player1 === userId;
     const nextTurn = isPlayer1 ? currentMatch.player2 : currentMatch.player1;
     
+    // Handle Wildcards
+    let wildcardMessage = null;
+    let pendingEffect = null;
+    if (stats.wildcard) {
+      wildcardMessage = `Rival triggered ${stats.wildcard.name}!`;
+      pendingEffect = stats.wildcard;
+    }
+
     const update = {
       currentTurn: nextTurn,
       lastAction: Timestamp.now(),
-      history: [...(currentMatch.history || []), { userId, stats, timestamp: Date.now() }]
+      history: [...(currentMatch.history || []), { userId, stats, timestamp: Date.now() }],
+      pendingEffect,
+      wildcardMessage
     };
 
     if (isPlayer1) {

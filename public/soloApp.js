@@ -119,11 +119,45 @@ function flipCard() {
 
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
     const exercise = EXERCISES[randomKey];
-    const value = Math.floor(Math.random() * 10) + 5; // 5 to 15 reps
+    let value = Math.floor(Math.random() * 10) + 5; // 5 to 15 reps
+
+    // Apply pending effects if any
+    const effect = urlParams.get('effect');
+    
+    if (effect === 'DOUBLE_REPS') {
+        value *= 2;
+        STATE.lastFeedback = "EFFECT: DOUBLE REPS!";
+    } else if (effect === 'CHAOS') {
+        value = Math.floor(Math.random() * 20) + 1;
+        STATE.lastFeedback = "EFFECT: RANDOMIZED REPS!";
+    } else if (effect === 'FREEZE') {
+        STATE.lastFeedback = "EFFECT: FROZEN! Wait 10s...";
+        // Simple freeze logic
+        STATE.isSessionActive = false;
+        setTimeout(() => {
+            STATE.isSessionActive = true;
+            STATE.lastFeedback = "UNFROZEN! GO!";
+            updateFeedbackUI();
+        }, 10000);
+    }
 
     STATE.currentExercise = randomKey;
     STATE.repsRemaining = value;
     STATE.initialReps = value; // Store for submission
+    
+    // Wildcard chance (15% in live mode)
+    if (urlParams.get('mode') === 'live' && Math.random() < 0.15) {
+        const wildcards = [
+            { id: 'DOUBLE_REPS', name: 'DOUBLE TROUBLE', description: 'Opponent must do 2x reps!' },
+            { id: 'FREEZE', name: 'CRYOGENIC LOCK', description: 'Opponent frozen for 10s!' },
+            { id: 'CHAOS', name: 'CHAOS FLIP', description: 'Opponent reps randomized!' }
+        ];
+        STATE.wildcard = wildcards[Math.floor(Math.random() * wildcards.length)];
+        STATE.lastFeedback = `WILDCARD: ${STATE.wildcard.name}!`;
+    } else {
+        STATE.wildcard = null;
+    }
+    
     STATE.isSessionActive = true;
     
     exerciseNameDisplay.innerText = exercise.name;
@@ -144,7 +178,8 @@ function submitSoloScore() {
         stats: { 
             reps: STATE.initialReps, 
             exercise: refKey,
-            type: refKey === 'plank' ? 'timed' : 'rep'
+            type: refKey === 'plank' ? 'timed' : 'rep',
+            wildcard: STATE.wildcard
         }
     }, "*");
 }
