@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Burnouts - RIVALIS Hub</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Video and Canvas Layers -->
+        <video class="input_video" playsinline webkit-playsinline muted style="display: none;"></video>
+        <canvas class="output_canvas"></canvas>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="overlay active">
+            <div class="spinner"></div>
+            <p>Initializing AI Burnout Core...</p>
+        </div>
+
+        <!-- UI Overlay -->
+        <div class="ui-layer">
+            <header class="top-bar">
+                <div class="status-badge active" id="camera-status">📷 LIVE</div>
+                <div id="timer-display" class="status-badge" style="border-color: #ff0000; color: #ff0000;">60s</div>
+            </header>
+
+            <main class="stats-container">
+                <!-- Mode Selection -->
+                <div id="mode-selection" class="mode-selection">
+                    <h2 class="neon-text">SELECT BURNOUT</h2>
+                    <div class="mode-grid">
+                        <button class="mode-btn" data-mode="arms">ARMS</button>
+                        <button class="mode-btn" data-mode="legs">LEGS</button>
+                        <button class="mode-btn" data-mode="core">CORE</button>
+                        <button class="mode-btn" data-mode="full">FULL BODY</button>
+                    </div>
+                </div>
+
+                <!-- Active Workout Info -->
+                <div id="workout-info" class="workout-info hidden">
+                    <h2 id="current-exercise-name" class="neon-text">READY</h2>
+                </div>
+
+                <div class="counter-box">
+                    <span class="label">TOTAL REPS</span>
+                    <span id="rep-count" class="big-number">0</span>
+                </div>
+                <div class="feedback-box">
+                    <div id="feedback-state" class="state-indicator">READY</div>
+                    <div id="feedback-message" class="sub-text">Choose a category to begin</div>
+                </div>
+            </main>
+
+            <footer class="controls">
+                <button id="end-btn" class="primary-btn hidden">END SESSION</button>
+            </footer>
+        </div>
+    </div>
+
+    <script type="module" src="/burnoutsApp.js"></script>
+</body>
+</html>

@@ -9,7 +9,7 @@ export default function Burnouts({ user, userProfile }) {
   const [token, setToken] = useState(null);
   const [sessionActive, setSessionActive] = useState(false);
   const navigate = useNavigate();
-  const externalAppUrl = "https://rivalis-burnouts.netlify.app/";
+  const externalAppUrl = window.location.origin + "/burnouts.html";
 
   useEffect(() => {
     const getAuthToken = async () => {

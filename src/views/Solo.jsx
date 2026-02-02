@@ -5,7 +5,7 @@ import { auth } from "../firebase.js";
 export default function Solo({ user }) {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
-  const externalAppUrl = "https://rivalis-solo.netlify.app/";
+  const externalAppUrl = window.location.origin + "/solo.html";
 
   useEffect(() => {
     const getAuthToken = async () => {

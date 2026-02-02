@@ -156,6 +156,44 @@ body {
     font-size: 60px;
 }
 
+/* Burnouts Styling */
+.mode-selection {
+    text-align: center;
+}
+
+.mode-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.mode-btn {
+    background: #111;
+    color: #fff;
+    border: 2px solid #ff0000;
+    padding: 20px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mode-btn:hover {
+    background: #ff0000;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+}
+
+.neon-text {
+    color: #ff0000;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+    font-weight: 800;
+}
+
+.hidden {
+    display: none !important;
+}
+
 .feedback-box {
     text-align: center;
     background: rgba(0, 0, 0, 0.8);
