@@ -1,0 +1,11 @@
+{
+  "exercise": "calf_raise",
+  "states": ["DOWN", "UP"],
+  "rep_order": ["DOWN", "UP", "DOWN"],
+  "angles": {
+    "UP": {
+      "left_ankle": [40, 70],
+      "right_ankle": [40, 70]
+    }
+  }
+}

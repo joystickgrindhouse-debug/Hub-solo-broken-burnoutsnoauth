@@ -6,21 +6,7 @@ const CONFIG = {
     minDetectionConfidence: 0.5,
     minTrackingConfidence: 0.5,
     modelComplexity: 1, 
-    visibilityThreshold: 0.2, // Extremely low threshold to maintain tracking
-};
-
-const MASTER_THRESHOLDS = {
-    pushup: { down: 110, up: 140, type: 'rep' },
-    squats: { down: 110, up: 145, type: 'rep' },
-    plank: { hold: 165, type: 'timed', interval: 5 },
-    jumpingjacks: { hands: 0.1, feet: 0.4, type: 'rep' },
-    lunge: { down: 115, up: 145, type: 'rep' },
-    crunches: { in: 1.3, out: 1.5, type: 'rep' },
-    highknees: { height: 0.08, type: 'rep' },
-    burpees: { horizontal: 0.25, vertical: 0.25, type: 'rep' },
-    shouldertap: { dist: 0.25, type: 'rep' },
-    calfraise: { up: 0.03, down: 0.01, type: 'rep' },
-    russiantwists: { tilt: 0.05, type: 'rep' }
+    visibilityThreshold: 0.2, 
 };
 
 const STATE = {
@@ -31,7 +17,26 @@ const STATE = {
     lastFeedback: 'Get Ready',
     startTime: null, 
     landmarks: null,
+    referenceData: {},
 };
+
+async function loadReferenceData() {
+    const exercises = [
+        'push_up', 'squat', 'plank', 'jumping_jack', 'lunge', 'crunch', 
+        'high_knee', 'burpee', 'shoulder_tap', 'calf_raise', 'russian_twist',
+        'glute_bridge', 'leg_raise', 'mountain_climber', 'pike_pushup', 'plank_up_down'
+    ];
+    for (const ex of exercises) {
+        try {
+            const response = await fetch(`/reference_data/${ex}.json`);
+            if (response.ok) {
+                STATE.referenceData[ex] = await response.json();
+            }
+        } catch (e) {
+            console.error(`Failed to load data for ${ex}`, e);
+        }
+    }
+}
 
 const videoElement = document.getElementsByClassName('input_video')[0];
 const canvasElement = document.getElementsByClassName('output_canvas')[0];
@@ -77,6 +82,48 @@ function updateFeedbackUI() {
     stateDisplay.style.color = colorMap[STATE.movementState] || '#ffffff';
 }
 
+function drawMotionOverlay(landmarks, exerciseKey) {
+    const ref = STATE.referenceData[exerciseKey];
+    if (!ref || !ref.angles) return;
+
+    const currentState = ref.states.find(s => {
+        const angles = ref.angles[s];
+        return Object.entries(angles).every(([joint, range]) => {
+            const val = getJointAngle(landmarks, joint);
+            return val >= range[0] && val <= range[1];
+        });
+    }) || ref.states[0];
+
+    const targetAngles = ref.angles[currentState];
+    canvasCtx.save();
+    canvasCtx.setTransform(1, 0, 0, 1, 0, 0);
+    canvasCtx.font = '16px "Press Start 2P"';
+    canvasCtx.fillStyle = '#ff4444';
+    let y = 30;
+    Object.entries(targetAngles).forEach(([joint, range]) => {
+        const current = getJointAngle(landmarks, joint);
+        const isOk = current >= range[0] && current <= range[1];
+        canvasCtx.fillStyle = isOk ? '#00ff88' : '#ff4444';
+        canvasCtx.fillText(`${joint}: ${Math.round(current)}° (Target: ${range[0]}-${range[1]}°)`, 10, y);
+        y += 25;
+    });
+    canvasCtx.restore();
+}
+
+function getJointAngle(landmarks, joint) {
+    const map = {
+        'left_elbow': [11, 13, 15],
+        'right_elbow': [12, 14, 16],
+        'left_hip': [11, 23, 25],
+        'right_hip': [12, 24, 26],
+        'left_knee': [23, 25, 27],
+        'right_knee': [24, 26, 28],
+    };
+    const indices = map[joint];
+    if (!indices) return 0;
+    return calculateAngle(landmarks[indices[0]], landmarks[indices[1]], landmarks[indices[2]]);
+}
+
 class BaseExercise {
     constructor() {
         this.state = 'UP';
@@ -91,279 +138,66 @@ class BaseExercise {
     }
 }
 
-class PushUp extends BaseExercise {
+class SmartExercise extends BaseExercise {
+    constructor(key) {
+        super();
+        this.key = key;
+    }
     update(landmarks) {
-        const threshold = MASTER_THRESHOLDS.pushup;
-        const leftShoulder = this.get(landmarks, 11);
-        const leftElbow = this.get(landmarks, 13);
-        const leftWrist = this.get(landmarks, 15);
-        
-        const rightShoulder = this.get(landmarks, 12);
-        const rightElbow = this.get(landmarks, 14);
-        const rightWrist = this.get(landmarks, 16);
+        const ref = STATE.referenceData[this.key];
+        if (!ref) return { feedback: 'Loading reference...' };
 
-        const leftAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
-        const rightAngle = calculateAngle(rightShoulder, rightElbow, rightWrist);
-        
-        let angle = -1;
-        if (leftAngle !== -1 && rightAngle !== -1) {
-            angle = Math.max(leftAngle, rightAngle); 
-        } else {
-            angle = leftAngle !== -1 ? leftAngle : rightAngle;
-        }
+        const currentAngles = {};
+        Object.keys(ref.angles[ref.states[0]]).forEach(joint => {
+            currentAngles[joint] = getJointAngle(landmarks, joint);
+        });
 
-        if (angle === -1) return { feedback: 'Align side to camera' };
-        
-        // Final broad thresholds for guaranteed detection
-        if (angle > threshold.up) { // Up position (Extension) - Very forgiving
-            if (this.state === 'DOWN') {
-                this.state = 'UP';
-                return { repIncrement: 1, state: 'UP', feedback: 'Good rep!' };
+        const nextStateIndex = (ref.rep_order.indexOf(this.state) + 1) % ref.rep_order.length;
+        const nextState = ref.rep_order[nextStateIndex];
+        const targetRange = ref.angles[nextState];
+
+        const reached = Object.entries(targetRange).every(([joint, range]) => {
+            const val = currentAngles[joint];
+            return val >= range[0] && val <= range[1];
+        });
+
+        if (reached) {
+            const oldState = this.state;
+            this.state = nextState;
+            if (this.state === ref.rep_order[0] && oldState !== this.state) {
+                return { repIncrement: 1, state: this.state, feedback: 'Perfect Form!' };
             }
-            return { state: 'UP', feedback: 'Go down' };
-        } 
-        if (angle < threshold.down) { // Down position (Compression) - Very forgiving
-            this.state = 'DOWN';
-            return { state: 'DOWN', feedback: 'Push up!' };
-        }
-        return { state: this.state, feedback: 'Keep going' };
-    }
-}
-
-class Squats extends BaseExercise {
-    update(landmarks) {
-        const threshold = MASTER_THRESHOLDS.squats;
-        const leftHip = this.get(landmarks, 23);
-        const leftKnee = this.get(landmarks, 25);
-        const leftAnkle = this.get(landmarks, 27);
-        const rightHip = this.get(landmarks, 24);
-        const rightKnee = this.get(landmarks, 26);
-        const rightAnkle = this.get(landmarks, 28);
-
-        const leftAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
-        const rightAngle = calculateAngle(rightHip, rightKnee, rightAnkle);
-
-        let angle = -1;
-        if (leftAngle !== -1 && rightAngle !== -1) {
-            angle = Math.min(leftAngle, rightAngle); 
-        } else {
-            angle = leftAngle !== -1 ? leftAngle : rightAngle;
+            return { state: this.state, feedback: 'Match!' };
         }
 
-        if (angle === -1) return { feedback: 'Legs out of view' };
-        if (angle > threshold.up) {
-            if (this.state === 'DOWN') {
-                this.state = 'UP';
-                return { repIncrement: 1, state: 'UP', feedback: 'Good!' };
-            }
-            return { state: 'UP', feedback: 'Squat down' };
-        }
-        if (angle < threshold.down) {
-            this.state = 'DOWN';
-            return { state: 'DOWN', feedback: 'Drive up!' };
-        }
-        return { state: this.state, feedback: 'Lower' };
-    }
-}
-
-class Plank extends BaseExercise {
-    constructor() { super(); this.startTime = null; }
-    reset() { this.startTime = null; }
-    update(landmarks) {
-        const threshold = MASTER_THRESHOLDS.plank;
-        const shoulder = this.get(landmarks, 11);
-        const hip = this.get(landmarks, 23);
-        const ankle = this.get(landmarks, 27);
-        const hipAngle = calculateAngle(shoulder, hip, ankle);
-        if (hipAngle === -1) return { feedback: 'Body out of view' };
-        if (hipAngle > threshold.hold) {
-            if (!this.startTime) this.startTime = Date.now();
-            const seconds = Math.floor((Date.now() - this.startTime) / 1000);
-            STATE.reps = seconds;
-            return { state: 'HOLD', feedback: 'Hold it!' };
-        } else {
-            this.startTime = null;
-            return { state: 'FORM', feedback: 'Lower hips' };
-        }
-    }
-}
-
-class JumpingJacks extends BaseExercise {
-    update(landmarks) {
-        const leftHand = this.get(landmarks, 15);
-        const rightHand = this.get(landmarks, 16);
-        const leftAnkle = this.get(landmarks, 27);
-        const rightAnkle = this.get(landmarks, 28);
-        const nose = this.get(landmarks, 0);
-        if (leftHand.visibility < CONFIG.visibilityThreshold || rightHand.visibility < CONFIG.visibilityThreshold) {
-            return { feedback: 'Hands in view' };
-        }
-        const handsUp = leftHand.y < nose.y && rightHand.y < nose.y;
-        const feetWide = calculateDistance(leftAnkle, rightAnkle) > 0.4;
-        if (handsUp && feetWide) {
-            this.state = 'UP';
-            return { state: 'OPEN', feedback: 'Back in' };
-        }
-        if (!handsUp && !feetWide) {
-            if (this.state === 'UP') {
-                this.state = 'DOWN';
-                return { repIncrement: 1, state: 'CLOSED', feedback: 'Nice!' };
-            }
-            return { state: 'DOWN', feedback: 'Jump!' };
-        }
-        return { state: this.state, feedback: 'Keep jumping' };
-    }
-}
-
-class Lunge extends BaseExercise {
-    update(landmarks) {
-        const lKnee = calculateAngle(this.get(landmarks, 23), this.get(landmarks, 25), this.get(landmarks, 27));
-        const rKnee = calculateAngle(this.get(landmarks, 24), this.get(landmarks, 26), this.get(landmarks, 28));
-        if (lKnee === -1 || rKnee === -1) return { feedback: 'Show legs' };
-        if (lKnee < 115 || rKnee < 115) {
-            this.state = 'DOWN';
-            return { state: 'DOWN', feedback: 'Up' };
-        }
-        if (lKnee > 145 && rKnee > 145) {
-            if (this.state === 'DOWN') {
-                this.state = 'UP';
-                return { repIncrement: 1, state: 'UP', feedback: 'Good!' };
-            }
-        }
-        return { state: this.state, feedback: 'Lunge' };
-    }
-}
-
-class Crunches extends BaseExercise {
-    update(landmarks) {
-        const shoulder = this.get(landmarks, 11);
-        const knee = this.get(landmarks, 25);
-        const hip = this.get(landmarks, 23);
-        if (shoulder.visibility < CONFIG.visibilityThreshold) return { feedback: 'Torso in view' };
-        const dist = calculateDistance(shoulder, knee);
-        const ref = calculateDistance(hip, knee);
-        if (dist < ref * 1.3) {
-            this.state = 'IN';
-            return { state: 'CRUNCH', feedback: 'Down' };
-        }
-        if (dist > ref * 1.5 && this.state === 'IN') {
-            this.state = 'OUT';
-            return { repIncrement: 1, state: 'OUT', feedback: 'Crunch!' };
-        }
-        return { state: this.state, feedback: 'Crunch' };
-    }
-}
-
-class HighKnees extends BaseExercise {
-    constructor() { super(); this.lastLeg = null; }
-    update(landmarks) {
-        const lKnee = this.get(landmarks, 25);
-        const lHip = this.get(landmarks, 23);
-        const rKnee = this.get(landmarks, 26);
-        const rHip = this.get(landmarks, 24);
-        const lUp = lKnee.visibility > CONFIG.visibilityThreshold && lKnee.y < lHip.y - 0.08;
-        const rUp = rKnee.visibility > CONFIG.visibilityThreshold && rKnee.y < rHip.y - 0.08;
-        if (lUp && this.lastLeg !== 'left') {
-            this.lastLeg = 'left';
-            return { repIncrement: 0.5, state: 'LEFT', feedback: 'Next!' };
-        }
-        if (rUp && this.lastLeg !== 'right') {
-            this.lastLeg = 'right';
-            return { repIncrement: 0.5, state: 'RIGHT', feedback: 'Next!' };
-        }
-        return { state: 'RUN', feedback: 'Knees high' };
-    }
-}
-
-class Burpees extends BaseExercise {
-    constructor() { super(); this.step = 0; }
-    reset() { this.step = 0; }
-    update(landmarks) {
-        const shoulder = this.get(landmarks, 11);
-        const ankle = this.get(landmarks, 27);
-        const isHorizontal = Math.abs(shoulder.y - ankle.y) < 0.25;
-        const isVertical = shoulder.y < this.get(landmarks, 23).y && Math.abs(shoulder.x - ankle.x) < 0.25;
-        if (isHorizontal && this.step === 0) {
-            this.step = 1;
-            return { state: 'PLANK', feedback: 'Up!' };
-        }
-        if (isVertical && this.step === 1) {
-            this.step = 0;
-            return { repIncrement: 1, state: 'STAND', feedback: 'Down!' };
-        }
-        return { state: this.step === 1 ? 'PLANK' : 'STAND', feedback: 'Move!' };
-    }
-}
-
-class ShoulderTap extends BaseExercise {
-    update(landmarks) {
-        const lWrist = this.get(landmarks, 15);
-        const rWrist = this.get(landmarks, 16);
-        const lShoulder = this.get(landmarks, 11);
-        const rShoulder = this.get(landmarks, 12);
-        const lTap = calculateDistance(lWrist, rShoulder) < 0.25;
-        const rTap = calculateDistance(rWrist, lShoulder) < 0.25;
-        if ((lTap || rTap) && this.state !== 'TAP') {
-            this.state = 'TAP';
-            return { repIncrement: 0.5, feedback: 'Tap!' };
-        }
-        if (!lTap && !rTap) this.state = 'IDLE';
-        return { feedback: 'Tap shoulders' };
-    }
-}
-
-class CalfRaise extends BaseExercise {
-    update(landmarks) {
-        const ankle = this.get(landmarks, 27);
-        if (!this.baseY) this.baseY = ankle.y;
-        if (ankle.y < this.baseY - 0.03) {
-            this.state = 'UP';
-            return { state: 'UP', feedback: 'Down' };
-        }
-        if (this.state === 'UP' && ankle.y > this.baseY - 0.01) {
-            this.state = 'DOWN';
-            return { repIncrement: 1, state: 'DOWN', feedback: 'Up' };
-        }
-        return { feedback: 'Rise' };
-    }
-}
-
-class RussianTwists extends BaseExercise {
-    update(landmarks) {
-        const lShoulder = this.get(landmarks, 11);
-        const rShoulder = this.get(landmarks, 12);
-        if (lShoulder.x > rShoulder.x + 0.05 && this.state !== 'LEFT') {
-            this.state = 'LEFT';
-            return { repIncrement: 0.5, feedback: 'Right' };
-        }
-        if (rShoulder.x > lShoulder.x + 0.05 && this.state !== 'RIGHT') {
-            this.state = 'RIGHT';
-            return { repIncrement: 0.5, feedback: 'Left' };
-        }
-        return { feedback: 'Twist' };
+        return { state: this.state, feedback: `Moving to ${nextState}` };
     }
 }
 
 class ExerciseEngine {
     constructor() {
-        this.exercises = {
-            pushup: new PushUp(),
-            plankupdown: new PushUp(),
-            pikepushup: new PushUp(),
-            shouldertap: new ShoulderTap(),
-            lunge: new Lunge(),
-            glutebridge: new Squats(),
-            calfraise: new CalfRaise(),
-            plank: new Plank(),
-            highknees: new HighKnees(),
-            burpees: new Burpees(),
-            mountainclimbers: new HighKnees(),
-            jumpingjacks: new JumpingJacks(),
-            legraises: new Crunches(),
-            russiantwists: new RussianTwists(),
-            crunches: new Crunches(),
-            squats: new Squats(),
+        this.exercises = {};
+        const mapping = {
+            'pushup': 'push_up',
+            'squats': 'squat',
+            'plank': 'plank',
+            'jumpingjacks': 'jumping_jack',
+            'lunge': 'lunge',
+            'crunches': 'crunch',
+            'highknees': 'high_knee',
+            'burpees': 'burpee',
+            'shouldertap': 'shoulder_tap',
+            'calfraise': 'calf_raise',
+            'russiantwists': 'russian_twist',
+            'glutebridge': 'glute_bridge',
+            'legraises': 'leg_raise',
+            'mountainclimbers': 'mountain_climber',
+            'pikepushup': 'pike_pushup',
+            'plankupdown': 'plank_up_down'
         };
+        Object.entries(mapping).forEach(([key, refKey]) => {
+            this.exercises[key] = new SmartExercise(refKey);
+        });
     }
     process(landmarks) {
         const exercise = this.exercises[STATE.currentExercise];
@@ -376,6 +210,7 @@ class ExerciseEngine {
         STATE.movementState = result.state || STATE.movementState;
         STATE.lastFeedback = result.feedback || STATE.lastFeedback;
         updateFeedbackUI();
+        drawMotionOverlay(landmarks, exercise.key);
     }
     reset() {
         STATE.reps = 0;
@@ -420,8 +255,9 @@ exerciseSelector.addEventListener('change', (e) => {
     updateUI();
 });
 
-function startCamera() {
+async function startCamera() {
     loadingOverlay.classList.remove('hidden');
+    await loadReferenceData();
     camera.start().then(() => {
         STATE.isCameraRunning = true;
         loadingOverlay.classList.add('hidden');

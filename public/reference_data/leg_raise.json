@@ -1,0 +1,11 @@
+{
+  "exercise": "leg_raise",
+  "states": ["DOWN", "UP"],
+  "rep_order": ["DOWN", "UP", "DOWN"],
+  "angles": {
+    "UP": {
+      "left_hip": [30, 60],
+      "right_hip": [30, 60]
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "exercise": "plank_up_down",
+  "states": ["ELBOW_PLANK", "HIGH_PLANK"],
+  "rep_order": ["ELBOW_PLANK", "HIGH_PLANK", "ELBOW_PLANK"],
+  "angles": {
+    "ELBOW_PLANK": {
+      "left_elbow": [80, 100],
+      "right_elbow": [80, 100]
+    },
+    "HIGH_PLANK": {
+      "left_elbow": [160, 180],
+      "right_elbow": [160, 180]
+    }
+  },
+  "constraints": {
+    "min_rep_time": 0.7
+  }
+}

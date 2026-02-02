@@ -1,0 +1,11 @@
+{
+  "exercise": "crunch",
+  "states": ["DOWN", "UP"],
+  "rep_order": ["DOWN", "UP", "DOWN"],
+  "angles": {
+    "UP": {
+      "left_hip": [40, 70],
+      "right_hip": [40, 70]
+    }
+  }
+}

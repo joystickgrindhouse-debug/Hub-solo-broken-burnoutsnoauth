@@ -1,0 +1,11 @@
+{
+  "exercise": "lunge",
+  "states": ["TOP", "BOTTOM"],
+  "rep_order": ["TOP", "BOTTOM", "TOP"],
+  "angles": {
+    "BOTTOM": {
+      "left_knee": [70, 110],
+      "right_knee": [70, 110]
+    }
+  }
+}

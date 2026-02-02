@@ -1,0 +1,11 @@
+{
+  "exercise": "jumping_jack",
+  "states": ["CLOSED", "OPEN"],
+  "rep_order": ["CLOSED", "OPEN", "CLOSED"],
+  "angles": {
+    "OPEN": {
+      "shoulder": [150, 180],
+      "hip": [30, 60]
+    }
+  }
+}

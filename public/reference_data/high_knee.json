@@ -1,0 +1,9 @@
+{
+  "exercise": "high_knees",
+  "states": ["LEFT_UP", "RIGHT_UP"],
+  "rep_order": ["LEFT_UP", "RIGHT_UP"],
+  "angles": {
+    "LEFT_UP": { "left_hip": [40, 70] },
+    "RIGHT_UP": { "right_hip": [40, 70] }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "exercise": "russian_twist",
+  "states": ["LEFT", "RIGHT"],
+  "rep_order": ["LEFT", "RIGHT"],
+  "angles": {
+    "LEFT": { "torso_rotation": [30, 60] },
+    "RIGHT": { "torso_rotation": [-60, -30] }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "exercise": "pike_push_up",
+  "states": ["TOP", "BOTTOM"],
+  "rep_order": ["TOP", "BOTTOM", "TOP"],
+  "angles": {
+    "TOP": {
+      "left_elbow": [160, 180],
+      "right_elbow": [160, 180],
+      "left_hip": [40, 70],
+      "right_hip": [40, 70]
+    },
+    "BOTTOM": {
+      "left_elbow": [60, 90],
+      "right_elbow": [60, 90]
+    }
+  }
+}
