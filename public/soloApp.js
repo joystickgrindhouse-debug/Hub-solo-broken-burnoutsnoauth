@@ -91,6 +91,7 @@ function flipCard() {
 
     STATE.currentExercise = randomKey;
     STATE.repsRemaining = value;
+    STATE.initialReps = value; // Store for submission
     STATE.isSessionActive = true;
     
     exerciseNameDisplay.innerText = exercise.name;
@@ -102,6 +103,18 @@ function flipCard() {
     updateUI();
     STATE.lastFeedback = "Exercise Loaded!";
     updateFeedbackUI();
+}
+
+function submitSoloScore() {
+    const refKey = EXERCISES[STATE.currentExercise]?.ref;
+    window.parent.postMessage({
+        type: "SESSION_STATS",
+        stats: { 
+            reps: STATE.initialReps, 
+            exercise: refKey,
+            type: refKey === 'plank' ? 'timed' : 'rep'
+        }
+    }, "*");
 }
 
 function getJointAngle(landmarks, joint) {
@@ -212,6 +225,7 @@ class ExerciseEngine {
                 STATE.isSessionActive = false;
                 STATE.lastFeedback = "Card Complete!";
                 updateFeedbackUI();
+                submitSoloScore();
                 return;
             }
         }

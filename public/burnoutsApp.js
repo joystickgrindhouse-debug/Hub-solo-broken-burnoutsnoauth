@@ -141,10 +141,15 @@ function endSession() {
     STATE.lastFeedback = "Session Complete!";
     updateFeedbackUI();
     
-    // Notify parent view
+    // Notify parent view with unified stats
     window.parent.postMessage({
         type: "SESSION_STATS",
-        stats: { reps: STATE.totalReps, duration: 60 }
+        stats: { 
+            reps: STATE.totalReps, 
+            duration: 60,
+            category: STATE.category,
+            type: 'rep' // Burnouts are primarily rep-based
+        }
     }, "*");
 }
 

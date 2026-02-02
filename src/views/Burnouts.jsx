@@ -54,10 +54,11 @@ export default function Burnouts({ user, userProfile }) {
         score: stats.reps || 0,
         duration: stats.duration || 0,
         metadata: {
-          exercises: stats.exercises || []
+          category: stats.category,
+          type: stats.type || 'rep'
         }
       });
-      alert("Session saved! Tickets earned.");
+      alert(`Burnout Complete! ${stats.reps} reps submitted.`);
       navigate("/dashboard");
     } catch (error) {
       console.error("Failed to save burnout session:", error);

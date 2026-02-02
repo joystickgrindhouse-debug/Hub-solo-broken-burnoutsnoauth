@@ -2,9 +2,13 @@ import React, { useState, useEffect } from "react";
 import LoadingScreen from "../components/LoadingScreen.jsx";
 import { auth } from "../firebase.js";
 
-export default function Solo({ user }) {
+import { LeaderboardService } from "../services/leaderboardService.js";
+import { useNavigate } from "react-router-dom";
+
+export default function Solo({ user, userProfile }) {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
+  const navigate = useNavigate();
   const externalAppUrl = window.location.origin + "/solo.html";
 
   useEffect(() => {
@@ -19,7 +23,36 @@ export default function Solo({ user }) {
       }
     };
     getAuthToken();
-  }, []);
+
+    const handleMessage = async (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data.type === "SESSION_STATS") {
+        await handleSessionEnd(event.data.stats);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [user]);
+
+  const handleSessionEnd = async (stats) => {
+    if (!user || !stats) return;
+    try {
+      await LeaderboardService.submitScore({
+        userId: user.uid,
+        userName: userProfile?.nickname || user.email,
+        gameMode: "solo",
+        score: stats.reps || 0,
+        metadata: {
+          exercise: stats.exercise,
+          type: stats.type
+        }
+      });
+      alert(`Card Complete! ${stats.reps} reps submitted.`);
+    } catch (error) {
+      console.error("Failed to save solo session:", error);
+    }
+  };
 
   const handleLoad = () => {
     setLoading(false);

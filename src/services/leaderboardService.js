@@ -45,7 +45,8 @@ export const LeaderboardService = {
       const ticketRefs = [];
       let ticketCount = 0;
       
-      if (gameMode === 'solo' && metadata.exercise === 'plank') {
+      // Unified calculation: 1 ticket per rep, 1 per 5s for timed/plank
+      if (metadata.exercise === 'plank' || metadata.type === 'timed') {
         ticketCount = Math.floor(score / 5);
       } else {
         ticketCount = Math.floor(score); // 1 ticket per rep
