@@ -60,10 +60,12 @@ const AdBanner = () => {
       alignItems: "center",
       gap: "20px",
       margin: "15px 0",
-      minHeight: "60px" 
+      minHeight: "60px",
+      position: "relative",
+      zIndex: 10000
     }}>
-      <div id="ad-container-69c3ae6b085d581d286b14b236fb4787"></div>
-      <div id="ad-container-216b83ae1cc7be8e80e9273c5ce952d9"></div>
+      <div id="ad-container-69c3ae6b085d581d286b14b236fb4787" style={{ minWidth: "468px", minHeight: "60px", background: "#222" }}></div>
+      <div id="ad-container-216b83ae1cc7be8e80e9273c5ce952d9" style={{ minWidth: "320px", minHeight: "50px", background: "#222" }}></div>
     </div>
   );
 };

@@ -9,7 +9,8 @@ const PopUnderAd = () => {
     const script = document.createElement("script");
     script.src = "https://pl28628138.effectivegatecpm.com/a4/6f/60/a46f60e4c5d35df7d4546ce6f3e1d521.js";
     script.async = true;
-    document.body.appendChild(script);
+    script.setAttribute('data-cfasync', 'false');
+    document.head.appendChild(script);
 
     return () => {
       document.body.removeChild(script);
