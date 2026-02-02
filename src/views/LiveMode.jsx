@@ -26,13 +26,13 @@ export default function LiveMode({ user, userProfile }) {
         <p className="mb-6 text-center text-zinc-400">Select your workout focus for this battle.</p>
         
         <div className="grid grid-cols-2 gap-4 w-full max-w-md mb-8">
-          {['Arms', 'Legs', 'Core', 'Full'].map((cat) => (
+          {['Arms', 'Legs', 'Core', 'Full Body'].map((cat) => (
             <button
               key={cat}
-              onClick={() => startMatchmaking(cat.toLowerCase())}
+              onClick={() => startMatchmaking(cat.toLowerCase().replace(' ', ''))}
               className="bg-zinc-900 hover:bg-red-600 border-2 border-red-900 text-white font-bold py-4 rounded-lg transition-all"
             >
-              {cat === 'Full' ? 'Full Body' : cat}
+              {cat}
             </button>
           ))}
         </div>

@@ -89,10 +89,10 @@ function flipCard() {
     
     // Exercise filtering for live mode categories
     const categoryMap = {
-        'arms': ['push_up', 'pike_pushup', 'shoulder_tap', 'crunches'], // simplified for solo keys
-        'legs': ['squats', 'lunge', 'calfraise'],
-        'core': ['crunches', 'plank'],
-        'full': Object.keys(EXERCISES)
+        'arms': ['push_up', 'pike_pushup', 'shoulder_tap'],
+        'legs': ['squat', 'lunge', 'calf_raise', 'glute_bridge'],
+        'core': ['crunch', 'leg_raise', 'russian_twist', 'plank'],
+        'fullbody': Object.keys(EXERCISES).map(k => EXERCISES[k].ref)
     };
     
     // Convert ref names to exercise keys for soloApp
@@ -108,7 +108,7 @@ function flipCard() {
     };
 
     let keys = Object.keys(EXERCISES);
-    if (category !== 'full') {
+    if (category !== 'fullbody') {
         const allowedRefs = categoryMap[category] || [];
         keys = keys.filter(k => {
             const ref = EXERCISES[k].ref;
