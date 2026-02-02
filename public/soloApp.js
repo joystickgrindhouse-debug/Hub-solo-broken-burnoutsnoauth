@@ -12,28 +12,36 @@ const CONFIG = {
 const STATE = {
     isCameraRunning: false,
     currentExercise: 'pushup',
-    reps: 0,
+    repsRemaining: 0,
     movementState: 'IDLE',
     lastFeedback: 'Get Ready',
     startTime: null, 
     landmarks: null,
     referenceData: {},
+    isSessionActive: false,
+};
+
+const EXERCISES = {
+    'pushup': { ref: 'push_up', name: 'Push-ups', suit: '♠' },
+    'squats': { ref: 'squat', name: 'Squats', suit: '♥' },
+    'jumpingjacks': { ref: 'jumping_jack', name: 'Jumping Jacks', suit: '♦' },
+    'lunge': { ref: 'lunge', name: 'Lunges', suit: '♣' },
+    'crunches': { ref: 'crunch', name: 'Crunches', suit: '♠' },
+    'highknees': { ref: 'high_knee', name: 'High Knees', suit: '♥' },
+    'burpees': { ref: 'burpee', name: 'Burpees', suit: '♦' },
+    'calfraise': { ref: 'calf_raise', name: 'Calf Raises', suit: '♣' }
 };
 
 async function loadReferenceData() {
-    const exercises = [
-        'push_up', 'squat', 'plank', 'jumping_jack', 'lunge', 'crunch', 
-        'high_knee', 'burpee', 'shoulder_tap', 'calf_raise', 'russian_twist',
-        'glute_bridge', 'leg_raise', 'mountain_climber', 'pike_pushup', 'plank_up_down'
-    ];
-    for (const ex of exercises) {
+    const refs = [...new Set(Object.values(EXERCISES).map(e => e.ref))];
+    for (const ref of refs) {
         try {
-            const response = await fetch(`/reference_data/${ex}.json`);
+            const response = await fetch(`/reference_data/${ref}.json`);
             if (response.ok) {
-                STATE.referenceData[ex] = await response.json();
+                STATE.referenceData[ref] = await response.json();
             }
         } catch (e) {
-            console.error(`Failed to load data for ${ex}`, e);
+            console.error(`Failed to load data for ${ref}`, e);
         }
     }
 }
@@ -44,10 +52,13 @@ const canvasCtx = canvasElement.getContext('2d');
 const repDisplay = document.getElementById('rep-count');
 const stateDisplay = document.getElementById('feedback-state');
 const messageDisplay = document.getElementById('feedback-message');
-const exerciseSelector = document.getElementById('exercise-selector');
-const startBtn = document.getElementById('start-btn');
+const flipBtn = document.getElementById('flip-btn');
 const loadingOverlay = document.getElementById('loading-overlay');
 const cameraStatus = document.getElementById('camera-status');
+const exerciseNameDisplay = document.getElementById('current-exercise-name');
+const cardValueDisplays = document.querySelectorAll('.card-value');
+const cardSuitDisplays = document.querySelectorAll('.card-suit');
+const centerSuitDisplay = document.querySelector('.suit-icon');
 
 function calculateAngle(a, b, c) {
     if (!a || !b || !c) return -1;
@@ -62,52 +73,35 @@ function calculateAngle(a, b, c) {
     return angle;
 }
 
-function calculateDistance(a, b) {
-    if (!a || !b) return 0;
-    return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
-}
-
 function updateUI() {
-    if (repDisplay) repDisplay.innerText = Math.floor(STATE.reps);
+    if (repDisplay) repDisplay.innerText = Math.max(0, Math.floor(STATE.repsRemaining));
 }
 
 function updateFeedbackUI() {
     if (!stateDisplay || !messageDisplay) return;
     stateDisplay.innerText = STATE.movementState;
     messageDisplay.innerText = STATE.lastFeedback;
-    const colorMap = {
-        'UP': '#00ff88', 'STAND': '#00ff88', 'OPEN': '#00ff88',
-        'DOWN': '#ff4444', 'PLANK': '#ff4444', 'CLOSED': '#ff4444'
-    };
-    stateDisplay.style.color = colorMap[STATE.movementState] || '#ffffff';
 }
 
-function drawMotionOverlay(landmarks, exerciseKey) {
-    const ref = STATE.referenceData[exerciseKey];
-    if (!ref || !ref.angles) return;
+function flipCard() {
+    const keys = Object.keys(EXERCISES);
+    const randomKey = keys[Math.floor(Math.random() * keys.length)];
+    const exercise = EXERCISES[randomKey];
+    const value = Math.floor(Math.random() * 10) + 5; // 5 to 15 reps
 
-    const currentState = ref.states.find(s => {
-        const angles = ref.angles[s];
-        return Object.entries(angles).every(([joint, range]) => {
-            const val = getJointAngle(landmarks, joint);
-            return val >= range[0] && val <= range[1];
-        });
-    }) || ref.states[0];
-
-    const targetAngles = ref.angles[currentState];
-    canvasCtx.save();
-    canvasCtx.setTransform(1, 0, 0, 1, 0, 0);
-    canvasCtx.font = '16px "Press Start 2P"';
-    canvasCtx.fillStyle = '#ff4444';
-    let y = 30;
-    Object.entries(targetAngles).forEach(([joint, range]) => {
-        const current = getJointAngle(landmarks, joint);
-        const isOk = current >= range[0] && current <= range[1];
-        canvasCtx.fillStyle = isOk ? '#00ff88' : '#ff4444';
-        canvasCtx.fillText(`${joint}: ${Math.round(current)}° (Target: ${range[0]}-${range[1]}°)`, 10, y);
-        y += 25;
-    });
-    canvasCtx.restore();
+    STATE.currentExercise = randomKey;
+    STATE.repsRemaining = value;
+    STATE.isSessionActive = true;
+    
+    exerciseNameDisplay.innerText = exercise.name;
+    centerSuitDisplay.innerText = exercise.suit;
+    cardValueDisplays.forEach(el => el.innerText = value);
+    cardSuitDisplays.forEach(el => el.innerText = exercise.suit);
+    
+    engine.reset();
+    updateUI();
+    STATE.lastFeedback = "Exercise Loaded!";
+    updateFeedbackUI();
 }
 
 function getJointAngle(landmarks, joint) {
@@ -124,6 +118,35 @@ function getJointAngle(landmarks, joint) {
     return calculateAngle(landmarks[indices[0]], landmarks[indices[1]], landmarks[indices[2]]);
 }
 
+function drawMotionOverlay(landmarks, exerciseKey) {
+    const refKey = EXERCISES[exerciseKey]?.ref;
+    const ref = STATE.referenceData[refKey];
+    if (!ref || !ref.angles) return;
+
+    const currentState = ref.states.find(s => {
+        const angles = ref.angles[s];
+        return Object.entries(angles).every(([joint, range]) => {
+            const val = getJointAngle(landmarks, joint);
+            return val >= range[0] && val <= range[1];
+        });
+    }) || ref.states[0];
+
+    const targetAngles = ref.angles[currentState];
+    canvasCtx.save();
+    canvasCtx.setTransform(1, 0, 0, 1, 0, 0);
+    canvasCtx.font = '14px "Inter"';
+    canvasCtx.fillStyle = '#ff4444';
+    let y = 30;
+    Object.entries(targetAngles).forEach(([joint, range]) => {
+        const current = getJointAngle(landmarks, joint);
+        const isOk = current >= range[0] && current <= range[1];
+        canvasCtx.fillStyle = isOk ? '#00ff88' : '#ff4444';
+        canvasCtx.fillText(`${joint}: ${Math.round(current)}°`, 10, y);
+        y += 20;
+    });
+    canvasCtx.restore();
+}
+
 class BaseExercise {
     constructor() {
         this.state = 'UP';
@@ -131,10 +154,6 @@ class BaseExercise {
     }
     reset() {
         this.state = 'UP';
-        this.counter = 0;
-    }
-    get(landmarks, index) {
-        return landmarks[index];
     }
 }
 
@@ -144,8 +163,9 @@ class SmartExercise extends BaseExercise {
         this.key = key;
     }
     update(landmarks) {
-        const ref = STATE.referenceData[this.key];
-        if (!ref) return { feedback: 'Loading reference...' };
+        const refKey = EXERCISES[this.key]?.ref;
+        const ref = STATE.referenceData[refKey];
+        if (!ref) return { feedback: 'Wait...' };
 
         const currentAngles = {};
         Object.keys(ref.angles[ref.states[0]]).forEach(joint => {
@@ -165,59 +185,42 @@ class SmartExercise extends BaseExercise {
             const oldState = this.state;
             this.state = nextState;
             if (this.state === ref.rep_order[0] && oldState !== this.state) {
-                return { repIncrement: 1, state: this.state, feedback: 'Perfect Form!' };
+                return { repDecrement: 1, state: this.state, feedback: 'Great Rep!' };
             }
-            return { state: this.state, feedback: 'Match!' };
+            return { state: this.state, feedback: 'Hold...' };
         }
-
-        return { state: this.state, feedback: `Moving to ${nextState}` };
+        return { state: this.state, feedback: `Reach ${nextState}` };
     }
 }
 
 class ExerciseEngine {
     constructor() {
         this.exercises = {};
-        const mapping = {
-            'pushup': 'push_up',
-            'squats': 'squat',
-            'plank': 'plank',
-            'jumpingjacks': 'jumping_jack',
-            'lunge': 'lunge',
-            'crunches': 'crunch',
-            'highknees': 'high_knee',
-            'burpees': 'burpee',
-            'shouldertap': 'shoulder_tap',
-            'calfraise': 'calf_raise',
-            'russiantwists': 'russian_twist',
-            'glutebridge': 'glute_bridge',
-            'legraises': 'leg_raise',
-            'mountainclimbers': 'mountain_climber',
-            'pikepushup': 'pike_pushup',
-            'plankupdown': 'plank_up_down'
-        };
-        Object.entries(mapping).forEach(([key, refKey]) => {
-            this.exercises[key] = new SmartExercise(refKey);
+        Object.keys(EXERCISES).forEach(key => {
+            this.exercises[key] = new SmartExercise(key);
         });
     }
     process(landmarks) {
+        if (!STATE.isSessionActive || STATE.repsRemaining <= 0) return;
         const exercise = this.exercises[STATE.currentExercise];
         if (!exercise) return;
         const result = exercise.update(landmarks);
-        if (result.repIncrement) {
-            STATE.reps += result.repIncrement;
+        if (result.repDecrement) {
+            STATE.repsRemaining -= result.repDecrement;
             updateUI();
+            if (STATE.repsRemaining <= 0) {
+                STATE.isSessionActive = false;
+                STATE.lastFeedback = "Card Complete!";
+                updateFeedbackUI();
+                return;
+            }
         }
         STATE.movementState = result.state || STATE.movementState;
         STATE.lastFeedback = result.feedback || STATE.lastFeedback;
         updateFeedbackUI();
-        drawMotionOverlay(landmarks, exercise.key);
+        drawMotionOverlay(landmarks, STATE.currentExercise);
     }
     reset() {
-        STATE.reps = 0;
-        STATE.movementState = 'IDLE';
-        STATE.lastFeedback = 'Get Ready';
-        updateUI();
-        updateFeedbackUI();
         Object.values(this.exercises).forEach(ex => ex.reset());
     }
 }
@@ -244,16 +247,7 @@ const camera = new Camera(videoElement, {
     height: 480
 });
 
-startBtn.addEventListener('click', () => {
-    if (!STATE.isCameraRunning) startCamera();
-    else stopCamera();
-});
-
-exerciseSelector.addEventListener('change', (e) => {
-    STATE.currentExercise = e.target.value;
-    engine.reset();
-    updateUI();
-});
+flipBtn.addEventListener('click', flipCard);
 
 async function startCamera() {
     loadingOverlay.classList.remove('hidden');
@@ -261,71 +255,25 @@ async function startCamera() {
     camera.start().then(() => {
         STATE.isCameraRunning = true;
         loadingOverlay.classList.add('hidden');
-        cameraStatus.innerText = "📷 LIVE";
-        cameraStatus.classList.add('active');
-        startBtn.innerText = "STOP SESSION";
     }).catch(err => {
         console.error(err);
         loadingOverlay.innerHTML = "<p>Camera Error</p>";
     });
 }
 
-function stopCamera() {
-    STATE.isCameraRunning = false;
-    cameraStatus.innerText = "📷 OFF";
-    cameraStatus.classList.remove('active');
-    startBtn.innerText = "RUN SESSION";
-    engine.reset();
-}
-
 function onResults(results) {
     if (!results.image) return; 
-    
     canvasElement.width = videoElement.videoWidth || 640;
     canvasElement.height = videoElement.videoHeight || 480;
-    
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     canvasCtx.translate(canvasElement.width, 0);
     canvasCtx.scale(-1, 1);
-    
     canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-    
     if (results.poseLandmarks) {
-        const connections = [
-            [11, 12], [11, 13], [13, 15], [12, 14], [14, 16], 
-            [11, 23], [12, 24], [23, 24], 
-            [23, 25], [25, 27], [24, 26], [26, 28], 
-            [27, 31], [28, 32], [27, 29], [28, 30] 
-        ];
-
-        canvasCtx.strokeStyle = '#00FF88';
-        canvasCtx.lineWidth = 4;
-        canvasCtx.lineCap = 'round';
-        canvasCtx.lineJoin = 'round';
-        
-        connections.forEach(([i, j]) => {
-            const p1 = results.poseLandmarks[i];
-            const p2 = results.poseLandmarks[j];
-            if (p1 && p2 && p1.visibility > 0.1 && p2.visibility > 0.1) {
-                canvasCtx.beginPath();
-                canvasCtx.moveTo(p1.x * canvasElement.width, p1.y * canvasElement.height);
-                canvasCtx.lineTo(p2.x * canvasElement.width, p2.y * canvasElement.height);
-                canvasCtx.stroke();
-            }
-        });
-        
-        drawLandmarks(canvasCtx, results.poseLandmarks, {
-            color: '#FF4444', 
-            lineWidth: 1,
-            radius: 3
-        });
-
         engine.process(results.poseLandmarks);
     }
-    
     canvasCtx.restore();
 }
 
-loadingOverlay.classList.add('hidden');
-console.log("AI Rep Counter Pro Ready");
+window.addEventListener('load', startCamera);
