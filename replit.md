@@ -29,6 +29,12 @@ I prefer simple, clear explanations and want the agent to adopt an iterative dev
     - Raffle ticket reward system (1 ticket per 30 reps).
     - Wake lock support to prevent screen sleep.
     - Enhanced camera permission handling with specific error messages for different failure types.
+- **Monetization (Ads):**
+    - Integrated a responsive `AdBanner` component at the root level (`App.jsx`).
+    - Standard banner sizes documented for future expansion:
+        - Desktop: 728x90 (Leaderboard), 300x250 (Medium Rectangle), 300x600 (Half-Page).
+        - Mobile: 320x100 (Large Mobile Banner), 320x50 (Standard Mobile Leaderboard).
+    - Recommended AdSense settings: "Responsive" mode for automatic optimization.
 - **Raffle System:**
     - Interactive raffle room where users can view their entries and prizes.
     - Progress (position, score, items, tickets balance) tracked via Firestore.
