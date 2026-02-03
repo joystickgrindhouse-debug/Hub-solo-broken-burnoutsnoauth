@@ -1,18 +1,18 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
-const InternalAd = ({ title, subtitle, discount, link, color }) => (
+const InternalAd = ({ title, subtitle, discount, link, color, visible }) => (
   <a 
     href={link} 
     target="_blank" 
     rel="noopener noreferrer"
     style={{
-      minWidth: "250px",
+      minWidth: "300px",
       height: "60px",
       flexShrink: 0,
       background: `linear-gradient(135deg, #111 0%, ${color} 100%)`,
       border: `1px solid ${color}`,
       borderRadius: "4px",
-      display: "flex",
+      display: visible ? "flex" : "none",
       flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
@@ -22,7 +22,9 @@ const InternalAd = ({ title, subtitle, discount, link, color }) => (
       fontFamily: "'Press Start 2P', cursive",
       fontSize: "7px",
       boxShadow: `0 0 10px ${color}44`,
-      transition: "transform 0.2s ease, box-shadow 0.2s ease"
+      transition: "all 0.5s ease",
+      opacity: visible ? 1 : 0,
+      transform: visible ? "scale(1)" : "scale(0.95)"
     }}
     onMouseOver={(e) => {
       e.currentTarget.style.transform = "scale(1.02)";
@@ -43,6 +45,8 @@ const InternalAd = ({ title, subtitle, discount, link, color }) => (
  * Integrates external and internal ads.
  */
 const AdBanner = () => {
+  const [currentAd, setCurrentAd] = useState(0);
+
   useEffect(() => {
     // External Ad (468x60)
     const container1 = document.getElementById("ad-container-69c3ae6b085d581d286b14b236fb4787");
@@ -66,6 +70,13 @@ const AdBanner = () => {
       invoke1.src = "https://enoughprosperabsorbed.com/69c3ae6b085d581d286b14b236fb4787/invoke.js";
       container1.appendChild(invoke1);
     }
+
+    // Rotate internal ads every 5 seconds
+    const interval = setInterval(() => {
+      setCurrentAd(prev => (prev === 0 ? 1 : 0));
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -76,28 +87,31 @@ const AdBanner = () => {
       flexWrap: "nowrap",
       justifyContent: "center", 
       alignItems: "center",
-      gap: "10px",
+      gap: "15px",
       margin: "10px 0",
       minHeight: "60px",
       position: "relative",
       zIndex: 10000,
-      overflowX: "auto",
       padding: "0 10px"
     }}>
       <div id="ad-container-69c3ae6b085d581d286b14b236fb4787" style={{ minWidth: "468px", minHeight: "60px", background: "#222", flexShrink: 0 }}></div>
-      <InternalAd 
-        title="RIVALIS SUBSCRIPTION" 
-        subtitle="LEVEL UP YOUR GAINS" 
-        discount="25% OFF NOW" 
-        link="/subscription" 
-        color="#ff3050"
-      />
-      <InternalAd 
-        title="RIVALIS MERCH SHOP" 
-        subtitle="GEAR UP LIKE A PRO" 
-        link="/merch" 
-        color="#00f2ff"
-      />
+      <div style={{ display: 'flex', minWidth: '300px', height: '60px', overflow: 'hidden' }}>
+        <InternalAd 
+          title="RIVALIS SUBSCRIPTION" 
+          subtitle="LEVEL UP YOUR GAINS" 
+          discount="25% OFF NOW" 
+          link="/subscription" 
+          color="#ff3050"
+          visible={currentAd === 0}
+        />
+        <InternalAd 
+          title="RIVALIS MERCH SHOP" 
+          subtitle="GEAR UP LIKE A PRO" 
+          link="/merch" 
+          color="#00f2ff"
+          visible={currentAd === 1}
+        />
+      </div>
     </div>
   );
 };
