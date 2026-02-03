@@ -6,8 +6,9 @@ const InternalAd = ({ title, subtitle, discount, link, color }) => (
     target="_blank" 
     rel="noopener noreferrer"
     style={{
-      minWidth: "300px",
+      minWidth: "250px",
       height: "60px",
+      flexShrink: 0,
       background: `linear-gradient(135deg, #111 0%, ${color} 100%)`,
       border: `1px solid ${color}`,
       borderRadius: "4px",
@@ -15,11 +16,11 @@ const InternalAd = ({ title, subtitle, discount, link, color }) => (
       flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
-      padding: "0 15px",
+      padding: "0 10px",
       textDecoration: "none",
       color: "#fff",
       fontFamily: "'Press Start 2P', cursive",
-      fontSize: "8px",
+      fontSize: "7px",
       boxShadow: `0 0 10px ${color}44`,
       transition: "transform 0.2s ease, box-shadow 0.2s ease"
     }}
@@ -71,16 +72,19 @@ const AdBanner = () => {
     <div style={{ 
       width: "100%", 
       display: "flex", 
-      flexWrap: "wrap",
+      flexDirection: "row",
+      flexWrap: "nowrap",
       justifyContent: "center", 
       alignItems: "center",
-      gap: "15px",
-      margin: "15px 0",
+      gap: "10px",
+      margin: "10px 0",
       minHeight: "60px",
       position: "relative",
-      zIndex: 10000
+      zIndex: 10000,
+      overflowX: "auto",
+      padding: "0 10px"
     }}>
-      <div id="ad-container-69c3ae6b085d581d286b14b236fb4787" style={{ minWidth: "468px", minHeight: "60px", background: "#222" }}></div>
+      <div id="ad-container-69c3ae6b085d581d286b14b236fb4787" style={{ minWidth: "468px", minHeight: "60px", background: "#222", flexShrink: 0 }}></div>
       <InternalAd 
         title="RIVALIS SUBSCRIPTION" 
         subtitle="LEVEL UP YOUR GAINS" 
