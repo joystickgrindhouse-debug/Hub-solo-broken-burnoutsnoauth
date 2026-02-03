@@ -9,7 +9,7 @@ export default function Solo({ user, userProfile }) {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
   const navigate = useNavigate();
-  const externalAppUrl = window.location.origin + "/solo.html";
+  const externalAppUrl = "https://solochallenge.netlify.app/";
 
   useEffect(() => {
     const getAuthToken = async () => {
@@ -25,9 +25,8 @@ export default function Solo({ user, userProfile }) {
     getAuthToken();
 
     const handleMessage = async (event) => {
-      // Relaxed origin check for production deployments where protocol/subdomain might vary slightly
-      const isSameOrigin = event.origin === window.location.origin;
-      if (!isSameOrigin && !event.origin.includes('vercel.app')) return;
+      // Allow messages from the new solo app
+      if (event.origin !== "https://solochallenge.netlify.app" && event.origin !== window.location.origin) return;
       
       if (event.data.type === "SESSION_STATS") {
         await handleSessionEnd(event.data.stats);
@@ -46,7 +45,6 @@ export default function Solo({ user, userProfile }) {
     const isLive = urlParams.get('mode') === 'live';
 
     if (isLive) {
-      // In live mode, we just post message back to LiveMode.jsx
       window.parent.postMessage({
         type: "SESSION_STATS",
         stats: stats
@@ -55,19 +53,11 @@ export default function Solo({ user, userProfile }) {
     }
 
     try {
-      await LeaderboardService.submitScore({
-        userId: user.uid,
-        userName: userProfile?.nickname || user.email,
-        gameMode: "solo",
-        score: stats.reps || 0,
-        metadata: {
-          exercise: stats.exercise,
-          type: stats.type
-        }
-      });
-      alert(`Card Complete! ${stats.reps} reps submitted.`);
+      // The new solo app handles its own score submission to the shared Firebase
+      // But we keep the listener here in case it needs to notify the hub
+      console.log("Solo session ended:", stats);
     } catch (error) {
-      console.error("Failed to save solo session:", error);
+      console.error("Failed to process solo session:", error);
     }
   };
 
