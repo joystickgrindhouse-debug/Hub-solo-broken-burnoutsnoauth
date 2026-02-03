@@ -218,8 +218,9 @@ export default function App() {
           className="theme-toggle-btn"
           style={{
             position: "fixed",
-            top: "1.5rem",
+            top: "10rem",
             right: "1.5rem",
+            zIndex: 10002
           }}
           title="Cycle Themes"
         >
