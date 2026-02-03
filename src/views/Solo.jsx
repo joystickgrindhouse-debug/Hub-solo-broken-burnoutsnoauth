@@ -53,11 +53,19 @@ export default function Solo({ user, userProfile }) {
     }
 
     try {
-      // The new solo app handles its own score submission to the shared Firebase
-      // But we keep the listener here in case it needs to notify the hub
-      console.log("Solo session ended:", stats);
+      await LeaderboardService.submitScore({
+        userId: user.uid,
+        userName: userProfile?.nickname || user.email,
+        gameMode: "solo",
+        score: stats.reps || 0,
+        metadata: {
+          exercise: stats.exercise,
+          type: stats.type
+        }
+      });
+      alert(`Card Complete! ${stats.reps} reps submitted.`);
     } catch (error) {
-      console.error("Failed to process solo session:", error);
+      console.error("Failed to save solo session:", error);
     }
   };
 
