@@ -27,28 +27,6 @@ const AdBanner = () => {
       invoke1.src = "https://enoughprosperabsorbed.com/69c3ae6b085d581d286b14b236fb4787/invoke.js";
       container1.appendChild(invoke1);
     }
-
-    // Ad 2 (320x50)
-    const container2 = document.getElementById("ad-container-216b83ae1cc7be8e80e9273c5ce952d9");
-    if (container2) {
-      const script2 = document.createElement("script");
-      script2.type = "text/javascript";
-      script2.innerHTML = `
-        atOptions = {
-          'key' : '216b83ae1cc7be8e80e9273c5ce952d9',
-          'format' : 'iframe',
-          'height' : 50,
-          'width' : 320,
-          'params' : {}
-        };
-      `;
-      container2.appendChild(script2);
-
-      const invoke2 = document.createElement("script");
-      invoke2.type = "text/javascript";
-      invoke2.src = "https://enoughprosperabsorbed.com/216b83ae1cc7be8e80e9273c5ce952d9/invoke.js";
-      container2.appendChild(invoke2);
-    }
   }, []);
 
   return (
@@ -65,7 +43,6 @@ const AdBanner = () => {
       zIndex: 10000
     }}>
       <div id="ad-container-69c3ae6b085d581d286b14b236fb4787" style={{ minWidth: "468px", minHeight: "60px", background: "#222" }}></div>
-      <div id="ad-container-216b83ae1cc7be8e80e9273c5ce952d9" style={{ minWidth: "320px", minHeight: "50px", background: "#222" }}></div>
     </div>
   );
 };
