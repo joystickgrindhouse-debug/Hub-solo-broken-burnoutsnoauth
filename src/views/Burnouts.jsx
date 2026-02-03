@@ -26,7 +26,8 @@ export default function Burnouts({ user, userProfile }) {
 
     // Listen for messages from the iframe
     const handleMessage = (event) => {
-      if (event.origin !== new URL(externalAppUrl).origin) return;
+      const isSameOrigin = event.origin === window.location.origin;
+      if (!isSameOrigin && !event.origin.includes('vercel.app')) return;
       
       if (event.data.type === "SESSION_STARTED") {
         setSessionActive(true);

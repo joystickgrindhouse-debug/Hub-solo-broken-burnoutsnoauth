@@ -25,7 +25,10 @@ export default function Solo({ user, userProfile }) {
     getAuthToken();
 
     const handleMessage = async (event) => {
-      if (event.origin !== window.location.origin) return;
+      // Relaxed origin check for production deployments where protocol/subdomain might vary slightly
+      const isSameOrigin = event.origin === window.location.origin;
+      if (!isSameOrigin && !event.origin.includes('vercel.app')) return;
+      
       if (event.data.type === "SESSION_STATS") {
         await handleSessionEnd(event.data.stats);
       }

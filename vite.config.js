@@ -10,6 +10,11 @@ export default defineConfig({
     sourcemap: false,
     emptyOutDir: true,
     rollupOptions: {
+      input: {
+        main: 'index.html',
+        solo: 'solo.html',
+        burnouts: 'burnouts.html'
+      },
       output: {
         manualChunks: undefined
       }
