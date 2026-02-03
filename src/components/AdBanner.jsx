@@ -1,14 +1,52 @@
 import React, { useEffect } from "react";
 
+const InternalAd = ({ title, subtitle, discount, link, color }) => (
+  <a 
+    href={link} 
+    target="_blank" 
+    rel="noopener noreferrer"
+    style={{
+      minWidth: "300px",
+      height: "60px",
+      background: `linear-gradient(135deg, #111 0%, ${color} 100%)`,
+      border: `1px solid ${color}`,
+      borderRadius: "4px",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: "0 15px",
+      textDecoration: "none",
+      color: "#fff",
+      fontFamily: "'Press Start 2P', cursive",
+      fontSize: "8px",
+      boxShadow: `0 0 10px ${color}44`,
+      transition: "transform 0.2s ease, box-shadow 0.2s ease"
+    }}
+    onMouseOver={(e) => {
+      e.currentTarget.style.transform = "scale(1.02)";
+      e.currentTarget.style.boxShadow = `0 0 20px ${color}88`;
+    }}
+    onMouseOut={(e) => {
+      e.currentTarget.style.transform = "scale(1)";
+      e.currentTarget.style.boxShadow = `0 0 10px ${color}44`;
+    }}
+  >
+    <div style={{ fontWeight: "bold", marginBottom: "4px", color: color }}>{title}</div>
+    <div style={{ fontSize: "6px" }}>{subtitle} {discount && <span style={{ color: "#00ff00" }}>{discount}</span>}</div>
+  </a>
+);
+
 /**
  * AdBanner Component
- * Integrates two ads side-by-side with unique handling.
+ * Integrates external and internal ads.
  */
 const AdBanner = () => {
   useEffect(() => {
-    // Ad 1 (468x60)
+    // External Ad (468x60)
     const container1 = document.getElementById("ad-container-69c3ae6b085d581d286b14b236fb4787");
     if (container1) {
+      container1.innerHTML = ''; // Clear if re-rendering
       const script1 = document.createElement("script");
       script1.type = "text/javascript";
       script1.innerHTML = `
@@ -36,13 +74,26 @@ const AdBanner = () => {
       flexWrap: "wrap",
       justifyContent: "center", 
       alignItems: "center",
-      gap: "20px",
+      gap: "15px",
       margin: "15px 0",
       minHeight: "60px",
       position: "relative",
       zIndex: 10000
     }}>
       <div id="ad-container-69c3ae6b085d581d286b14b236fb4787" style={{ minWidth: "468px", minHeight: "60px", background: "#222" }}></div>
+      <InternalAd 
+        title="RIVALIS SUBSCRIPTION" 
+        subtitle="LEVEL UP YOUR GAINS" 
+        discount="25% OFF NOW" 
+        link="/subscription" 
+        color="#ff3050"
+      />
+      <InternalAd 
+        title="RIVALIS MERCH SHOP" 
+        subtitle="GEAR UP LIKE A PRO" 
+        link="/merch" 
+        color="#00f2ff"
+      />
     </div>
   );
 };
