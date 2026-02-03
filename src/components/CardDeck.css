@@ -8,9 +8,11 @@
   border: 2px solid #e63946;
   border-radius: 8px;
   box-shadow: 0 0 20px rgba(230, 57, 70, 0.5);
-  height: 100%;
+  height: auto;
+  min-height: 500px;
   width: 100%;
-  overflow: hidden;
+  max-width: 100%;
+  overflow: visible;
 }
 
 .deck-header {

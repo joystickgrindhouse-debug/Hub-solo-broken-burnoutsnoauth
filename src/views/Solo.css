@@ -2,19 +2,22 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 100vh;
-  padding: 2rem;
+  padding: 1rem;
   background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
   color: #fff;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .solo-title {
-  font-size: 3rem;
+  font-size: clamp(1.5rem, 8vw, 3rem);
   font-family: 'Press Start 2P', cursive;
   color: #ff3050;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   text-shadow: 0 0 20px rgba(255, 48, 80, 0.8);
+  text-align: center;
 }
 
 .solo-button {

@@ -1,6 +1,6 @@
 .playing-card {
-  width: 160px;
-  height: 220px;
+  width: clamp(140px, 45vw, 160px);
+  height: clamp(200px, 65vw, 220px);
   background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%);
   border: 2px solid var(--card-color);
   border-radius: 8px;

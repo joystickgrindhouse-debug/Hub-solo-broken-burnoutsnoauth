@@ -84,18 +84,35 @@ const AdBanner = () => {
       width: "100%", 
       display: "flex", 
       flexDirection: "row",
-      flexWrap: "nowrap",
+      flexWrap: "wrap",
       justifyContent: "center", 
       alignItems: "center",
-      gap: "15px",
+      gap: "10px",
       margin: "10px 0",
       minHeight: "60px",
       position: "relative",
       zIndex: 10000,
       padding: "0 10px"
     }}>
-      <div id="ad-container-69c3ae6b085d581d286b14b236fb4787" style={{ minWidth: "468px", minHeight: "60px", background: "#222", flexShrink: 0 }}></div>
-      <div style={{ display: 'flex', minWidth: '300px', height: '60px', overflow: 'hidden' }}>
+      <div id="ad-container-69c3ae6b085d581d286b14b236fb4787" style={{ 
+        minWidth: "300px", 
+        maxWidth: "468px", 
+        width: "100%",
+        minHeight: "60px", 
+        background: "#222", 
+        flexShrink: 0,
+        display: "flex",
+        justifyContent: "center"
+      }}></div>
+      <div style={{ 
+        display: 'flex', 
+        minWidth: '300px', 
+        width: "100%",
+        maxWidth: "468px",
+        height: '60px', 
+        overflow: 'hidden',
+        justifyContent: "center"
+      }}>
         <InternalAd 
           title="RIVALIS SUBSCRIPTION" 
           subtitle="FOR AN AD FREE EXPERIENCE" 
