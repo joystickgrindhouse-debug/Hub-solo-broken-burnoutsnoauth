@@ -56,6 +56,8 @@ export const LiveService = {
       const players = roomData.players || [];
       
       if (players.find(p => p.userId === userId)) return { success: true };
+      if (players.length >= 4) return { success: false, error: "Room is full" };
+      if (roomData.status !== "waiting") return { success: false, error: "Match already in progress" };
       
       await updateDoc(roomRef, {
         players: [...players, { userId, userName, ready: false }],

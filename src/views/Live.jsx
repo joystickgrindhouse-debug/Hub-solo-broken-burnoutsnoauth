@@ -91,16 +91,22 @@ export default function Live({ user, userProfile }) {
   };
 
   const handleJoinRoom = async (room) => {
+    if (room.players?.length >= 4) {
+      alert("This arena is full! Choose another showdown.");
+      return;
+    }
     const res = await LiveService.joinRoom(room.id, user.uid, userProfile?.nickname || "Rival");
     if (res.success) {
       setCurrentRoomId(room.id);
-      // Find showdown by name or store ID in room
       const showdown = SHOWDOWNS.find(s => room.roomName.includes(s.name)) || SHOWDOWNS[0];
       setSelectedShowdown(showdown);
+    } else {
+      alert("Failed to join: " + res.error);
     }
   };
 
   const handleToggleReady = async () => {
+    if (lobbyStatus === "ACTIVE") return;
     const isReady = !roomData?.players?.find(p => p.userId === user.uid)?.ready;
     await LiveService.toggleReady(currentRoomId, user.uid, isReady);
   };

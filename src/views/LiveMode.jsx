@@ -25,12 +25,12 @@ export default function LiveMode({ user, userProfile }) {
         <h1 className="text-4xl font-bold mb-4 neon-text">LIVE MATCHUP</h1>
         <p className="mb-6 text-center text-zinc-400">Select your workout focus for this battle.</p>
         
-        <div className="grid grid-cols-2 gap-4 w-full max-w-md mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md mb-8 px-4">
           {['Arms', 'Legs', 'Core', 'Full Body'].map((cat) => (
             <button
               key={cat}
               onClick={() => startMatchmaking(cat.toLowerCase().replace(' ', ''))}
-              className="bg-zinc-900 hover:bg-red-600 border-2 border-red-900 text-white font-bold py-4 rounded-lg transition-all"
+              className="bg-zinc-900 hover:bg-red-600 border-2 border-red-900 text-white font-bold py-4 rounded-lg transition-all active:scale-95"
             >
               {cat}
             </button>
