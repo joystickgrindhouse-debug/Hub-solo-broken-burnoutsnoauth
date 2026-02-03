@@ -98,8 +98,8 @@ const AdBanner = () => {
       <div style={{ display: 'flex', minWidth: '300px', height: '60px', overflow: 'hidden' }}>
         <InternalAd 
           title="RIVALIS SUBSCRIPTION" 
-          subtitle="LEVEL UP YOUR GAINS" 
-          discount="25% OFF NOW" 
+          subtitle="FOR AN AD FREE EXPERIENCE" 
+          discount="50% OFF NOW" 
           link="/subscription" 
           color="#ff3050"
           visible={currentAd === 0}
