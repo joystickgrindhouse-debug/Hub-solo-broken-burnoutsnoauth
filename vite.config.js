@@ -12,8 +12,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: 'index.html',
-        solo: 'public/solo/index.html',
-        burnouts: 'public/burnouts/index.html'
+        solo: 'solo.html',
+        burnouts: 'burnouts.html'
       },
       output: {
         manualChunks: undefined
