@@ -121,7 +121,7 @@ export default function Burnouts({ user, userProfile }) {
         width="100%"
         height="100%"
         frameBorder="0"
-        allow="camera; microphone; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allow="camera; microphone; autoplay; clipboard-write; encrypted-media; gyroscope; accelerometer; magnetometer; display-capture; picture-in-picture"
         style={{ border: "none" }}
       />
 
