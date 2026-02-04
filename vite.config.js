@@ -12,7 +12,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: 'index.html',
-        solo: 'soloIndex.html',
+        solo: 'solo.html',
         burnouts: 'burnouts.html'
       },
       output: {
