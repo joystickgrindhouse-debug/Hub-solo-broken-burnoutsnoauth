@@ -9,7 +9,7 @@ export default function Burnouts({ user, userProfile }) {
   const [token, setToken] = useState(null);
   const [sessionActive, setSessionActive] = useState(false);
   const navigate = useNavigate();
-  const externalAppUrl = window.location.origin + "/burnouts.html";
+  const externalAppUrl = "https://burnoutschallenge.netlify.app/";
 
   useEffect(() => {
     const getAuthToken = async () => {
@@ -26,8 +26,8 @@ export default function Burnouts({ user, userProfile }) {
 
     // Listen for messages from the iframe
     const handleMessage = (event) => {
-      const isSameOrigin = event.origin === window.location.origin;
-      if (!isSameOrigin && !event.origin.includes('vercel.app')) return;
+      // Allow messages from the new burnouts app
+      if (event.origin !== "https://burnoutschallenge.netlify.app" && event.origin !== window.location.origin) return;
       
       if (event.data.type === "SESSION_STARTED") {
         setSessionActive(true);

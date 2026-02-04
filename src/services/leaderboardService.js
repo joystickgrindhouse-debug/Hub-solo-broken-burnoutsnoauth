@@ -7,7 +7,10 @@ import {
   limit, 
   getDocs,
   where,
-  Timestamp 
+  Timestamp,
+  doc,
+  updateDoc,
+  increment
 } from "firebase/firestore";
 
 /**
@@ -41,17 +44,15 @@ export const LeaderboardService = {
       const now = new Date();
       const windowStart = getRaffleWindowStart();
       
-      // Generate unique ticket reference numbers: 1 ticket per rep, 1 per 5s for timed
-      const ticketRefs = [];
+      // Scoring: 1 rep = 1 ticket, 5 sec = 1 ticket
       let ticketCount = 0;
-      
-      // Unified calculation: 1 ticket per rep, 1 per 5s for timed/plank
-      if (metadata.exercise === 'plank' || metadata.type === 'timed') {
+      if (metadata.type === 'timed' || metadata.exercise === 'plank') {
         ticketCount = Math.floor(score / 5);
       } else {
-        ticketCount = Math.floor(score); // 1 ticket per rep
+        ticketCount = Math.floor(score);
       }
       
+      const ticketRefs = [];
       for (let i = 0; i < ticketCount; i++) {
         const ref = `RIV-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
         ticketRefs.push(ref);
@@ -62,6 +63,7 @@ export const LeaderboardService = {
         userName,
         gameMode,
         score,
+        ticketCount,
         ticketRefs,
         duration,
         metadata,
@@ -72,24 +74,27 @@ export const LeaderboardService = {
 
       const docRef = await addDoc(collection(db, "leaderboard"), scoreEntry);
       
-      // Also update user's profile with active ticket refs if within current window
-      const userRef = query(collection(db, "users"), where("uid", "==", userId));
-      const userSnap = await getDocs(userRef);
+      // Update user's profile with ticket balance and total reps/stats
+      const userRef = doc(db, "users", userId);
+      const userSnap = await getDocs(query(collection(db, "users"), where("userId", "==", userId)));
+      
       if (!userSnap.empty) {
         const userDoc = userSnap.docs[0];
         const userData = userDoc.data();
         
-        // Reset refs if the window has changed
+        // Reset weekly tickets if window changed
         const lastUpdate = userData.lastTicketWindowUpdate?.toDate() || new Date(0);
-        let currentRefs = userData.activeTicketRefs || [];
-        
+        let currentWeeklyRefs = userData.activeTicketRefs || [];
         if (lastUpdate < windowStart) {
-          currentRefs = [];
+          currentWeeklyRefs = [];
         }
 
         await updateDoc(userDoc.ref, {
-          activeTicketRefs: [...currentRefs, ...ticketRefs],
-          lastTicketWindowUpdate: Timestamp.now()
+          ticketBalance: increment(ticketCount),
+          totalReps: increment(metadata.type !== 'timed' ? score : 0),
+          activeTicketRefs: [...currentWeeklyRefs, ...ticketRefs],
+          lastTicketWindowUpdate: Timestamp.now(),
+          updatedAt: Timestamp.now()
         });
       }
 
