@@ -50,7 +50,7 @@ const gameModes = [
     id: "shop",
     name: "Merch Shop",
     image: shopImage,
-    link: "https://squarespace.com",
+    link: "https://rivalis.printful.me",
     external: true,
   },
 ];
