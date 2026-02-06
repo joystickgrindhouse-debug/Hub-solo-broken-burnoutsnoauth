@@ -1,111 +1,286 @@
-import React, { useState, useEffect } from "react";
-import { MatchmakingService } from "../services/matchmakingService";
-import LoadingScreen from "../components/LoadingScreen";
+import React, { useEffect, useMemo, useState } from "react";
+import { auth } from "../firebase.js";
+import {
+  createLobby,
+  joinLobby,
+  leaveLobby,
+  listenLobby,
+  listenPlayers,
+  setReady,
+  startLobby
+} from "../live/lobby.js";
 
 export default function LiveMode({ user, userProfile }) {
-  const [match, setMatch] = useState(null);
-  const [searching, setSearching] = useState(false);
-  const [role, setRole] = useState(null);
+  // Prefer the user passed in from App (your ProtectedRoute guarantees it)
+  const me = user || auth.currentUser;
 
-  const startMatchmaking = async (category) => {
-    setSearching(true);
-    const result = await MatchmakingService.joinQueue(user.uid, userProfile?.nickname || user.email, category);
-    setRole(result.role);
-    MatchmakingService.listenToMatch(result.matchId, (data) => {
-      setMatch(data);
-      setSearching(false);
-    });
-  };
-
-  if (searching) return <LoadingScreen message="Finding Rival..." />;
-
-  if (!match) {
+  const displayName = useMemo(() => {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-white bg-black p-4 overflow-y-auto">
-        <h1 className="text-4xl font-bold mb-4 neon-text">LIVE MATCHUP</h1>
-        <p className="mb-6 text-center text-zinc-400">Select your workout focus for this battle.</p>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md mb-8 px-4">
-          {['Arms', 'Legs', 'Core', 'Full Body'].map((cat) => (
-            <button
-              key={cat}
-              onClick={() => startMatchmaking(cat.toLowerCase().replace(' ', ''))}
-              className="bg-zinc-900 hover:bg-red-600 border-2 border-red-900 text-white font-bold py-4 rounded-lg transition-all active:scale-95"
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+      userProfile?.displayName ||
+      userProfile?.username ||
+      me?.displayName ||
+      me?.email ||
+      "Player"
+    );
+  }, [userProfile, me]);
 
-        <button 
-          onClick={() => startMatchmaking('full')}
-          className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-12 rounded-lg border-2 border-white shadow-[0_0_20px_rgba(255,0,0,0.4)] animate-pulse"
-        >
-          QUICK START (FULL BODY)
-        </button>
+  const [joinInput, setJoinInput] = useState("");
+  const [activeLobbyId, setActiveLobbyId] = useState(null);
+  const [lobby, setLobby] = useState(null);
+  const [players, setPlayers] = useState([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!activeLobbyId) return;
+
+    const unsubLobby = listenLobby(activeLobbyId, setLobby);
+    const unsubPlayers = listenPlayers(activeLobbyId, setPlayers);
+
+    return () => {
+      unsubLobby();
+      unsubPlayers();
+    };
+  }, [activeLobbyId]);
+
+  if (!me) {
+    // Shouldn't happen because /live is protected, but safe fallback
+    return (
+      <div style={{ padding: 20, color: "#fff" }}>
+        <h2>Live Mode</h2>
+        <p>Please log in first.</p>
       </div>
     );
   }
 
-  const handleSessionEnd = async (stats) => {
-    if (!match) return;
-    await MatchmakingService.submitTurn(match.id || match.matchId, user.uid, stats, match);
-  };
+  const uid = me.uid;
+  const isHost = lobby?.hostUid === uid;
+  const myPlayer = players.find((p) => p.uid === uid);
+  const myReady = !!myPlayer?.ready;
 
-  useEffect(() => {
-    const handleMessage = async (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data.type === "SESSION_STATS") {
-        await handleSessionEnd(event.data.stats);
-      }
-    };
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [match]);
+  async function handleCreate() {
+    setError("");
+    try {
+      const id = await createLobby(uid, displayName);
+      setActiveLobbyId(id);
+    } catch (e) {
+      setError(e?.message || "Failed to create lobby");
+    }
+  }
+
+  async function handleJoin() {
+    setError("");
+    const id = joinInput.trim();
+    if (!id) return setError("Enter a lobby ID");
+    try {
+      await joinLobby(id, uid, displayName);
+      setActiveLobbyId(id);
+    } catch (e) {
+      setError(e?.message || "Failed to join lobby");
+    }
+  }
+
+  async function handleLeave() {
+    setError("");
+    try {
+      await leaveLobby(activeLobbyId, uid);
+      setActiveLobbyId(null);
+      setLobby(null);
+      setPlayers([]);
+    } catch (e) {
+      setError(e?.message || "Failed to leave lobby");
+    }
+  }
+
+  async function handleToggleReady() {
+    setError("");
+    try {
+      await setReady(activeLobbyId, uid, !myReady);
+    } catch (e) {
+      setError(e?.message || "Failed to toggle ready");
+    }
+  }
+
+  async function handleStart() {
+    setError("");
+    try {
+      await startLobby(activeLobbyId, uid);
+    } catch (e) {
+      setError(e?.message || "Failed to start lobby");
+    }
+  }
 
   return (
-    <div className="text-white p-4 h-full flex flex-col items-center overflow-y-auto">
-      <h2 className="text-2xl mb-4 font-bold neon-text">{match.player1Name} vs {match.player2Name}</h2>
-      <div className="bg-zinc-900 p-4 rounded-xl border-2 border-red-600 w-full max-w-4xl">
-        <div className="flex justify-between mb-4 px-4 font-bold text-red-500">
-          <span>{match.player1Name}: {match.deck1Count}/52</span>
-          <span>{match.player2Name}: {match.deck2Count}/52</span>
+    <div style={{ padding: 20, color: "#fff" }}>
+      <h2 style={{ marginBottom: 8 }}>Live Mode</h2>
+      <p style={{ opacity: 0.8, marginTop: 0 }}>
+        Firebase-only lobby (runs inside Hub)
+      </p>
+
+      {error && (
+        <div
+          style={{
+            background: "rgba(255,48,80,0.12)",
+            border: "1px solid rgba(255,48,80,0.5)",
+            padding: 12,
+            borderRadius: 10,
+            marginBottom: 16
+          }}
+        >
+          {error}
         </div>
-        
-        {match.wildcardMessage && (
-          <div className="bg-red-900/50 border border-red-500 p-3 mb-4 rounded animate-bounce text-center">
-            <span className="text-white font-bold">⚠️ {match.wildcardMessage}</span>
+      )}
+
+      {!activeLobbyId ? (
+        <div style={{ display: "grid", gap: 12, maxWidth: 520 }}>
+          <button
+            onClick={handleCreate}
+            style={btnPrimary}
+          >
+            Create Lobby
+          </button>
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <input
+              value={joinInput}
+              onChange={(e) => setJoinInput(e.target.value)}
+              placeholder="Enter Lobby ID"
+              style={inputStyle}
+            />
+            <button onClick={handleJoin} style={btnSecondary}>
+              Join
+            </button>
           </div>
-        )}
-        
-        {match.status === "completed" ? (
-          <div className="text-center py-10">
-            <h3 className="text-3xl text-yellow-400 mb-4">MATCH COMPLETE!</h3>
-            <button onClick={() => window.location.reload()} className="bg-red-600 px-6 py-2 rounded">BACK TO ARENA</button>
-          </div>
-        ) : match.currentTurn === user.uid ? (
-          <div className="flex flex-col items-center">
-            <h3 className="text-xl text-green-400 mb-4">YOUR TURN!</h3>
-            <div style={{ width: "100%", height: "500px", position: "relative" }}>
-               <iframe
-                src={`/solo.html?mode=live&category=${match.category || 'full'}&matchId=${match.id || match.matchId}&effect=${match.pendingEffect?.id || ''}`}
-                title="Live Turn"
-                width="100%"
-                height="100%"
-                style={{ border: "none", borderRadius: "10px" }}
-                allow="camera; microphone"
-              />
+
+          <p style={{ fontSize: 12, opacity: 0.7, marginTop: 6 }}>
+            Tip: Create a lobby, copy the Lobby ID, send it to friends.
+          </p>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: 12, maxWidth: 720 }}>
+          <div style={card}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+              <div>
+                <div style={{ opacity: 0.8, fontSize: 12 }}>Lobby ID</div>
+                <div style={{ fontWeight: 800, fontSize: 18 }}>{activeLobbyId}</div>
+              </div>
+              <div>
+                <div style={{ opacity: 0.8, fontSize: 12 }}>Status</div>
+                <div style={{ fontWeight: 700 }}>
+                  {lobby?.status || "loading..."}
+                </div>
+              </div>
+              <div>
+                <div style={{ opacity: 0.8, fontSize: 12 }}>Players</div>
+                <div style={{ fontWeight: 700 }}>{players.length}/6</div>
+              </div>
             </div>
           </div>
-        ) : (
-          <div className="text-center py-20">
-            <h3 className="text-2xl text-yellow-400 mb-4 animate-pulse">
-              {match.currentTurn === "BOT_ID" ? "BOT IS ANALYZING FORM..." : "RIVAL IS PERFORMING..."}
-            </h3>
-            <p className="text-zinc-400">Stay hydrated, your turn is next.</p>
+
+          <div style={card}>
+            <h3 style={{ marginTop: 0 }}>Players</h3>
+            <div style={{ display: "grid", gap: 8 }}>
+              {players.map((p) => (
+                <div
+                  key={p.uid}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.08)"
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 700 }}>
+                      {p.displayName || "Player"}
+                      {p.uid === lobby?.hostUid ? " (Host)" : ""}
+                      {p.uid === uid ? " (You)" : ""}
+                    </div>
+                  </div>
+                  <div style={{ fontWeight: 700 }}>
+                    {p.ready ? "✅ Ready" : "❌ Not ready"}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
+              <button onClick={handleToggleReady} style={btnSecondary}>
+                {myReady ? "Unready" : "Ready Up"}
+              </button>
+
+              {isHost && (
+                <button onClick={handleStart} style={btnPrimary}>
+                  Start Game
+                </button>
+              )}
+
+              <button onClick={handleLeave} style={btnDanger}>
+                Leave Lobby
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+
+          {lobby?.status === "started" && (
+            <div style={card}>
+              <h3 style={{ marginTop: 0 }}>Game Started</h3>
+              <p style={{ marginBottom: 0, opacity: 0.85 }}>
+                Next step: this is where you transition everyone into your Live workout session.
+                (We can wire your “trick cards / joker cards / burnouts type” logic here next.)
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
+
+const inputStyle = {
+  flex: 1,
+  padding: "12px 12px",
+  borderRadius: 12,
+  border: "1px solid rgba(255,255,255,0.15)",
+  background: "rgba(0,0,0,0.35)",
+  color: "#fff",
+  outline: "none"
+};
+
+const btnPrimary = {
+  padding: "12px 14px",
+  borderRadius: 12,
+  border: "none",
+  background: "linear-gradient(45deg, #ff3050 0%, #ff6b6b 100%)",
+  color: "#fff",
+  fontWeight: 800,
+  cursor: "pointer"
+};
+
+const btnSecondary = {
+  padding: "12px 14px",
+  borderRadius: 12,
+  border: "1px solid rgba(255,255,255,0.18)",
+  background: "rgba(255,255,255,0.06)",
+  color: "#fff",
+  fontWeight: 800,
+  cursor: "pointer"
+};
+
+const btnDanger = {
+  padding: "12px 14px",
+  borderRadius: 12,
+  border: "1px solid rgba(255,48,80,0.6)",
+  background: "rgba(255,48,80,0.12)",
+  color: "#fff",
+  fontWeight: 800,
+  cursor: "pointer"
+};
+
+const card = {
+  background: "rgba(0,0,0,0.35)",
+  border: "1px solid rgba(255,255,255,0.10)",
+  borderRadius: 16,
+  padding: 16,
+  boxShadow: "0 8px 24px rgba(0,0,0,0.25)"
+};
