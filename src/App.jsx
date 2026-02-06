@@ -28,6 +28,8 @@ const AdminDashboard = lazy(() => import("./views/AdminDashboard.jsx"));
 const OtherApps = lazy(() => import("./views/OtherApps.jsx"));
 const BoxingArena = lazy(() => import("./boxing/pages/Arena.tsx"));
 
+const MerchShop = lazy(() => import("./views/MerchShop.jsx"));
+
 export default function App() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -380,6 +382,14 @@ export default function App() {
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <BoxingArena />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/merch" 
+            element={
+              <ProtectedRoute user={user} userProfile={userProfile}>
+                <MerchShop />
               </ProtectedRoute>
             } 
           />

@@ -50,8 +50,8 @@ const gameModes = [
     id: "shop",
     name: "Merch Shop",
     image: shopImage,
-    link: "https://rivalis.printful.me",
-    external: true,
+    link: "/merch",
+    external: false,
   },
 ];
 
@@ -67,34 +67,7 @@ export default function Dashboard({ user, userProfile }) {
   }, [user]);
 
   const handleTileClick = async (mode) => {
-    if (mode.external) {
-      if (mode.id === "shop") {
-        window.open(mode.link, "_blank", "noopener,noreferrer");
-        return;
-      }
-      // For external apps like Solo mode, pass authentication data
-      try {
-        const token = await user.getIdToken();
-        const authData = {
-          token: token,
-          userId: user.uid,
-          email: user.email,
-          displayName: user.displayName || user.email
-        };
-        
-        // Encode auth data as URL parameters
-        const params = new URLSearchParams(authData);
-        const urlWithAuth = `${mode.link}?${params.toString()}`;
-        
-        window.open(urlWithAuth, "_blank", "noopener,noreferrer");
-      } catch (error) {
-        console.error("Error getting auth token:", error);
-        // Fallback: open without auth data
-        window.open(mode.link, "_blank", "noopener,noreferrer");
-      }
-    } else {
-      navigate(mode.link);
-    }
+    navigate(mode.link);
   };
 
   console.log("Dashboard rendering with", gameModes.length, "game modes:", gameModes.map(m => m.name));
