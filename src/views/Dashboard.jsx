@@ -10,27 +10,28 @@ import runImage from "/assets/images/run.png";
 import gameboardImage from "/assets/images/gameboard.jpeg";
 import shopImage from "/assets/circuit-board.png"; // Using circuit board as placeholder
 
+// ✅ Everything runs INSIDE the hub now (no external Netlify/Vercel URLs)
 const gameModes = [
   {
     id: "solo",
     name: "Solo",
     image: soloImage,
-    link: "https://rivcontender.netlify.app",
-    external: true,
+    link: "/solo",
+    external: false,
   },
   {
     id: "burnouts",
     name: "Burnouts",
     image: burnoutsImage,
-    link: "https://burnchallenge.netlify.app/burnouts",
-    external: true,
+    link: "/burnouts",
+    external: false,
   },
   {
     id: "live",
     name: "Live",
     image: liveImage,
-    link: "https://livecomp.netlify.app",
-    external: true,
+    link: "/live",
+    external: false,
   },
   {
     id: "run",
@@ -66,15 +67,17 @@ export default function Dashboard({ user, userProfile }) {
     }
   }, [user]);
 
-  const handleTileClick = async (mode) => {
-    if (mode.external) {
-      window.location.href = mode.link;
-    } else {
-      navigate(mode.link);
-    }
+  // ✅ Always navigate internally (no external redirects)
+  const handleTileClick = (mode) => {
+    navigate(mode.link);
   };
 
-  console.log("Dashboard rendering with", gameModes.length, "game modes:", gameModes.map(m => m.name));
+  console.log(
+    "Dashboard rendering with",
+    gameModes.length,
+    "game modes:",
+    gameModes.map((m) => m.name)
+  );
 
   return (
     <div className="dashboard-background">
@@ -87,24 +90,59 @@ export default function Dashboard({ user, userProfile }) {
             FITNESS REIMAGINED
           </h1>
         </div>
-        
+
         <CoachsCorner />
 
         {activeChallenges.length > 0 && (
-          <div style={{
-            marginBottom: "2rem",
-            padding: "1.5rem",
-            background: "rgba(255, 48, 80, 0.1)",
-            border: "2px solid #ff3050",
-            borderRadius: "12px",
-            boxShadow: "0 0 20px rgba(255, 48, 80, 0.2)"
-          }}>
-            <h3 style={{ color: "#ff3050", marginBottom: "1rem", fontFamily: "'Press Start 2P', cursive", fontSize: "0.8rem" }}>ACTIVE BUDDY CHALLENGES</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
-              {activeChallenges.map(challenge => (
-                <div key={challenge.id} style={{ background: "#000", padding: "1rem", borderRadius: "8px", border: "1px solid rgba(255, 48, 80, 0.3)" }}>
-                  <div style={{ color: "#ff3050", fontWeight: "bold", marginBottom: "0.5rem" }}>{challenge.type.toUpperCase()} GOAL: {challenge.goal}</div>
-                  <div style={{ fontSize: "0.8rem", color: "#ccc" }}>Status: {challenge.status}</div>
+          <div
+            style={{
+              marginBottom: "2rem",
+              padding: "1.5rem",
+              background: "rgba(255, 48, 80, 0.1)",
+              border: "2px solid #ff3050",
+              borderRadius: "12px",
+              boxShadow: "0 0 20px rgba(255, 48, 80, 0.2)",
+            }}
+          >
+            <h3
+              style={{
+                color: "#ff3050",
+                marginBottom: "1rem",
+                fontFamily: "'Press Start 2P', cursive",
+                fontSize: "0.8rem",
+              }}
+            >
+              ACTIVE BUDDY CHALLENGES
+            </h3>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gap: "1rem",
+              }}
+            >
+              {activeChallenges.map((challenge) => (
+                <div
+                  key={challenge.id}
+                  style={{
+                    background: "#000",
+                    padding: "1rem",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255, 48, 80, 0.3)",
+                  }}
+                >
+                  <div
+                    style={{
+                      color: "#ff3050",
+                      fontWeight: "bold",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    {challenge.type.toUpperCase()} GOAL: {challenge.goal}
+                  </div>
+                  <div style={{ fontSize: "0.8rem", color: "#ccc" }}>
+                    Status: {challenge.status}
+                  </div>
                 </div>
               ))}
             </div>
@@ -127,7 +165,10 @@ export default function Dashboard({ user, userProfile }) {
         </div>
 
         <div style={styles.otherAppsSection}>
-          <button style={styles.otherAppsButton} onClick={() => navigate("/other-apps")}>
+          <button
+            style={styles.otherAppsButton}
+            onClick={() => navigate("/other-apps")}
+          >
             TRY OUR OTHER APPS
           </button>
         </div>
@@ -163,7 +204,7 @@ const styles = {
     maxWidth: "1400px",
     margin: "0 auto",
     padding: "20px",
-    position: 'relative',
+    position: "relative",
   },
   header: {
     textAlign: "center",
@@ -223,7 +264,8 @@ const styles = {
     bottom: "0",
     left: "0",
     right: "0",
-    background: "linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%)",
+    background:
+      "linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%)",
     padding: "20px",
     display: "flex",
     justifyContent: "space-between",
@@ -246,13 +288,12 @@ const styles = {
     color: "white",
     border: "none",
     padding: "15px 40px",
-    fontSize: "18px",
     fontWeight: "bold",
     borderRadius: "30px",
     cursor: "pointer",
     boxShadow: "0 0 20px rgba(255, 48, 80, 0.3)",
     transition: "all 0.3s ease",
     fontFamily: "'Press Start 2P', cursive",
-    fontSize: "0.8rem"
-  }
+    fontSize: "0.8rem",
+  },
 };
