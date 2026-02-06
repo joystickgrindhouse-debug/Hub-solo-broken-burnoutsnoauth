@@ -1,10 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-// Images
-import soloImage from "../assets/solo.png";
-import burnoutsImage from "../assets/burnouts.png";
-import trainingImage from "../assets/training.png";
+// ✅ Correct asset paths (your real files)
+import soloImage from "../assets/images/solo.png";
+import burnoutsImage from "../assets/images/burnouts.png";
+import liveImage from "../assets/images/live.png";
+import runImage from "../assets/images/run.png";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -13,8 +14,6 @@ export default function Dashboard() {
   const SOLO_URL = "https://riv-solo.vercel.app/";
   const BURNOUTS_URL = "https://burnouts.vercel.app/";
 
-  // Nav cards / game modes
-  // NOTE: Live removed until you provide the exact Firebase Hosting URL.
   const gameModes = [
     {
       id: "solo",
@@ -22,6 +21,7 @@ export default function Dashboard() {
       image: soloImage,
       link: SOLO_URL,
       external: true,
+      desc: "AI rep detection. Solo grind mode.",
     },
     {
       id: "burnouts",
@@ -29,13 +29,23 @@ export default function Dashboard() {
       image: burnoutsImage,
       link: BURNOUTS_URL,
       external: true,
+      desc: "High-intensity burn challenges.",
     },
     {
-      id: "training",
-      name: "Training",
-      image: trainingImage,
-      link: "/training",
+      id: "live",
+      name: "Live",
+      image: liveImage,
+      link: "/live",
       external: false,
+      desc: "Real-time rooms and matchups.",
+    },
+    {
+      id: "run",
+      name: "Run",
+      image: runImage,
+      link: "/run",
+      external: false,
+      desc: "Cardio tracking / run mode.",
     },
   ];
 
@@ -88,11 +98,7 @@ export default function Dashboard() {
                   </span>
                 </div>
 
-                <p className="text-white/60 text-sm mt-2">
-                  {mode.id === "solo" && "AI rep detection. Solo grind mode."}
-                  {mode.id === "burnouts" && "High-intensity burn challenges."}
-                  {mode.id === "training" && "Practice and test movements."}
-                </p>
+                <p className="text-white/60 text-sm mt-2">{mode.desc}</p>
               </div>
             </button>
           ))}
