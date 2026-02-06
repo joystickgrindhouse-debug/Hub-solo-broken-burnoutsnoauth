@@ -15,22 +15,22 @@ const gameModes = [
     id: "solo",
     name: "Solo",
     image: soloImage,
-    link: "/solo",
-    external: false,
+    link: "https://rivcontender.netlify.app",
+    external: true,
   },
   {
     id: "burnouts",
     name: "Burnouts",
     image: burnoutsImage,
-    link: "/burnouts",
-    external: false,
+    link: "https://burnchallenge.netlify.app/burnouts",
+    external: true,
   },
   {
     id: "live",
     name: "Live",
     image: liveImage,
-    link: "/live",
-    external: false,
+    link: "https://livecomp.netlify.app",
+    external: true,
   },
   {
     id: "run",
@@ -67,7 +67,11 @@ export default function Dashboard({ user, userProfile }) {
   }, [user]);
 
   const handleTileClick = async (mode) => {
-    navigate(mode.link);
+    if (mode.external) {
+      window.location.href = mode.link;
+    } else {
+      navigate(mode.link);
+    }
   };
 
   console.log("Dashboard rendering with", gameModes.length, "game modes:", gameModes.map(m => m.name));
