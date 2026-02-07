@@ -13,7 +13,6 @@ export default function BackgroundShell({ children }) {
       const nx = (clientX / w) * 2 - 1;
       const ny = (clientY / h) * 2 - 1;
 
-      // Subtle parallax
       setParallax({ x: clamp(nx * 10, -10, 10), y: clamp(ny * 7, -7, 7) });
     };
 
