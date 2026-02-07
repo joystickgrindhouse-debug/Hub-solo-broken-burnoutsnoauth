@@ -189,25 +189,29 @@ export default function Dashboard() {
         }}
       />
 
-      <div className="relative z-20 px-4 py-10">
+      {/* Mobile-first padding + safe-area */}
+      <div className="relative z-20 px-3 sm:px-4 py-8 pb-[calc(24px+env(safe-area-inset-bottom))]">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-10">
+          <div className="mb-6 sm:mb-10">
             <div className="inline-flex items-center gap-3">
               <div className="h-3 w-3 rounded-full bg-red-500 shadow-[0_0_18px_rgba(255,0,60,0.9)] animate-pulse" />
-              <h1 className="text-3xl md:text-5xl font-extrabold tracking-wide">Rivalis</h1>
+              <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-wide">
+                Rivalis
+              </h1>
             </div>
-            <p className="text-white/75 mt-2 text-base md:text-lg">
+            <p className="text-white/75 mt-2 text-sm sm:text-base md:text-lg">
               Fitness Reimagined — Get Hooked. Outtrain. Outrival.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* MOBILE FIRST: 2 cols on phones, tighter gaps */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
             {cards.map((mode) => (
               <button
                 key={mode.id}
                 onClick={() => handleCardClick(mode)}
                 className={[
-                  "group relative overflow-hidden rounded-2xl text-left",
+                  "group relative overflow-hidden rounded-2xl text-left h-full flex flex-col",
                   "border bg-zinc-950/75 backdrop-blur-md",
                   "transition-all duration-200",
                   mode.comingSoon
@@ -224,31 +228,38 @@ export default function Dashboard() {
                   }}
                 />
 
-                <div className="relative h-44 w-full overflow-hidden">
+                {/* SHRUNK image area (mobile-first) */}
+                <div className="relative flex-none h-[clamp(120px,18vh,160px)] w-full overflow-hidden">
                   <SafeImg
                     src={mode.image}
                     alt={mode.name}
-                    className="h-full w-full object-cover opacity-90 transition-all duration-200 group-hover:opacity-100 group-hover:scale-[1.06]"
+                    className="h-full w-full object-cover opacity-90 transition-all duration-200 group-hover:opacity-100 group-hover:scale-[1.04]"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
 
                   {(mode.badge || mode.comingSoon) && (
-                    <div className="absolute top-3 left-3">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-black/70 border border-red-500/40 text-red-200 shadow-[0_0_18px_rgba(255,0,60,0.25)]">
+                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold tracking-wider bg-black/70 border border-red-500/40 text-red-200 shadow-[0_0_18px_rgba(255,0,60,0.25)]">
                         {mode.comingSoon ? "COMING SOON" : mode.badge}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div className="p-4">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold">{mode.name}</h2>
-                    <span className="text-red-300 group-hover:text-red-200 text-sm font-semibold transition-colors">
+                {/* Tighter text + clamped desc */}
+                <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between">
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="text-base sm:text-lg font-semibold leading-tight">
+                      {mode.name}
+                    </h2>
+                    <span className="text-red-300 group-hover:text-red-200 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap">
                       Enter →
                     </span>
                   </div>
-                  <p className="text-white/60 text-sm mt-2">{mode.desc}</p>
+
+                  <p className="text-white/60 text-[11px] sm:text-sm mt-1 sm:mt-2 leading-snug line-clamp-2">
+                    {mode.desc}
+                  </p>
                 </div>
               </button>
             ))}
@@ -257,12 +268,19 @@ export default function Dashboard() {
       </div>
 
       {showComingSoon && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" role="dialog" aria-modal="true">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          role="dialog"
+          aria-modal="true"
+        >
           <div className="absolute inset-0 bg-black/70" onClick={() => setShowComingSoon(false)} />
           <div className="relative w-full max-w-lg rounded-2xl border border-red-500/30 bg-zinc-950/90 backdrop-blur-md shadow-[0_0_50px_rgba(255,0,60,0.18)] overflow-hidden">
             <div className="p-5 border-b border-white/10 flex items-center justify-between">
               <h3 className="text-lg font-bold tracking-wide">Coming Soon</h3>
-              <button onClick={() => setShowComingSoon(false)} className="text-white/70 hover:text-white transition-colors">
+              <button
+                onClick={() => setShowComingSoon(false)}
+                className="text-white/70 hover:text-white transition-colors"
+              >
                 ✕
               </button>
             </div>
