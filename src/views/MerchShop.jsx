@@ -8,7 +8,7 @@ export default function MerchShop() {
   const [loaded, setLoaded] = useState(false);
   const [blocked, setBlocked] = useState(false);
 
-  // If the iframe doesn't load quickly, assume embedding is blocked.
+  // If iframe doesn't load quickly, assume it is blocked.
   useEffect(() => {
     const t = setTimeout(() => {
       if (!loaded) setBlocked(true);
@@ -30,7 +30,7 @@ export default function MerchShop() {
               Rivalis Merch Shop
             </div>
             <div className="text-white/70 text-sm sm:text-base">
-              Official merch store — real purchases (Printful).
+              Official merch store — powered by Printful.
             </div>
           </div>
 
@@ -67,10 +67,10 @@ export default function MerchShop() {
           {/* Blocked fallback */}
           {blocked && !loaded && (
             <div className="p-6">
-              <div className="text-lg font-bold">Can’t embed this shop</div>
+              <div className="text-lg font-bold">This shop can’t be embedded</div>
               <div className="text-white/70 text-sm mt-2">
-                Printful Quick Stores may block being shown inside an iframe for security (X-Frame-Options/CSP).
-                Use the button below to open the store normally.
+                Printful Quick Stores often block iframe embeds for security.
+                Tap below to open the Rivalis shop normally.
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -89,7 +89,7 @@ export default function MerchShop() {
               </div>
 
               <div className="mt-4 text-[12px] text-white/55">
-                If you want a fully in-app embedded checkout, you’ll need a storefront that explicitly supports embedding.
+                If you want a fully in-app embedded shop, you’ll need a storefront that supports embedding.
               </div>
             </div>
           )}
@@ -102,7 +102,6 @@ export default function MerchShop() {
             style={{ height: "calc(100vh - 210px)" }}
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
-            // If the page is allowed to render, this will fire.
             onLoad={() => setLoaded(true)}
           />
         </div>
