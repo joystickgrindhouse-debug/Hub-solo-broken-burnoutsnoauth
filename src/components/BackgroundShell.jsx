@@ -1,24 +1,46 @@
+// src/components/BackgroundShell.jsx
 import React, { useEffect, useRef, useState } from "react";
+
+const BG_URL = "/assets/images/background.png";
 
 export default function BackgroundShell({ children }) {
   const bgRef = useRef(null);
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.matchMedia("(max-width: 768px)").matches;
+  });
 
+  // Detect mobile/desktop (updates on resize/orientation)
   useEffect(() => {
-    const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+    const mq = window.matchMedia("(max-width: 768px)");
+    const onChange = (e) => setIsMobile(e.matches);
 
+    if (mq.addEventListener) mq.addEventListener("change", onChange);
+    else mq.addListener(onChange);
+
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener("change", onChange);
+      else mq.removeListener(onChange);
+    };
+  }, []);
+
+  // Parallax: subtle on desktop, off on mobile (prevents “warp/stretch” feel)
+  useEffect(() => {
+    if (isMobile) return;
+
+    const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
     const onMove = (clientX, clientY) => {
       const w = window.innerWidth || 1;
       const h = window.innerHeight || 1;
       const nx = (clientX / w) * 2 - 1;
       const ny = (clientY / h) * 2 - 1;
-
-      setParallax({ x: clamp(nx * 10, -10, 10), y: clamp(ny * 7, -7, 7) });
+      setParallax({ x: clamp(nx * 6, -6, 6), y: clamp(ny * 4, -4, 4) });
     };
 
     const onMouseMove = (e) => onMove(e.clientX, e.clientY);
     const onTouchMove = (e) => {
-      if (!e.touches || !e.touches[0]) return;
+      if (!e.touches?.[0]) return;
       onMove(e.touches[0].clientX, e.touches[0].clientY);
     };
 
@@ -29,12 +51,30 @@ export default function BackgroundShell({ children }) {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("touchmove", onTouchMove);
     };
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
     if (!bgRef.current) return;
-    bgRef.current.style.transform = `scale(1.06) translate3d(${parallax.x}px, ${parallax.y}px, 0)`;
-  }, [parallax]);
+
+    // Mobile: no parallax, no zoom (clean + stable)
+    if (isMobile) {
+      bgRef.current.style.transform = "scale(1) translate3d(0px, 0px, 0)";
+      return;
+    }
+
+    // Desktop: tiny zoom + subtle parallax
+    bgRef.current.style.transform = `scale(1.03) translate3d(${parallax.x}px, ${parallax.y}px, 0)`;
+  }, [parallax, isMobile]);
+
+  // SMART sizing rules:
+  // - Mobile: cover (fills screen, looks premium)
+  // - Desktop: contain (shows full image, avoids heavy crop)
+  const backgroundSize = isMobile ? "cover" : "contain";
+
+  // Position rules:
+  // - Mobile: top-center (keeps important top artwork visible)
+  // - Desktop: center (balanced)
+  const backgroundPosition = isMobile ? "center top" : "center center";
 
   return (
     <div className="relative min-h-screen w-full text-white overflow-hidden bg-black">
@@ -43,10 +83,12 @@ export default function BackgroundShell({ children }) {
         ref={bgRef}
         className="absolute inset-0 z-0 will-change-transform transition-transform duration-200"
         style={{
-          backgroundImage: "url(/assets/images/background.png)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundImage: `url(${BG_URL})`,
           backgroundRepeat: "no-repeat",
+          backgroundSize,
+          backgroundPosition,
+          backgroundColor: "#000", // important when using 'contain' on desktop (fills bars)
+          transformOrigin: isMobile ? "center top" : "center center",
           filter: "brightness(0.42) contrast(1.2) saturate(1.15)",
         }}
       />
@@ -73,7 +115,7 @@ export default function BackgroundShell({ children }) {
       />
 
       {/* Foreground content */}
-      <div className="relative z-20 min-h-screen">{children}</div>
+      <div className="relative z-20 min-h-screen bg-transparent">{children}</div>
     </div>
   );
 }
