@@ -20,6 +20,8 @@ export default function Dashboard() {
 
   const SOLO_URL = "https://riv-solo.vercel.app/";
   const BURNOUTS_URL = "https://burnouts.vercel.app/";
+  const MERCH_URL = "https://rivalis.printful.me";
+
   const LIVE_COMING_SOON = false;
 
   const [showComingSoon, setShowComingSoon] = useState(false);
@@ -80,8 +82,8 @@ export default function Dashboard() {
         id: "shop",
         name: "Merch Shop",
         image: "/assets/images/shop.png.png",
-        link: "/merch",
-        external: false,
+        link: MERCH_URL,
+        external: true,
         desc: "Buy official Rivalis merch.",
         badge: "SHOP",
         comingSoon: false,
@@ -105,7 +107,7 @@ export default function Dashboard() {
       { id: "tournaments", name: "Tournaments", desc: "Bracket battles + prize pools." },
       { id: "arena", name: "Arena", desc: "Ranked battles + seasonal rewards." },
       { id: "clans", name: "Clans", desc: "Teams, rivalries, clan leaderboards." },
-      { id: "store", name: "More Drops", desc: "More merch + surprise drops." },
+      { id: "drops", name: "Drops", desc: "Limited-time merch + special rewards." },
     ],
     []
   );
@@ -115,10 +117,13 @@ export default function Dashboard() {
       setShowComingSoon(true);
       return;
     }
+
+    // External links open new tab
     if (mode.external) {
-      window.location.href = mode.link;
+      window.open(mode.link, "_blank", "noopener,noreferrer");
       return;
     }
+
     navigate(mode.link);
   };
 
