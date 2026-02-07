@@ -189,10 +189,10 @@ export default function Dashboard() {
         }}
       />
 
-      {/* Mobile-first padding + safe-area */}
-      <div className="relative z-20 px-3 sm:px-4 py-8 pb-[calc(24px+env(safe-area-inset-bottom))]">
+      {/* MOBILE FIRST */}
+      <div className="relative z-20 px-3 sm:px-4 py-7 pb-[calc(20px+env(safe-area-inset-bottom))]">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-6 sm:mb-10">
+          <div className="mb-5 sm:mb-10">
             <div className="inline-flex items-center gap-3">
               <div className="h-3 w-3 rounded-full bg-red-500 shadow-[0_0_18px_rgba(255,0,60,0.9)] animate-pulse" />
               <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-wide">
@@ -204,14 +204,15 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* MOBILE FIRST: 2 cols on phones, tighter gaps */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+          {/* 2 COLS ON PHONES */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-5">
             {cards.map((mode) => (
               <button
                 key={mode.id}
                 onClick={() => handleCardClick(mode)}
                 className={[
-                  "group relative overflow-hidden rounded-2xl text-left h-full flex flex-col",
+                  "group relative overflow-hidden rounded-2xl text-left flex flex-col",
+                  "h-[168px] sm:h-[210px] lg:h-[230px]",
                   "border bg-zinc-950/75 backdrop-blur-md",
                   "transition-all duration-200",
                   mode.comingSoon
@@ -228,8 +229,8 @@ export default function Dashboard() {
                   }}
                 />
 
-                {/* SHRUNK image area (mobile-first) */}
-                <div className="relative flex-none h-[clamp(120px,18vh,160px)] w-full overflow-hidden">
+                {/* SMALL IMAGE BLOCK */}
+                <div className="relative flex-none h-[88px] sm:h-[120px] lg:h-[132px] w-full overflow-hidden">
                   <SafeImg
                     src={mode.image}
                     alt={mode.name}
@@ -246,18 +247,19 @@ export default function Dashboard() {
                   )}
                 </div>
 
-                {/* Tighter text + clamped desc */}
-                <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between">
-                  <div className="flex items-center justify-between gap-2">
-                    <h2 className="text-base sm:text-lg font-semibold leading-tight">
+                {/* COMPACT TEXT */}
+                <div className="p-2.5 sm:p-4 flex-1 flex flex-col justify-between min-w-0">
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <h2 className="text-sm sm:text-lg font-semibold leading-tight truncate">
                       {mode.name}
                     </h2>
-                    <span className="text-red-300 group-hover:text-red-200 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap">
+                    <span className="text-red-300 group-hover:text-red-200 text-[10px] sm:text-sm font-semibold transition-colors whitespace-nowrap">
                       Enter →
                     </span>
                   </div>
 
-                  <p className="text-white/60 text-[11px] sm:text-sm mt-1 sm:mt-2 leading-snug line-clamp-2">
+                  {/* Hide desc on mobile so tiles stay small */}
+                  <p className="hidden sm:block text-white/60 text-sm mt-2 line-clamp-2">
                     {mode.desc}
                   </p>
                 </div>
