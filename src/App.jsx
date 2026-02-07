@@ -116,7 +116,6 @@ export default function App() {
       setUser(currentUser);
 
       if (currentUser) {
-        console.log("Fetching user profile for:", currentUser.uid);
         try {
           const result = await UserService.getUserProfile(currentUser.uid);
 
@@ -282,7 +281,9 @@ export default function App() {
           />
           <Route
             path="/avatar-creator"
-            element={user ? (isNewSignup ? <WaitingForUpload /> : <Profile user={user} userProfile={userProfile} />) : <Login />}
+            element={
+              user ? (isNewSignup ? <WaitingForUpload /> : <Profile user={user} userProfile={userProfile} />) : <Login />
+            }
           />
           <Route
             path="/solo"
