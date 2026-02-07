@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function SafeImg({ src, alt, className }) {
@@ -10,24 +10,21 @@ function SafeImg({ src, alt, className }) {
       className={className}
       onError={() => setErr(true)}
       loading="lazy"
+      draggable={false}
     />
   );
 }
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const bgRef = useRef(null);
 
-  // External URLs
   const SOLO_URL = "https://riv-solo.vercel.app/";
   const BURNOUTS_URL = "https://burnouts.vercel.app/";
-
-  // If you want to show Live as coming soon, set true
   const LIVE_COMING_SOON = false;
 
   const [showComingSoon, setShowComingSoon] = useState(false);
 
-  const cards = useMemo(
+  const modes = useMemo(
     () => [
       {
         id: "solo",
@@ -81,12 +78,12 @@ export default function Dashboard() {
       },
       {
         id: "shop",
-        name: "Shop",
+        name: "Merch Shop",
         image: "/assets/images/shop.png.png",
-        link: "/merch", // your MerchShop.jsx iframe page
+        link: "/merch",
         external: false,
-        desc: "Official Rivalis merch shop.",
-        badge: "MERCH",
+        desc: "Buy official Rivalis merch.",
+        badge: "SHOP",
         comingSoon: false,
       },
       {
@@ -108,12 +105,12 @@ export default function Dashboard() {
       { id: "tournaments", name: "Tournaments", desc: "Bracket battles + prize pools." },
       { id: "arena", name: "Arena", desc: "Ranked battles + seasonal rewards." },
       { id: "clans", name: "Clans", desc: "Teams, rivalries, clan leaderboards." },
-      { id: "store", name: "Ticket Store", desc: "Redeem tickets for drops and gear." },
+      { id: "store", name: "More Drops", desc: "More merch + surprise drops." },
     ],
     []
   );
 
-  const handleCardClick = (mode) => {
+  const handleClick = (mode) => {
     if (mode.comingSoon) {
       setShowComingSoon(true);
       return;
@@ -125,143 +122,77 @@ export default function Dashboard() {
     navigate(mode.link);
   };
 
-  // Parallax background
-  const [parallax, setParallax] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
-    const onMove = (clientX, clientY) => {
-      const w = window.innerWidth || 1;
-      const h = window.innerHeight || 1;
-      const nx = (clientX / w) * 2 - 1;
-      const ny = (clientY / h) * 2 - 1;
-      setParallax({ x: clamp(nx * 14, -14, 14), y: clamp(ny * 10, -10, 10) });
-    };
-
-    const onMouseMove = (e) => onMove(e.clientX, e.clientY);
-    const onTouchMove = (e) => {
-      if (!e.touches || !e.touches[0]) return;
-      onMove(e.touches[0].clientX, e.touches[0].clientY);
-    };
-
-    window.addEventListener("mousemove", onMouseMove, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
-
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("touchmove", onTouchMove);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!bgRef.current) return;
-    bgRef.current.style.transform = `scale(1.06) translate3d(${parallax.x}px, ${parallax.y}px, 0)`;
-  }, [parallax]);
-
   return (
-    <div className="relative min-h-screen w-full text-white overflow-hidden bg-black">
-      <div
-        ref={bgRef}
-        className="absolute inset-0 z-0 will-change-transform transition-transform duration-200"
-        style={{
-          backgroundImage: "url(/assets/images/background.png)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          filter: "brightness(0.42) contrast(1.2) saturate(1.15)",
-        }}
-      />
-      <div className="absolute inset-0 z-0 bg-black/55" />
-
-      <div
-        className="absolute inset-0 z-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(1200px 600px at 50% 25%, rgba(255,0,60,0.18), transparent 60%), radial-gradient(900px 500px at 20% 90%, rgba(255,0,60,0.10), transparent 65%), radial-gradient(900px 500px at 80% 90%, rgba(0,255,210,0.06), transparent 65%)",
-        }}
-      />
-
-      <div
-        className="absolute inset-0 z-10 pointer-events-none opacity-25 mix-blend-soft-light"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(to bottom, rgba(255,255,255,0.06), rgba(255,255,255,0.06) 1px, rgba(0,0,0,0) 3px, rgba(0,0,0,0) 6px)",
-        }}
-      />
-
-      {/* MOBILE FIRST */}
-      <div className="relative z-20 px-3 sm:px-4 py-7 pb-[calc(20px+env(safe-area-inset-bottom))]">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-5 sm:mb-10">
+    <>
+      <div className="px-3 sm:px-4 py-7 pb-[calc(18px+env(safe-area-inset-bottom))]">
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-5">
             <div className="inline-flex items-center gap-3">
               <div className="h-3 w-3 rounded-full bg-red-500 shadow-[0_0_18px_rgba(255,0,60,0.9)] animate-pulse" />
-              <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-wide">
-                Rivalis
-              </h1>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-wide">Rivalis</h1>
             </div>
-            <p className="text-white/75 mt-2 text-sm sm:text-base md:text-lg">
+            <p className="text-white/75 mt-2 text-sm sm:text-base">
               Fitness Reimagined — Get Hooked. Outtrain. Outrival.
             </p>
           </div>
 
-          {/* 2 COLS ON PHONES */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-5">
-            {cards.map((mode) => (
+          {/* Compact PNG buttons */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+            {modes.map((mode) => (
               <button
                 key={mode.id}
-                onClick={() => handleCardClick(mode)}
+                onClick={() => handleClick(mode)}
                 className={[
-                  "group relative overflow-hidden rounded-2xl text-left flex flex-col",
-                  "h-[168px] sm:h-[210px] lg:h-[230px]",
-                  "border bg-zinc-950/75 backdrop-blur-md",
+                  "group relative overflow-hidden rounded-2xl text-left",
+                  "border bg-zinc-950/70 backdrop-blur-md",
                   "transition-all duration-200",
+                  "min-h-[74px] sm:min-h-[92px]",
                   mode.comingSoon
-                    ? "border-white/10 opacity-90 hover:shadow-[0_0_30px_rgba(255,0,60,0.18)]"
-                    : "border-red-500/25 hover:-translate-y-1 hover:border-red-400/70 active:translate-y-0 hover:shadow-[0_0_38px_rgba(255,0,60,0.25)]",
+                    ? "border-white/10 opacity-85"
+                    : "border-red-500/25 hover:border-red-400/70 active:scale-[0.99] hover:shadow-[0_0_28px_rgba(255,0,60,0.22)]",
                 ].join(" ")}
               >
-                <div
-                  className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  style={{
-                    boxShadow:
-                      "inset 0 0 0 1px rgba(255,0,60,0.35), 0 0 48px rgba(255,0,60,0.25)",
-                    animation: "neonPulse 2.4s ease-in-out infinite",
-                  }}
-                />
-
-                {/* SMALL IMAGE BLOCK */}
-                <div className="relative flex-none h-[88px] sm:h-[120px] lg:h-[132px] w-full overflow-hidden">
-                  <SafeImg
-                    src={mode.image}
-                    alt={mode.name}
-                    className="h-full w-full object-cover opacity-90 transition-all duration-200 group-hover:opacity-100 group-hover:scale-[1.04]"
+                {!mode.comingSoon && (
+                  <div
+                    className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    style={{
+                      boxShadow:
+                        "inset 0 0 0 1px rgba(255,0,60,0.35), 0 0 38px rgba(255,0,60,0.2)",
+                    }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+                )}
 
-                  {(mode.badge || mode.comingSoon) && (
-                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold tracking-wider bg-black/70 border border-red-500/40 text-red-200 shadow-[0_0_18px_rgba(255,0,60,0.25)]">
-                        {mode.comingSoon ? "COMING SOON" : mode.badge}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* COMPACT TEXT */}
-                <div className="p-2.5 sm:p-4 flex-1 flex flex-col justify-between min-w-0">
-                  <div className="flex items-center justify-between gap-2 min-w-0">
-                    <h2 className="text-sm sm:text-lg font-semibold leading-tight truncate">
-                      {mode.name}
-                    </h2>
-                    <span className="text-red-300 group-hover:text-red-200 text-[10px] sm:text-sm font-semibold transition-colors whitespace-nowrap">
-                      Enter →
-                    </span>
+                <div className="relative flex items-center gap-3 p-2.5 sm:p-3">
+                  {/* PNG icon */}
+                  <div className="relative flex-none h-12 w-12 sm:h-14 sm:w-14 rounded-xl overflow-hidden border border-red-500/25 bg-black/40">
+                    <SafeImg src={mode.image} alt={mode.name} className="h-full w-full object-cover opacity-95" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
                   </div>
 
-                  {/* Hide desc on mobile so tiles stay small */}
-                  <p className="hidden sm:block text-white/60 text-sm mt-2 line-clamp-2">
-                    {mode.desc}
-                  </p>
+                  {/* Text */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-sm sm:text-base font-semibold truncate">{mode.name}</span>
+
+                          {(mode.badge || mode.comingSoon) && (
+                            <span className="inline-flex items-center px-2 py-[3px] rounded-full text-[10px] font-bold tracking-wider bg-black/70 border border-red-500/40 text-red-200">
+                              {mode.comingSoon ? "COMING SOON" : mode.badge}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="text-white/60 text-[11px] sm:text-sm mt-0.5 leading-tight line-clamp-1">
+                          {mode.desc}
+                        </div>
+                      </div>
+
+                      <span className="text-red-300 text-[11px] sm:text-sm font-semibold whitespace-nowrap">
+                        {mode.comingSoon ? "Soon" : "Go →"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </button>
             ))}
@@ -269,20 +200,14 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Coming Soon Modal */}
       {showComingSoon && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center px-4"
-          role="dialog"
-          aria-modal="true"
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" role="dialog" aria-modal="true">
           <div className="absolute inset-0 bg-black/70" onClick={() => setShowComingSoon(false)} />
           <div className="relative w-full max-w-lg rounded-2xl border border-red-500/30 bg-zinc-950/90 backdrop-blur-md shadow-[0_0_50px_rgba(255,0,60,0.18)] overflow-hidden">
             <div className="p-5 border-b border-white/10 flex items-center justify-between">
               <h3 className="text-lg font-bold tracking-wide">Coming Soon</h3>
-              <button
-                onClick={() => setShowComingSoon(false)}
-                className="text-white/70 hover:text-white transition-colors"
-              >
+              <button onClick={() => setShowComingSoon(false)} className="text-white/70 hover:text-white transition-colors">
                 ✕
               </button>
             </div>
@@ -305,13 +230,6 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-
-      <style>{`
-        @keyframes neonPulse {
-          0%, 100% { opacity: 0.95; filter: drop-shadow(0 0 0 rgba(255,0,60,0.0)); }
-          50% { opacity: 1; filter: drop-shadow(0 0 18px rgba(255,0,60,0.35)); }
-        }
-      `}</style>
-    </div>
+    </>
   );
 }
