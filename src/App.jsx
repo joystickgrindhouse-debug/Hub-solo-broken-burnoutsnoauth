@@ -3,12 +3,14 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-
 import { auth } from "./firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
 import { UserService } from "./services/userService.js";
+
 import LoadingScreen from "./components/LoadingScreen.jsx";
 import OnboardingSlides from "./components/OnboardingSlides.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Navbar from "./components/Navbar.jsx";
 import AdBanner from "./components/AdBanner.jsx";
 import ChatbotTour from "./components/ChatbotTour/ChatbotTour.jsx";
+import BackgroundShell from "./components/BackgroundShell.jsx";
 
 // Lazy load views for better performance
 const Login = lazy(() => import("./views/Login.jsx"));
@@ -27,11 +29,12 @@ const WaitingForUpload = lazy(() => import("./views/WaitingForUpload.jsx"));
 const AdminDashboard = lazy(() => import("./views/AdminDashboard.jsx"));
 const OtherApps = lazy(() => import("./views/OtherApps.jsx"));
 const BoxingArena = lazy(() => import("./boxing/pages/Arena.tsx"));
-
 const MerchShop = lazy(() => import("./views/MerchShop.jsx"));
 
 export default function App() {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
@@ -42,11 +45,12 @@ export default function App() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isNewSignup, setIsNewSignup] = useState(false);
   const [initialHype, setInitialHype] = useState(false);
+
   const [showBot, setShowBot] = useState(false);
+
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("theme") || "red-black";
   });
-  const location = useLocation();
 
   useEffect(() => {
     const body = document.body;
@@ -56,24 +60,21 @@ export default function App() {
   }, [theme]);
 
   const cycleTheme = () => {
-    setTheme(prev => {
-      if (prev === "red-black") return "white-black";
-      return "red-black";
-    });
+    setTheme((prev) => (prev === "red-black" ? "white-black" : "red-black"));
   };
 
   // Activity tracking
   useEffect(() => {
-    if (user) {
-      const path = location.pathname.split('/')[1] || 'dashboard';
+    if (!user) return;
+
+    const path = location.pathname.split("/")[1] || "dashboard";
+    UserService.updateHeartbeat(user.uid, path);
+
+    const interval = setInterval(() => {
       UserService.updateHeartbeat(user.uid, path);
-      
-      const interval = setInterval(() => {
-        UserService.updateHeartbeat(user.uid, path);
-      }, 30000); // Heartbeat every 30s
-      
-      return () => clearInterval(interval);
-    }
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [user, location.pathname]);
 
   // Force a minimum loading time for the hype screen even if auth is fast
@@ -82,7 +83,6 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Function to refresh user profile (used after avatar creation)
   const refreshUserProfile = async (userId) => {
     try {
       const result = await UserService.getUserProfile(userId);
@@ -98,10 +98,12 @@ export default function App() {
 
   useEffect(() => {
     const MINIMUM_LOADING_TIME = 3000;
+
     setLoading(true);
     setCheckingSetup(true);
     setProfileLoaded(false);
     setInitialHype(true);
+
     const timeout = setTimeout(() => {
       console.log("Loading timeout - forcing end of loading state");
       setLoading(false);
@@ -112,28 +114,25 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       console.log("Auth state changed:", currentUser ? "User logged in" : "No user");
       setUser(currentUser);
-      
+
       if (currentUser) {
         console.log("Fetching user profile for:", currentUser.uid);
         try {
           const result = await UserService.getUserProfile(currentUser.uid);
-          console.log("Profile fetch result:", result);
+
           if (result.success && result.profile) {
             setUserProfile(result.profile);
-            // Existing user logging in - skip onboarding if setup complete
+
             if (result.profile.hasCompletedSetup) {
               setShowOnboarding(false);
               setOnboardingComplete(true);
               setIsNewSignup(false);
             } else {
-              // User has profile but setup not complete (shouldn't happen normally)
               setShowOnboarding(true);
               setIsNewSignup(true);
             }
           } else {
-            console.log("No profile found - new user signing up");
             setUserProfile(null);
-            // New user signing up - show onboarding slides
             setShowOnboarding(true);
             setIsNewSignup(true);
           }
@@ -143,11 +142,12 @@ export default function App() {
           setShowOnboarding(true);
           setIsNewSignup(true);
         }
+
         setProfileLoaded(true);
-        
+
         const elapsedTime = Date.now() - loadingStartTime;
         const remainingTime = Math.max(0, MINIMUM_LOADING_TIME - elapsedTime);
-        
+
         setTimeout(() => {
           clearTimeout(timeout);
           setLoading(false);
@@ -176,12 +176,10 @@ export default function App() {
     setOnboardingComplete(true);
   };
 
-  const handleSetupComplete = async (profile) => {
-    // Refresh the profile after avatar creation
+  const handleSetupComplete = async () => {
     const updatedProfile = await refreshUserProfile(user.uid);
     if (updatedProfile && updatedProfile.hasCompletedSetup) {
       setOnboardingComplete(true);
-      // Navigate to dashboard after successful setup
       setTimeout(() => navigate("/dashboard"), 100);
     }
   };
@@ -193,59 +191,61 @@ export default function App() {
     setProfileLoaded(true);
   };
 
-  // Show initial loading screen or hype screen
+  // Loading / onboarding gates
   if (loading || checkingSetup || !profileLoaded || initialHype) {
     return <LoadingScreen onSkip={skipLoading} />;
   }
 
-  // Show onboarding slides after login/signup but before main app (only for logged-in users)
   if (user && showOnboarding && !onboardingComplete) {
     return <OnboardingSlides onComplete={handleOnboardingComplete} />;
   }
 
-  // After onboarding, check if user needs to complete setup (only for NEW signups)
   if (user && isNewSignup && (!userProfile || !userProfile.hasCompletedSetup)) {
-    return <WaitingForUpload user={user} onSetupComplete={() => refreshUserProfile(user.uid).then(handleSetupComplete)} />;
+    return <WaitingForUpload user={user} onSetupComplete={handleSetupComplete} />;
   }
 
-  // Render routes (public and protected)
   return (
-    <div style={{ background: 'var(--bg-color, #111)', minHeight: '100vh', color: 'var(--text-color, #fff)', transition: 'color 0.3s ease' }}>
+    <BackgroundShell>
       <AdBanner />
-      {user && <Navbar user={user} userProfile={userProfile} theme={theme} cycleTheme={cycleTheme} />}
-      
+
+      {user && (
+        <Navbar user={user} userProfile={userProfile} theme={theme} cycleTheme={cycleTheme} />
+      )}
+
+      {/* Theme toggle only on login route */}
       {!user && location.pathname === "/login" && (
-        <button 
+        <button
           onClick={cycleTheme}
           className="theme-toggle-btn"
           style={{
             position: "fixed",
             top: "10rem",
             right: "1.5rem",
-            zIndex: 10002
+            zIndex: 10002,
           }}
           title="Cycle Themes"
         >
           {theme === "red-black" ? "🔴" : theme === "white-black" ? "⚪" : "⚫"}
         </button>
       )}
-      
-      {user && !loading && !checkingSetup && profileLoaded && !initialHype && !showOnboarding && (
+
+      {/* Bot trigger only when logged in */}
+      {user && (
         <>
-          <button 
+          <button
             onClick={() => setShowBot(!showBot)}
             style={botStyles.botTrigger}
             aria-label="Rivalis Coach"
           >
-            {showBot ? '✕' : '🦾'}
+            {showBot ? "✕" : "🦾"}
           </button>
 
           {showBot && (
             <div style={botStyles.botContainer}>
-              <ChatbotTour 
-                user={user} 
+              <ChatbotTour
+                user={user}
                 userProfile={userProfile}
-                onTourComplete={() => console.log('Tour finished')}
+                onTourComplete={() => console.log("Tour finished")}
                 initialMessage="Hey Rival! I'm Rivalis Coach. Ready to optimize? Let's take the tour!"
               />
             </div>
@@ -253,180 +253,171 @@ export default function App() {
         </>
       )}
 
-      <Suspense fallback={<div style={{ color: '#ff3050', padding: '20px', textAlign: 'center' }}>LOADING ARENA...</div>}>
+      <Suspense
+        fallback={<div style={{ color: "#ff3050", padding: "20px", textAlign: "center" }}>LOADING…</div>}
+      >
         <Routes>
           <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
           <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
-          
-          {/* Public routes */}
-          <Route 
-            path="/burnouts" 
-            element={<Burnouts user={user} userProfile={userProfile} />} 
-          />
-          
-          {/* Protected routes */}
-          <Route 
-            path="/dashboard" 
+
+          {/* Public */}
+          <Route path="/burnouts" element={<Burnouts user={user} userProfile={userProfile} />} />
+
+          {/* Protected */}
+          <Route
+            path="/dashboard"
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <Dashboard user={user} />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/profile" 
+          <Route
+            path="/profile"
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <Profile user={user} userProfile={userProfile} />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/avatar-creator" 
-            element={
-              user ? (
-                isNewSignup ? (
-                  <WaitingForUpload />
-                ) : (
-                  <Profile user={user} userProfile={userProfile} />
-                )
-              ) : (
-                <Login />
-              )
-            } 
+          <Route
+            path="/avatar-creator"
+            element={user ? (isNewSignup ? <WaitingForUpload /> : <Profile user={user} userProfile={userProfile} />) : <Login />}
           />
-          <Route 
-            path="/solo" 
+          <Route
+            path="/solo"
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <Solo user={user} userProfile={userProfile} />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/live" 
+          <Route
+            path="/live"
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <Live user={user} userProfile={userProfile} />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/run" 
+          <Route
+            path="/run"
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <Run user={user} userProfile={userProfile} />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/raffle" 
+          <Route
+            path="/raffle"
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <RaffleRoom user={user} userProfile={userProfile} />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/achievements" 
+          <Route
+            path="/achievements"
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <Achievements user={user} userProfile={userProfile} />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/chat" 
+          <Route
+            path="/chat"
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <GlobalChat user={user} userProfile={userProfile} />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/dm" 
+          <Route
+            path="/dm"
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <DMChat user={user} userProfile={userProfile} />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/leaderboard" 
+          <Route
+            path="/leaderboard"
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <Leaderboard user={user} />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/admin-control" 
+          <Route
+            path="/admin-control"
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <Suspense fallback={<div>LOADING...</div>}>
                   <AdminDashboard userProfile={userProfile} />
                 </Suspense>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/other-apps" 
+          <Route
+            path="/other-apps"
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <OtherApps />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/boxing" 
+          <Route
+            path="/boxing"
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <BoxingArena />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/merch" 
+
+          {/* Merch */}
+          <Route
+            path="/merch"
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <MerchShop />
               </ProtectedRoute>
-            } 
+            }
           />
         </Routes>
       </Suspense>
-    </div>
+    </BackgroundShell>
   );
 }
 
 const botStyles = {
   botTrigger: {
-    position: 'fixed',
-    bottom: '85px',
-    right: '20px',
-    background: '#FF0000',
-    color: '#FFF',
-    border: 'none',
-    borderRadius: '50%',
-    width: '50px',
-    height: '50px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    boxShadow: '0 0 15px #FF0000',
+    position: "fixed",
+    bottom: "85px",
+    right: "20px",
+    background: "#FF0000",
+    color: "#FFF",
+    border: "none",
+    borderRadius: "50%",
+    width: "50px",
+    height: "50px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "bold",
+    cursor: "pointer",
+    boxShadow: "0 0 15px #FF0000",
     zIndex: 10001,
-    fontSize: '20px',
-    transition: 'all 0.3s ease',
+    fontSize: "20px",
+    transition: "all 0.3s ease",
   },
   botContainer: {
-    position: 'fixed',
-    bottom: '145px',
-    right: '20px',
-    width: '350px',
-    height: '500px',
+    position: "fixed",
+    bottom: "145px",
+    right: "20px",
+    width: "350px",
+    height: "500px",
     zIndex: 10001,
-    boxShadow: '0 0 30px rgba(0,0,0,0.5)',
-  }
+    boxShadow: "0 0 30px rgba(0,0,0,0.5)",
+  },
 };
