@@ -61,34 +61,34 @@ export default function Dashboard() {
         </div>
 
         {/* ✅ Dense grid: always multiple buttons visible */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5">
           {modes.map((mode) => (
             <button
               key={mode.id}
               type="button"
               onClick={() => handleClick(mode)}
               className={[
-                "relative rounded-2xl overflow-hidden",
+                "relative rounded-xl overflow-hidden",
                 "border border-red-500/25 bg-zinc-950/70 backdrop-blur-md",
                 "active:scale-[0.99] transition",
-                // ✅ HARD SIZE LOCKS (cannot become full-screen)
-                "h-[92px] sm:h-[110px]",
+                // ✅ SHRUNK SIZE
+                "h-[75px] sm:h-[85px]",
                 "w-full",
               ].join(" ")}
-              style={{ maxWidth: "180px" }} // ✅ extra clamp against weird global CSS
+              style={{ maxWidth: "120px" }} // ✅ tighter clamp
             >
               {/* icon */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-2">
-                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl overflow-hidden border border-white/10 bg-black/40">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 p-1">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg overflow-hidden border border-white/10 bg-black/40">
                   <SafeImg src={mode.image} alt={mode.name} className="h-full w-full object-cover" />
                 </div>
-                <div className="text-[11px] sm:text-xs font-semibold text-white/90 leading-none">
+                <div className="text-[9px] sm:text-[10px] font-bold text-white/90 leading-tight uppercase tracking-tighter">
                   {mode.name}
                 </div>
               </div>
 
               {/* subtle bottom fade */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
             </button>
           ))}
         </div>

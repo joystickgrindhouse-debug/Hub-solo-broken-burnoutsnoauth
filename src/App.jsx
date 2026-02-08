@@ -202,9 +202,79 @@ export default function App() {
     return <WaitingForUpload user={user} onSetupComplete={handleSetupComplete} />;
   }
 
+  const [activeGame, setActiveGame] = useState(null);
+
+  const launchGame = (url) => {
+    setActiveGame(url);
+  };
+
+  const closeGame = () => {
+    setActiveGame(null);
+  };
+
   return (
     <BackgroundShell>
       <AdBanner />
+
+      {/* PERSISTENT OVERLAY FOR GAMES */}
+      {activeGame && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 20000,
+          background: "#000",
+          display: "flex",
+          flexDirection: "column"
+        }}>
+          {/* Overlay Header */}
+          <div style={{
+            height: "60px",
+            background: "rgba(0,0,0,0.8)",
+            borderBottom: "1px solid #ff3050",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 15px",
+            backdropFilter: "blur(10px)",
+            zIndex: 1
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              {userProfile?.avatarURL && (
+                <img 
+                  src={userProfile.avatarURL} 
+                  alt="avatar" 
+                  style={{ width: "35px", height: "35px", borderRadius: "50%", border: "1px solid #ff3050" }} 
+                />
+              )}
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ color: "#fff", fontSize: "12px", fontWeight: "bold" }}>{userProfile?.nickname}</span>
+                <span style={{ color: "#ff3050", fontSize: "10px" }}>🎟️ {userProfile?.tickets || 0}</span>
+              </div>
+            </div>
+            <button 
+              onClick={closeGame}
+              style={{
+                background: "#ff3050",
+                color: "#fff",
+                border: "none",
+                borderRadius: "5px",
+                padding: "5px 12px",
+                fontSize: "12px",
+                fontWeight: "bold",
+                boxShadow: "0 0 10px rgba(255, 48, 80, 0.5)"
+              }}
+            >
+              EXIT
+            </button>
+          </div>
+          
+          <iframe 
+            src={activeGame}
+            style={{ flex: 1, border: "none", width: "100%", height: "100%" }}
+            title="Rivalis Game Instance"
+          />
+        </div>
+      )}
 
       {user && (
         <Navbar user={user} userProfile={userProfile} theme={theme} cycleTheme={cycleTheme} />
