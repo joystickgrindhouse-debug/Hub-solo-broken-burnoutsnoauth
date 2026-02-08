@@ -44,12 +44,25 @@ export default function App() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isNewSignup, setIsNewSignup] = useState(false);
   const [initialHype, setInitialHype] = useState(false);
-
   const [showBot, setShowBot] = useState(false);
+  const [activeGame, setActiveGame] = useState(null);
 
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("theme") || "red-black";
   });
+
+  const launchGame = (url) => {
+    setActiveGame(url);
+  };
+
+  const closeGame = () => {
+    setActiveGame(null);
+  };
+
+  useEffect(() => {
+    window.launchGame = launchGame;
+    return () => { delete window.launchGame; };
+  }, []);
 
   useEffect(() => {
     const body = document.body;
@@ -201,21 +214,6 @@ export default function App() {
   if (user && isNewSignup && (!userProfile || !userProfile.hasCompletedSetup)) {
     return <WaitingForUpload user={user} onSetupComplete={handleSetupComplete} />;
   }
-
-  const [activeGame, setActiveGame] = useState(null);
-
-  const launchGame = (url) => {
-    setActiveGame(url);
-  };
-
-  const closeGame = () => {
-    setActiveGame(null);
-  };
-
-  useEffect(() => {
-    window.launchGame = launchGame;
-    return () => { delete window.launchGame; };
-  }, []);
 
   return (
     <BackgroundShell>
