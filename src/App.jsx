@@ -212,6 +212,11 @@ export default function App() {
     setActiveGame(null);
   };
 
+  useEffect(() => {
+    window.launchGame = launchGame;
+    return () => { delete window.launchGame; };
+  }, []);
+
   return (
     <BackgroundShell>
       <AdBanner />

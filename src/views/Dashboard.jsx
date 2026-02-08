@@ -43,15 +43,19 @@ export default function Dashboard() {
       return;
     }
     if (mode.external) {
-      window.open(mode.link, "_blank", "noopener,noreferrer");
+      if (typeof window.launchGame === 'function') {
+        window.launchGame(mode.link);
+      } else {
+        window.open(mode.link, "_blank", "noopener,noreferrer");
+      }
       return;
     }
     navigate(mode.link);
   };
 
   return (
-    <div className="px-3 py-6 pb-[calc(18px+env(safe-area-inset-bottom))]">
-      <div className="max-w-xl mx-auto">
+    <div className="px-3 py-6 pb-[calc(18px+env(safe-area-inset-bottom))] min-h-screen flex flex-col">
+      <div className="max-w-xl mx-auto w-full flex-1 flex flex-col">
         <div className="mb-4">
           <div className="flex items-center gap-2">
             <div className="h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_18px_rgba(255,0,60,0.9)]" />

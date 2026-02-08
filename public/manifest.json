@@ -4,8 +4,9 @@
   "description": "Rivalis Fitness Reimagined",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "background_color": "#000000",
+  "theme_color": "#ff3050",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "favicon.ico",
