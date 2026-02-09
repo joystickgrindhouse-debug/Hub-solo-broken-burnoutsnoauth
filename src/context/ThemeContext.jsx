@@ -37,7 +37,7 @@ const THEMES = {
     tileBorder: "rgba(255,255,255,0.25)",
     muted: "rgba(255,255,255,0.6)",
     mutedMore: "rgba(255,255,255,0.4)",
-    imgFilter: "brightness(0) invert(1)",
+    imgFilter: "none",
   },
 };
 
