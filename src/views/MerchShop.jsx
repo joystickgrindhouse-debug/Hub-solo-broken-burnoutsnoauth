@@ -1,109 +1,177 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 const SHOP_URL = "https://rivalis.printful.me";
 
+const PRODUCTS = [
+  { name: "Rivalis Tee", price: "$29.99", image: "/merch/tshirt.png", tag: "BESTSELLER" },
+  { name: "Rivalis Hoodie", price: "$54.99", image: "/merch/hoodie.png", tag: "POPULAR" },
+  { name: "Rivalis Tank", price: "$24.99", image: "/merch/tank.png", tag: null },
+  { name: "Rivalis Joggers", price: "$44.99", image: "/merch/joggers.png", tag: "NEW" },
+  { name: "Rivalis Cap", price: "$22.99", image: "/merch/cap.png", tag: null },
+  { name: "Rivalis Bottle", price: "$19.99", image: "/merch/bottle.png", tag: null },
+];
+
 export default function MerchShop() {
   const navigate = useNavigate();
-  const [loaded, setLoaded] = useState(false);
-  const [blocked, setBlocked] = useState(false);
-
-  // If iframe doesn't load quickly, assume it is blocked.
-  useEffect(() => {
-    const t = setTimeout(() => {
-      if (!loaded) setBlocked(true);
-    }, 4500);
-    return () => clearTimeout(t);
-  }, [loaded]);
+  const t = useTheme();
 
   const openShop = () => {
-    window.location.href = SHOP_URL;
+    window.open(SHOP_URL, "_blank", "noopener,noreferrer");
   };
 
   return (
-    <div className="px-3 sm:px-4 py-6 pb-[calc(18px+env(safe-area-inset-bottom))]">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <div className="min-w-0">
-            <div className="text-xl sm:text-2xl font-extrabold tracking-wide">
-              Rivalis Merch Shop
+    <div style={{ padding: "16px 12px", minHeight: "100vh", paddingBottom: "calc(80px + env(safe-area-inset-bottom))" }}>
+      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", gap: "12px" }}>
+          <div>
+            <div style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "1px", fontFamily: "'Press Start 2P', cursive", color: t.accent }}>
+              MERCH SHOP
             </div>
-            <div className="text-white/70 text-sm sm:text-base">
-              Official merch store — powered by Printful.
+            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", marginTop: "6px" }}>
+              Official Rivalis gear — tap any item to shop
             </div>
           </div>
-
-          <div className="flex items-center gap-2 flex-none">
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="px-3 py-2 rounded-xl border border-white/10 text-white/80 hover:text-white hover:border-white/20 transition"
-            >
-              Back
-            </button>
-            <button
-              onClick={openShop}
-              className="px-3 py-2 rounded-xl border border-red-500/30 bg-black/40 text-red-100 hover:border-red-400/60 hover:shadow-[0_0_28px_rgba(255,0,60,0.22)] transition"
-            >
-              Open Shop
-            </button>
-          </div>
+          <button
+            onClick={() => navigate("/dashboard")}
+            style={{
+              padding: "8px 14px",
+              borderRadius: "10px",
+              border: `1px solid ${t.shadowXs}`,
+              background: "rgba(0,0,0,0.4)",
+              color: "rgba(255,255,255,0.8)",
+              fontSize: "11px",
+              fontFamily: "'Press Start 2P', cursive",
+              cursor: "pointer",
+            }}
+          >
+            Back
+          </button>
         </div>
 
-        {/* Container */}
-        <div className="relative rounded-2xl overflow-hidden border border-red-500/20 bg-black/30">
-          {/* Loading state */}
-          {!loaded && !blocked && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center">
-              <div className="rounded-2xl border border-white/10 bg-black/70 backdrop-blur-md px-4 py-3">
-                <div className="text-sm font-semibold">Loading shop…</div>
-                <div className="text-[12px] text-white/60 mt-1">
-                  If it stays blank, Printful is blocking iframe embeds.
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+          gap: "12px",
+        }}>
+          {PRODUCTS.map((product, i) => (
+            <div
+              key={i}
+              onClick={openShop}
+              style={{
+                borderRadius: "14px",
+                border: `1px solid ${t.shadowXs}`,
+                background: "rgba(0,0,0,0.5)",
+                overflow: "hidden",
+                cursor: "pointer",
+                transition: "transform 0.2s, border-color 0.2s, box-shadow 0.2s",
+                position: "relative",
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = "translateY(-4px)";
+                e.currentTarget.style.borderColor = t.shadowSm;
+                e.currentTarget.style.boxShadow = `0 8px 24px ${t.shadowXs}`;
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.borderColor = t.shadowXs;
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              {product.tag && (
+                <div style={{
+                  position: "absolute",
+                  top: "8px",
+                  right: "8px",
+                  background: t.accent,
+                  color: "#000",
+                  fontSize: "7px",
+                  fontFamily: "'Press Start 2P', cursive",
+                  padding: "3px 6px",
+                  borderRadius: "4px",
+                  fontWeight: 700,
+                  zIndex: 2,
+                  letterSpacing: "0.5px",
+                }}>
+                  {product.tag}
+                </div>
+              )}
+              <div style={{
+                width: "100%",
+                aspectRatio: "1",
+                background: "rgba(20,20,20,0.6)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+              }}>
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
+              </div>
+              <div style={{ padding: "10px 12px" }}>
+                <div style={{
+                  fontSize: "9px",
+                  fontFamily: "'Press Start 2P', cursive",
+                  color: "#fff",
+                  marginBottom: "6px",
+                  lineHeight: 1.4,
+                }}>
+                  {product.name}
+                </div>
+                <div style={{
+                  fontSize: "11px",
+                  fontFamily: "'Press Start 2P', cursive",
+                  color: t.accent,
+                  fontWeight: 700,
+                }}>
+                  {product.price}
                 </div>
               </div>
             </div>
-          )}
+          ))}
+        </div>
 
-          {/* Blocked fallback */}
-          {blocked && !loaded && (
-            <div className="p-6">
-              <div className="text-lg font-bold">This shop can’t be embedded</div>
-              <div className="text-white/70 text-sm mt-2">
-                Printful Quick Stores often block iframe embeds for security.
-                Tap below to open the Rivalis shop normally.
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  onClick={openShop}
-                  className="px-4 py-2 rounded-xl border border-red-500/30 bg-black/40 text-red-100 hover:border-red-400/60 hover:shadow-[0_0_28px_rgba(255,0,60,0.22)] transition"
-                >
-                  Open Rivalis Shop
-                </button>
-                <button
-                  onClick={() => navigate("/dashboard")}
-                  className="px-4 py-2 rounded-xl border border-white/10 text-white/80 hover:text-white hover:border-white/20 transition"
-                >
-                  Back to Dashboard
-                </button>
-              </div>
-
-              <div className="mt-4 text-[12px] text-white/55">
-                If you want a fully in-app embedded shop, you’ll need a storefront that supports embedding.
-              </div>
-            </div>
-          )}
-
-          {/* Iframe attempt */}
-          <iframe
-            title="Rivalis Printful Shop"
-            src={SHOP_URL}
-            className="w-full"
-            style={{ height: "calc(100vh - 210px)" }}
-            loading="lazy"
-            referrerPolicy="strict-origin-when-cross-origin"
-            onLoad={() => setLoaded(true)}
-          />
+        <div
+          onClick={openShop}
+          style={{
+            marginTop: "20px",
+            padding: "16px",
+            borderRadius: "14px",
+            border: `1px solid ${t.shadowXs}`,
+            background: "rgba(0,0,0,0.4)",
+            textAlign: "center",
+            cursor: "pointer",
+            transition: "border-color 0.2s, box-shadow 0.2s",
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = t.shadowSm;
+            e.currentTarget.style.boxShadow = `0 4px 16px ${t.shadowXs}`;
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = t.shadowXs;
+            e.currentTarget.style.boxShadow = "none";
+          }}
+        >
+          <div style={{
+            fontSize: "10px",
+            fontFamily: "'Press Start 2P', cursive",
+            color: t.accent,
+            marginBottom: "6px",
+          }}>
+            VIEW FULL COLLECTION
+          </div>
+          <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px" }}>
+            Browse all Rivalis merch at our official store
+          </div>
         </div>
       </div>
     </div>
