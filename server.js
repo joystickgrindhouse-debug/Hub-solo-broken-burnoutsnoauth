@@ -265,7 +265,41 @@ app.post('/api/generate-plan', verifyFirebaseToken, async (req, res) => {
       ? appSeeking.join(", ")
       : (appSeeking || "not specified");
 
-    const prompt = `You are the Rivalis AI Fitness Coach. Generate a personalized fitness plan preview based on this user's profile:
+    if (!isPro) {
+      const levelMap = {
+        'Beginner': { sets: 2, reps: '8-10', rest: '60s' },
+        'Intermediate': { sets: 3, reps: '12-15', rest: '45s' },
+        'Advanced': { sets: 4, reps: '15-20', rest: '30s' },
+      };
+      const params = levelMap[fitnessLevel] || levelMap['Beginner'];
+
+      const sampleExercises = [
+        { name: 'Squats', category: 'Legs' },
+        { name: 'Push-ups', category: 'Arms' },
+        { name: 'Plank', category: 'Core' },
+        { name: 'Jumping Jacks', category: 'Cardio' },
+        { name: 'Lunges', category: 'Legs' },
+      ];
+
+      const plan = `**⚡ YOUR RIVALIS STARTER PLAN**
+
+**WEEKLY OVERVIEW**
+Train ${workoutFrequency || '3-4 days/week'} focusing on full-body bodyweight sessions. Mix strength days with cardio bursts using Solo Mode and Burnouts to keep your body guessing and your scores climbing.
+
+**SAMPLE WORKOUT DAY**
+${sampleExercises.map(e => `- **${e.name}** (${e.category}) — ${params.sets} sets × ${params.reps} reps, ${params.rest} rest`).join('\n')}
+
+**TOP 3 TIPS**
+1. **Start every session in Burnouts Mode** — let the camera track your reps and build your streak.
+2. **Stay consistent** — ${fitnessLevel === 'Beginner' ? 'focus on form over speed, your scores will climb naturally' : 'push for progressive overload each week to keep leveling up'}.
+3. **Log your runs** — Use Run Mode to track outdoor cardio and stack points on the leaderboard.
+
+🔒 Unlock your full personalized plan with detailed nutrition, recovery protocols, and 12-week milestones — upgrade to Rivalis Pro.`;
+
+      return res.json({ plan, isPro });
+    }
+
+    const prompt = `You are the Rivalis AI Fitness Coach. Generate a personalized fitness plan based on this user's profile:
 
 GOALS: ${goalsText}
 SEEKING IN RIVALIS: ${seekingText}
@@ -283,27 +317,21 @@ CRITICAL: You may ONLY recommend exercises from this approved list (all bodyweig
 - Running: Outdoor runs (tracked in Run Mode)
 Do NOT suggest dumbbells, resistance bands, barbells, kettlebells, machines, pull-up bars, or any equipment.
 
-${isPro ? `Generate a FULL detailed plan with:
+Generate a FULL detailed plan with:
 1. **WEEKLY TRAINING SPLIT** — Day-by-day breakdown using ONLY the approved exercises above, with sets, reps, and rest times
 2. **NUTRITION BLUEPRINT** — Daily macro targets, meal timing, sample meals
 3. **RECOVERY PROTOCOL** — Rest days, stretching, sleep recommendations
 4. **MILESTONES** — 4-week, 8-week, and 12-week progress checkpoints
 5. **RIVALIS INTEGRATION** — How to use Solo Mode, Burnouts, and Run Mode to complement the plan
 
-Be detailed, specific, and actionable. Use bold headings and bullet points.` : `Generate a SHORT preview plan with:
-1. **WEEKLY OVERVIEW** — Brief 3-4 sentence summary of the recommended training approach
-2. **SAMPLE DAY** — One example workout day with 4-5 exercises from the approved list (name and sets/reps only)
-3. **TOP 3 TIPS** — Quick actionable tips based on their goals
-
-Keep it concise (under 200 words). At the end, add: "🔒 Unlock your full personalized plan with detailed nutrition, recovery protocols, and 12-week milestones — upgrade to Rivalis Pro."`}
-
+Be detailed, specific, and actionable. Use bold headings and bullet points.
 Use the cyberpunk Rivalis tone — sharp, motivating, and authoritative. Format with markdown-style bold headings.`;
 
     const openai = getOpenAIClientExported();
     const completion = await openai.chat.completions.create({
-      model: isPro ? "gpt-5" : "gpt-5-nano",
+      model: "gpt-5",
       messages: [{ role: "user", content: prompt }],
-      max_completion_tokens: isPro ? 2048 : 512,
+      max_completion_tokens: 2048,
     });
 
     const plan = completion.choices[0]?.message?.content || "Plan generation failed. Try again.";
