@@ -24,6 +24,8 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
   const [inputText, setInputText] = useState('');
   const chatEndRef = useRef(null);
 
+  const isPro = userProfile?.subscriptionStatus === 'active';
+
   const motivationalQuotes = [
     "Biological limits are meant to be shattered, Rival.",
     "Your neural link is primed. Time for a bio-metric upgrade.",
@@ -154,12 +156,18 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       // Create conversation if it doesn't exist
       let convId = window.localStorage.getItem('rivalis_conv_id');
       
+      const userContext = isPro ? [
+        userProfile?.goals && `Goal: ${userProfile.goals}`,
+        userProfile?.weight && `Weight: ${userProfile.weight}`,
+        userProfile?.height && `Height: ${userProfile.height}`,
+        userProfile?.age && `Age: ${userProfile.age}`,
+      ].filter(Boolean).join(', ') : '';
+
       const sendRequest = async (cid) => {
-        // Use full URL to avoid proxy issues if necessary, but /api is configured in vite
         return await fetch(`/api/conversations/${cid}/messages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: inputText })
+          body: JSON.stringify({ content: inputText, isPro, userContext })
         });
       };
 
@@ -357,6 +365,18 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={styles.statusDot}></div>
           <span style={styles.headerTitle}>RIVALIS COACH</span>
+          {isPro && (
+            <span style={{
+              background: 'linear-gradient(135deg, #ff3050, #ff6080)',
+              color: '#fff',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              fontSize: '8px',
+              fontWeight: 'bold',
+              fontFamily: "'Press Start 2P', cursive",
+              letterSpacing: '1px',
+            }}>PRO</span>
+          )}
         </div>
         <button 
           onClick={exportConversation}
@@ -425,12 +445,37 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
             <div ref={chatEndRef} />
           </div>
 
-          <form onSubmit={handleSendMessage} style={styles.inputArea}>
+          {isPro && (
+            <div style={styles.proActions}>
+              {[
+                { label: '🥗 Meal Plan', prompt: 'Create a personalized meal plan for my goals' },
+                { label: '💪 Workout', prompt: 'Build me a custom workout program' },
+                { label: '🎯 Goals', prompt: 'Help me set and track my fitness goals' },
+              ].map((action, i) => (
+                <button
+                  key={i}
+                  onClick={() => setInputText(action.prompt)}
+                  style={styles.proActionBtn}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {!isPro && (
+            <div style={styles.upgradeBar}>
+              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
+                Unlock meal plans, custom workouts & goal tracking
+              </span>
+              <a href="/subscription" style={styles.upgradeLink}>GO PRO</a>
+            </div>
+          )}
+          <form onSubmit={handleSendMessage} style={styles.inputArea} data-chatbot-form>
             <input 
               type="text" 
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="Ask me anything..."
+              placeholder={isPro ? "Ask your personal trainer..." : "Ask me anything..."}
               style={styles.input}
             />
             <button type="submit" style={styles.sendButton}>➤</button>
@@ -605,7 +650,45 @@ const styles = {
     fontFamily: "'Press Start 2P', cursive",
     textShadow: '0 0 10px #FF0000',
     whiteSpace: 'nowrap',
-  }
+  },
+  proActions: {
+    display: 'flex',
+    gap: '6px',
+    padding: '6px 10px',
+    background: '#0a0a0a',
+    borderTop: '1px solid #222',
+    overflowX: 'auto',
+  },
+  proActionBtn: {
+    background: 'rgba(255,48,80,0.1)',
+    border: '1px solid rgba(255,48,80,0.3)',
+    color: '#fff',
+    padding: '6px 10px',
+    borderRadius: '8px',
+    fontSize: '11px',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
+    transition: 'all 0.2s',
+  },
+  upgradeBar: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '8px',
+    padding: '6px 10px',
+    background: 'rgba(255,48,80,0.05)',
+    borderTop: '1px solid rgba(255,48,80,0.15)',
+  },
+  upgradeLink: {
+    color: '#ff3050',
+    fontSize: '10px',
+    fontWeight: 'bold',
+    fontFamily: "'Press Start 2P', cursive",
+    textDecoration: 'none',
+    textShadow: '0 0 5px rgba(255,48,80,0.5)',
+    flexShrink: 0,
+  },
 };
 
 export default ChatbotTour;

@@ -73,7 +73,7 @@ function registerChatRoutes(app) {
   app.post("/api/conversations/:id/messages", async (req, res) => {
     try {
       const conversationId = req.params.id;
-      const { content } = req.body;
+      const { content, isPro, userContext } = req.body;
       await chatStorage.createMessage(conversationId, "user", content);
       const messages = await chatStorage.getMessagesByConversation(conversationId);
       const chatMessages = messages.map((m) => ({
@@ -85,12 +85,7 @@ function registerChatRoutes(app) {
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
 
-      const stream = await getOpenAIClient().chat.completions.create({
-        model: "gpt-5",
-        messages: [
-          {
-            role: "system",
-            content: `You are the Rivalis AI Fitness Coach, a high-intelligence cyberpunk entity. 
+      const baseSystemPrompt = `You are the Rivalis AI Fitness Coach, a high-intelligence cyberpunk entity. 
 
 PERSONA:
 - High-energy, gritty, and relentlessly motivating.
@@ -126,12 +121,36 @@ COMMUNICATION PROTOCOL:
 TONE:
 - Do not be generic. Be sharp, witty, and authoritative.
 - Keep responses concise but saturated with personality.
-- If the user is on a tour, guide them to the next sector of the hub.`
+- If the user is on a tour, guide them to the next sector of the hub.`;
+
+      const proEnhancement = isPro ? `
+
+PRO MEMBER FEATURES (This user is a Rivalis Pro subscriber):
+- You have FULL access to advanced personal training capabilities.
+- **CUSTOM MEAL PLANS**: When asked, create detailed daily/weekly meal plans with exact portions, macros (protein/carbs/fat), calories, and meal timing. Tailor to their goals (cutting, bulking, maintenance, keto, vegan, etc.).
+- **WORKOUT BUILDER**: Design comprehensive multi-week training programs with progressive overload, periodization, and exercise substitutions. Include warm-up and cooldown protocols.
+- **GOAL TRACKING**: Help them set SMART fitness goals, track progress metrics, and adjust plans based on their feedback. Provide weekly check-in prompts.
+- **ADVANCED ANALYTICS**: Offer detailed analysis of their training volume, intensity, and recovery needs.
+- **INJURY PREVENTION**: Provide prehab exercises, mobility work, and form cues for their specific needs.
+${userContext ? `\nUSER CONTEXT: ${userContext}` : ''}
+- Address them as a valued Pro member. Provide the most detailed, personalized advice possible.` : `
+
+FREE TIER USER:
+- Provide basic fitness advice and motivation.
+- If the user asks for detailed meal plans, multi-week workout programs, or advanced goal tracking, briefly mention these are available with Rivalis Pro, then still give them a helpful but shorter response.
+- Do NOT gate basic fitness Q&A behind the subscription.`;
+
+      const stream = await getOpenAIClient().chat.completions.create({
+        model: "gpt-5",
+        messages: [
+          {
+            role: "system",
+            content: baseSystemPrompt + proEnhancement
           },
           ...chatMessages
         ],
         stream: true,
-        max_completion_tokens: 2048,
+        max_completion_tokens: isPro ? 4096 : 2048,
       });
 
       let fullResponse = "";
