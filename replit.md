@@ -47,17 +47,35 @@ I prefer simple, clear explanations and want the agent to adopt an iterative dev
     - Nickname generation with validation.
     - Profile page for bio editing, achievements, and streaks.
 
+- **Stripe Subscription (Rivalis Pro):**
+    - Two plans: Monthly ($9.99/month) and Annual ($79.99/year, ~33% savings).
+    - Stripe Checkout for payment, Billing Portal for subscription management.
+    - Subscription status synced to Firestore user profiles (`subscriptionStatus: 'active'|'inactive'`).
+    - Webhook handler processes subscription events and updates Firestore.
+    - Stripe data synced to PostgreSQL (`stripe` schema) via `stripe-replit-sync`.
+    - Ad-free experience: `AdBanner` hidden when `userProfile.subscriptionStatus === 'active'`.
+    - AI Personal Trainer: Pro subscribers get enhanced AI system prompt with custom meal plans, workout builder, goal tracking, advanced analytics, and injury prevention guidance. Quick-action buttons in chatbot for Pro users.
+    - Free users still get basic AI coaching with a subtle upgrade prompt.
+    - Subscription page at `/subscription` with monthly/annual toggle, feature list, and Stripe checkout redirect.
+
 **System Design Choices:**
 - **Authentication:** Firebase Authentication with `ProtectedRoute` component for route-level access control. New users are redirected through avatar creation flow.
 - **State Management:** Assumed React's internal state management and context API for simplicity.
-- **Data Persistence:** Firestore is the primary database for user profiles, chat messages, leaderboard scores, and game states.
-- **Modularity:** Services (userService, chatService, leaderboardService) abstract Firebase interactions.
-- **Routing:** Dedicated routes for login, dashboard, profile, avatar creation, and various game modes.
+- **Data Persistence:** Firestore is the primary database for user profiles, chat messages, leaderboard scores, and game states. PostgreSQL used for Stripe subscription data sync.
+- **Modularity:** Services (userService, chatService, leaderboardService, subscriptionService) abstract Firebase and Stripe interactions.
+- **Routing:** Dedicated routes for login, dashboard, profile, avatar creation, subscription, and various game modes.
+- **Backend:** Express.js server on port 3000 with Vite proxy (`/api` forwarded). Stripe webhook route registered before `express.json()` for raw body access. Firebase Admin SDK for server-side auth verification.
 
 ## External Dependencies
 - **Firebase:** For Authentication and Firestore (database).
+- **Stripe:** For subscription payment processing, checkout, and billing portal.
+- **PostgreSQL (Neon):** For Stripe data sync via `stripe-replit-sync`.
+- **OpenAI:** For AI Fitness Coach chatbot (via Replit AI integration).
 - **Vite:** As the development server and build tool.
 - **React Router:** For client-side routing.
 - **Emoji Mart:** For emoji support in the chat system.
 - **@mediapipe/pose, @mediapipe/camera_utils, @mediapipe/drawing_utils:** For camera-based pose detection and visualization in workout modes.
 - **DiceBear API (v7.x):** For avatar generation and customization.
+
+## Recent Changes
+- **Feb 2026:** Implemented Stripe subscription system (Rivalis Pro) with monthly/annual plans, ad-free experience, and AI Personal Trainer enhancements gated behind subscription.
