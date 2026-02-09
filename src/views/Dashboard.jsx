@@ -19,8 +19,6 @@ function SafeImg({ src, alt, className, style }) {
 export default function Dashboard() {
   const navigate = useNavigate();
 
-  const SOLO_URL = "https://riv-solo.vercel.app/";
-  const BURNOUTS_URL = "https://burnouts.vercel.app/";
   const MERCH_URL = "https://rivalis.printful.me";
 
   const [showComingSoon, setShowComingSoon] = useState(false);

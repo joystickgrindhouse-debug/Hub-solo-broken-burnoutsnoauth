@@ -23,11 +23,10 @@ I prefer simple, clear explanations and want the agent to adopt an iterative dev
 - **Workout Modes (Solo & Burnouts):**
     - Camera-based workout modes using MediaPipe Pose detection for automatic rep counting.
     - 16 exercises across 4 categories (Arms, Legs, Core, Cardio).
-    - **Burnouts Mode:** Selection screen for workout type (Arms, Legs, Core, Full Body) with proper game logic filtering exercises by selected category.
+    - **Burnouts Mode (Merged):** Fully integrated into the Hub (no longer external iframe). Components in `src/components/Burnouts/` (BurnoutsSession, BurnoutsSelection, PoseVisualizer) with helpers in `src/logic/burnoutsHelpers.js`. Styles in `src/styles/Burnouts.css`.
+    - **Solo Mode:** Still loaded via iframe from external Vercel deployment (`https://riv-solo.vercel.app/`).
     - **Playing Card UI:** Workout cards designed to look like authentic playing cards with corner values, center suit icons, and clear exercise names.
-    - **Avatar Background System:** User's avatar displays as a blurred background (40% opacity) with green pose skeleton overlay on transparent canvas, providing visual feedback without showing actual camera feed.
     - Raffle ticket reward system (1 ticket per 30 reps).
-    - Wake lock support to prevent screen sleep.
     - Enhanced camera permission handling with specific error messages for different failure types.
 - **Monetization (Ads):**
     - Integrated a responsive `AdBanner` component at the root level (`App.jsx`).
@@ -78,4 +77,5 @@ I prefer simple, clear explanations and want the agent to adopt an iterative dev
 - **DiceBear API (v7.x):** For avatar generation and customization.
 
 ## Recent Changes
+- **Feb 2026:** Merged Burnouts app directly into the Hub, eliminating iframe/external app dependency and resolving cross-origin authentication issues. Components live in `src/components/Burnouts/`.
 - **Feb 2026:** Implemented Stripe subscription system (Rivalis Pro) with monthly/annual plans, ad-free experience, and AI Personal Trainer enhancements gated behind subscription.

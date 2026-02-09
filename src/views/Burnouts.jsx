@@ -1,47 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import LoadingScreen from "../components/LoadingScreen";
-import { auth } from "../firebase";
 import { LeaderboardService } from "../services/leaderboardService";
 import { useNavigate } from "react-router-dom";
+import BurnoutsSelection from "../components/Burnouts/BurnoutsSelection";
+import BurnoutsSession from "../components/Burnouts/BurnoutsSession";
+import "../styles/Burnouts.css";
 
 export default function Burnouts({ user, userProfile }) {
-  const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(null);
-  const [sessionActive, setSessionActive] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const externalAppUrl = "https://burnouts.vercel.app/";
 
-  useEffect(() => {
-    const getAuthToken = async () => {
-      try {
-        if (auth.currentUser) {
-          const idToken = await auth.currentUser.getIdToken(true);
-          setToken(idToken);
-        }
-      } catch (error) {
-        console.error("Error getting auth token:", error);
-      }
-    };
-    getAuthToken();
-
-    // Listen for messages from the iframe
-    const handleMessage = (event) => {
-      // Allow messages from the new burnouts app
-      if (event.origin !== "https://burnouts.vercel.app" && event.origin !== window.location.origin) return;
-      
-      if (event.data.type === "SESSION_STARTED") {
-        setSessionActive(true);
-      } else if (event.data.type === "SESSION_STATS") {
-        handleSessionEnd(event.data.stats);
-      } else if (event.data.type === "EXERCISE_SELECTED") {
-        // Trigger 3s loading for each mode selection
-        setLoading(true);
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, []);
+  const handleSelectGroup = (group) => {
+    setLoading(true);
+    setSelectedGroup(group);
+    setTimeout(() => setLoading(false), 2000);
+  };
 
   const handleSessionEnd = async (stats) => {
     if (!user || !stats) return;
@@ -69,69 +43,19 @@ export default function Burnouts({ user, userProfile }) {
     }
   };
 
-  const forceEndSession = () => {
-    const iframe = document.getElementById("burnouts-iframe");
-    if (iframe) {
-      iframe.contentWindow.postMessage({ type: "END_SESSION_REQUEST" }, externalAppUrl);
-    }
-  };
-
-  const handleSkipLoading = () => {
-    setLoading(false);
-  };
-
-  const iframeSrc = token 
-    ? `${externalAppUrl}?token=${token}&userId=${user?.uid || ""}&userEmail=${user?.email || ""}&displayName=${encodeURIComponent(userProfile?.nickname || user?.displayName || user?.email || "")}`
-    : externalAppUrl;
-
   return (
     <div style={{ width: "100%", height: "calc(100vh - 64px)", position: "relative", overflow: "hidden", backgroundColor: "#000" }}>
-      {loading && <LoadingScreen onSkip={handleSkipLoading} />}
+      {loading && <LoadingScreen />}
       
-      {/* End Session Button Overlay */}
-      {sessionActive && (
-        <button 
-          onClick={forceEndSession}
-          style={{
-            position: "absolute",
-            bottom: "30px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 100,
-            backgroundColor: "#ff3050",
-            color: "#fff",
-            border: "none",
-            padding: "12px 24px",
-            fontFamily: "'Press Start 2P', cursive",
-            fontSize: "0.8rem",
-            borderRadius: "4px",
-            cursor: "pointer",
-            boxShadow: "0 0 20px rgba(255, 48, 80, 0.5)",
-            animation: "pulse 2s infinite"
-          }}
-        >
-          END SESSION
-        </button>
+      {!selectedGroup ? (
+        <BurnoutsSelection onSelect={handleSelectGroup} />
+      ) : (
+        <BurnoutsSession 
+          userId={user.uid} 
+          muscleGroup={selectedGroup} 
+          onSessionEnd={handleSessionEnd}
+        />
       )}
-
-      <iframe
-        id="burnouts-iframe"
-        src={iframeSrc}
-        title="Burnouts Mode"
-        width="100%"
-        height="100%"
-        frameBorder="0"
-        allow="camera; microphone; autoplay; clipboard-write; encrypted-media; gyroscope; accelerometer; magnetometer; display-capture; picture-in-picture"
-        style={{ border: "none" }}
-      />
-
-      <style>{`
-        @keyframes pulse {
-          0% { box-shadow: 0 0 0 0 rgba(255, 48, 80, 0.7); }
-          70% { box-shadow: 0 0 0 15px rgba(255, 48, 80, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(255, 48, 80, 0); }
-        }
-      `}</style>
     </div>
   );
 }
