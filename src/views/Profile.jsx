@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { UserService } from "../services/userService.js";
 import { BuddyService } from "../services/buddyService.js";
 import { db, storage } from "../firebase.js";
@@ -63,6 +63,9 @@ export default function Profile({ user, userProfile }) {
   const [fitnessLevel, setFitnessLevel] = useState(userProfile?.fitnessLevel || "");
   const [workoutFrequency, setWorkoutFrequency] = useState(userProfile?.workoutFrequency || "");
   const [profileInjuries, setProfileInjuries] = useState(userProfile?.injuries || "");
+  const [aiPlan, setAiPlan] = useState(null);
+  const [aiPlanLoading, setAiPlanLoading] = useState(false);
+  const [showFullPlan, setShowFullPlan] = useState(false);
   const [friends, setFriends] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [searchEmail, setSearchEmail] = useState("");
@@ -136,7 +139,17 @@ export default function Profile({ user, userProfile }) {
     "Gamification",
     "Social Connection",
     "Structured Plans",
-    "Progress Tracking"
+    "Progress Tracking",
+    "Accountability",
+    "Competition",
+    "Weight Loss",
+    "Muscle Building",
+    "Community Support",
+    "Motivation",
+    "Fun Workouts",
+    "Stress Relief",
+    "Health Improvement",
+    "Athletic Performance"
   ];
 
   useEffect(() => {
@@ -192,8 +205,47 @@ export default function Profile({ user, userProfile }) {
     });
     if (result.success) {
       setIsEditing(false);
+      if (fitnessGoals.length > 0 || appSeeking) {
+        generateAiPlan();
+      }
     }
   };
+
+  const isPro = userProfile?.subscriptionStatus === "active";
+
+  const generateAiPlan = useCallback(async () => {
+    if (!user) return;
+    setAiPlanLoading(true);
+    setAiPlan(null);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch("/api/generate-plan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          fitnessGoals: fitnessGoals.length > 0 ? fitnessGoals : (userProfile?.fitnessGoals || []),
+          appSeeking: appSeeking || userProfile?.appSeeking || "",
+          age: age || userProfile?.age || "",
+          gender: gender || userProfile?.gender || "",
+          fitnessLevel: fitnessLevel || userProfile?.fitnessLevel || "",
+          workoutFrequency: workoutFrequency || userProfile?.workoutFrequency || "",
+          injuries: profileInjuries || userProfile?.injuries || ""
+        })
+      });
+      const data = await res.json();
+      if (data.plan) {
+        setAiPlan(data.plan);
+        setShowFullPlan(true);
+      }
+    } catch (err) {
+      console.error("Plan generation failed:", err);
+    } finally {
+      setAiPlanLoading(false);
+    }
+  }, [user, fitnessGoals, appSeeking, age, gender, fitnessLevel, workoutFrequency, profileInjuries, userProfile]);
 
   const toggleFitnessGoal = (goal) => {
     setFitnessGoals(prev => 
@@ -629,6 +681,127 @@ export default function Profile({ user, userProfile }) {
                     <div style={{ fontSize: "0.9rem" }}>{appSeeking}</div>
                   </div>
                 )}
+
+                {(fitnessGoals.length > 0 || appSeeking) && (
+                  <div style={{
+                    background: "linear-gradient(135deg, rgba(0,0,0,0.8), rgba(0,0,0,0.6))",
+                    border: `1px solid ${t.accent}`,
+                    borderRadius: "12px",
+                    padding: "16px",
+                    marginBottom: "1.5rem",
+                    position: "relative",
+                    overflow: "hidden"
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                      <div style={{ color: t.accent, fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>AI TRAINING PLAN</div>
+                      {isPro && <span style={{
+                        background: `linear-gradient(135deg, ${t.accent}, ${t.shadowMd || t.accent})`,
+                        color: "#fff",
+                        padding: "2px 8px",
+                        borderRadius: "4px",
+                        fontSize: "7px",
+                        fontWeight: "bold",
+                        fontFamily: "'Press Start 2P', cursive",
+                        letterSpacing: "1px"
+                      }}>PRO</span>}
+                    </div>
+
+                    {aiPlanLoading ? (
+                      <div style={{ textAlign: "center", padding: "20px" }}>
+                        <div style={{ color: t.accent, fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive", marginBottom: "8px" }}>GENERATING PLAN...</div>
+                        <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>Analyzing your goals and building your protocol</div>
+                      </div>
+                    ) : aiPlan ? (
+                      <div>
+                        <div style={{
+                          position: "relative",
+                          maxHeight: showFullPlan ? "none" : (isPro ? "none" : "200px"),
+                          overflow: "hidden"
+                        }}>
+                          <div style={{
+                            color: "rgba(255,255,255,0.85)",
+                            fontSize: "13px",
+                            lineHeight: "1.7",
+                            whiteSpace: "pre-wrap"
+                          }}>
+                            {aiPlan.split(/\*\*(.*?)\*\*/).map((part, i) =>
+                              i % 2 === 1
+                                ? <strong key={i} style={{ color: t.accent, display: "block", marginTop: "10px", marginBottom: "4px", fontSize: "12px" }}>{part}</strong>
+                                : <span key={i}>{part}</span>
+                            )}
+                          </div>
+                          {!isPro && !showFullPlan && (
+                            <div style={{
+                              position: "absolute",
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              height: "80px",
+                              background: "linear-gradient(transparent, rgba(0,0,0,0.95))"
+                            }} />
+                          )}
+                        </div>
+                        {!isPro && (
+                          <div style={{ textAlign: "center", marginTop: "12px" }}>
+                            <a href="/subscription" style={{
+                              display: "inline-block",
+                              padding: "8px 20px",
+                              background: `linear-gradient(135deg, ${t.accent}, ${t.shadowMd || t.accent})`,
+                              border: "none",
+                              borderRadius: "8px",
+                              color: "#fff",
+                              fontSize: "10px",
+                              fontFamily: "'Press Start 2P', cursive",
+                              textDecoration: "none",
+                              cursor: "pointer"
+                            }}>
+                              UNLOCK FULL PLAN
+                            </a>
+                          </div>
+                        )}
+                        <button
+                          onClick={generateAiPlan}
+                          style={{
+                            marginTop: "10px",
+                            padding: "6px 12px",
+                            background: "transparent",
+                            border: `1px solid ${t.accent}`,
+                            borderRadius: "6px",
+                            color: t.accent,
+                            fontSize: "10px",
+                            fontFamily: "'Press Start 2P', cursive",
+                            cursor: "pointer",
+                            width: "100%"
+                          }}
+                        >
+                          REGENERATE PLAN
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: "center", padding: "12px" }}>
+                        <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px", marginBottom: "12px" }}>
+                          Generate a personalized training plan based on your goals{isPro ? "" : " — preview available for free"}
+                        </p>
+                        <button
+                          onClick={generateAiPlan}
+                          style={{
+                            padding: "8px 20px",
+                            background: `linear-gradient(135deg, ${t.accent}, ${t.shadowMd || t.accent})`,
+                            border: "none",
+                            borderRadius: "8px",
+                            color: "#fff",
+                            fontSize: "10px",
+                            fontFamily: "'Press Start 2P', cursive",
+                            cursor: "pointer"
+                          }}
+                        >
+                          GENERATE MY PLAN
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <button
                   onClick={() => setIsEditing(true)}
                   style={{

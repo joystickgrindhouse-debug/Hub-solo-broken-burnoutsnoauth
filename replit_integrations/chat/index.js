@@ -1,3 +1,3 @@
-const { registerChatRoutes } = require("./routes.js");
+const { registerChatRoutes, getOpenAIClientExported } = require("./routes.js");
 const { chatStorage } = require("./storage.js");
-module.exports = { registerChatRoutes, chatStorage };
+module.exports = { registerChatRoutes, getOpenAIClientExported, chatStorage };

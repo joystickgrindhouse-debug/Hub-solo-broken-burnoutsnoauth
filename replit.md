@@ -79,6 +79,7 @@ I prefer simple, clear explanations and want the agent to adopt an iterative dev
 - **DiceBear API (v7.x):** For avatar generation and customization.
 
 ## Recent Changes
+- **Feb 2026:** AI Training Plan generation: Expanded "Seeking in Rivalis" dropdown to 14 options. Added `/api/generate-plan` endpoint (auth-protected, server-side Pro verification) that generates personalized AI training plans via OpenAI. Free users see a short preview with upgrade CTA; Pro users get full detailed plans with weekly splits, nutrition, recovery, and milestones. Plan preview section renders on Profile after goals are saved.
 - **Feb 2026:** Added login streak tracking system. `updateLoginStreak()` in userService tracks consecutive daily logins via `loginStreak`, `longestLoginStreak`, `lastLoginDate` fields in Firestore. Called on auth state change in App.jsx. Profile displays login streak and best streak. "Streak Keeper" achievement uses login streak.
 - **Feb 2026:** Profile biometric privacy: height, weight, BMI, gender, fitness level, workout frequency, and injuries are hidden from profile view mode. Only age is displayed publicly. All biometric data remains editable and saved to Firestore.
 - **Feb 2026:** Fixed login persistence to always use `browserLocalPersistence` — users stay logged in until they explicitly sign out. Removed Remember Me toggle from Login page.

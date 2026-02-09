@@ -178,4 +178,8 @@ FREE TIER USER:
   });
 }
 
-module.exports = { registerChatRoutes };
+function getOpenAIClientExported() {
+  return getOpenAIClient();
+}
+
+module.exports = { registerChatRoutes, getOpenAIClientExported };

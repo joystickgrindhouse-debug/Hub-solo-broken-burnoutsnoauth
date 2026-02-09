@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { randomUUID } = require('crypto');
 
-const { registerChatRoutes } = require("./replit_integrations/chat");
+const { registerChatRoutes, getOpenAIClientExported } = require("./replit_integrations/chat");
 const { registerImageRoutes } = require("./replit_integrations/image");
 const { WebhookHandlers } = require("./stripe/webhookHandlers");
 const { getUncachableStripeClient, getStripePublishableKey, getStripeSync } = require("./stripe/stripeClient");
@@ -248,6 +248,62 @@ app.post('/api/stripe/portal', verifyFirebaseToken, async (req, res) => {
 });
 
 registerChatRoutes(app);
+
+app.post('/api/generate-plan', verifyFirebaseToken, async (req, res) => {
+  try {
+    const { fitnessGoals, appSeeking, age, gender, fitnessLevel, workoutFrequency, injuries } = req.body;
+
+    const { db } = require('./src/firebase_server');
+    const userDoc = await db.collection('users').doc(req.user.uid).get();
+    const userData = userDoc.exists ? userDoc.data() : {};
+    const isPro = userData.subscriptionStatus === 'active';
+
+    const goalsText = Array.isArray(fitnessGoals) && fitnessGoals.length > 0
+      ? fitnessGoals.join(", ")
+      : "General Fitness";
+    const seekingText = appSeeking || "not specified";
+
+    const prompt = `You are the Rivalis AI Fitness Coach. Generate a personalized fitness plan preview based on this user's profile:
+
+GOALS: ${goalsText}
+SEEKING IN RIVALIS: ${seekingText}
+AGE: ${age || "not provided"}
+GENDER: ${gender || "not provided"}
+FITNESS LEVEL: ${fitnessLevel || "not provided"}
+WORKOUT FREQUENCY: ${workoutFrequency || "not provided"}
+INJURIES/LIMITATIONS: ${injuries || "none"}
+
+${isPro ? `Generate a FULL detailed plan with:
+1. **WEEKLY TRAINING SPLIT** — Day-by-day breakdown with exercises, sets, reps, and rest times
+2. **NUTRITION BLUEPRINT** — Daily macro targets, meal timing, sample meals
+3. **RECOVERY PROTOCOL** — Rest days, stretching, sleep recommendations
+4. **MILESTONES** — 4-week, 8-week, and 12-week progress checkpoints
+5. **RIVALIS INTEGRATION** — How to use Solo Mode and Burnouts to complement the plan
+
+Be detailed, specific, and actionable. Use bold headings and bullet points.` : `Generate a SHORT preview plan with:
+1. **WEEKLY OVERVIEW** — Brief 3-4 sentence summary of the recommended training approach
+2. **SAMPLE DAY** — One example workout day with 4-5 exercises (name and sets/reps only)
+3. **TOP 3 TIPS** — Quick actionable tips based on their goals
+
+Keep it concise (under 200 words). At the end, add: "🔒 Unlock your full personalized plan with detailed nutrition, recovery protocols, and 12-week milestones — upgrade to Rivalis Pro."`}
+
+Use the cyberpunk Rivalis tone — sharp, motivating, and authoritative. Format with markdown-style bold headings.`;
+
+    const openai = getOpenAIClientExported();
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      max_completion_tokens: isPro ? 2048 : 512,
+    });
+
+    const plan = completion.choices[0]?.message?.content || "Plan generation failed. Try again.";
+    res.json({ plan, isPro });
+  } catch (error) {
+    console.error("Plan generation error:", error);
+    res.status(500).json({ error: "Failed to generate plan" });
+  }
+});
+
 registerImageRoutes(app);
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
