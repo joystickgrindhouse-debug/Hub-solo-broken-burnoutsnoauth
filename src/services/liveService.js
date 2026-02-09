@@ -11,7 +11,8 @@ import {
   where,
   Timestamp,
   getDocs,
-  arrayUnion
+  arrayUnion,
+  runTransaction
 } from "firebase/firestore";
 
 export const LiveService = {
@@ -179,6 +180,7 @@ export const LiveService = {
         players,
         playOrder,
         currentTurnIndex: 0,
+        currentCardIndex: 0,
         round: 1,
         totalRounds: deck.length,
         startTime: Timestamp.now(),
@@ -195,44 +197,106 @@ export const LiveService = {
     }
   },
 
-  async completeCard(roomId, userId, cardIndex, repsCompleted, pointsEarned) {
+  async completeCard(roomId, userId, repsCompleted, pointsEarned, jokerEffect = null) {
     try {
       const roomRef = doc(db, "liveRooms", roomId);
-      const roomSnap = await getDoc(roomRef);
-      const roomData = roomSnap.data();
 
-      const players = roomData.players.map((p) => {
-        if (p.userId !== userId) return p;
-        const newTotalReps = (p.totalReps || 0) + repsCompleted;
-        const newTickets = Math.floor(newTotalReps / 30);
-        return {
-          ...p,
-          score: (p.score || 0) + pointsEarned,
-          currentCardIndex: cardIndex + 1,
-          completedCards: (p.completedCards || 0) + 1,
-          totalReps: newTotalReps,
-          ticketsEarned: newTickets,
-          activeEffects: [],
+      const result = await runTransaction(db, async (transaction) => {
+        const roomSnap = await transaction.get(roomRef);
+        if (!roomSnap.exists()) throw new Error("Room not found");
+        const roomData = roomSnap.data();
+
+        let playOrder = [...(roomData.playOrder || [])];
+        const currentTurnIndex = roomData.currentTurnIndex || 0;
+        const currentCardIndex = roomData.currentCardIndex || 0;
+
+        if (playOrder[currentTurnIndex] !== userId) {
+          throw new Error("Not your turn");
+        }
+
+        let players = roomData.players.map((p) => {
+          if (p.userId !== userId) return p;
+          const newTotalReps = (p.totalReps || 0) + repsCompleted;
+          const newTickets = Math.floor(newTotalReps / 30);
+          return {
+            ...p,
+            score: (p.score || 0) + pointsEarned,
+            completedCards: (p.completedCards || 0) + 1,
+            totalReps: newTotalReps,
+            ticketsEarned: newTickets,
+            activeEffects: [],
+          };
+        });
+
+        if (jokerEffect) {
+          switch (jokerEffect) {
+            case "double_points":
+              players = players.map((p) =>
+                p.userId === userId ? { ...p, activeEffects: [...(p.activeEffects || []), "double_points"] } : p
+              );
+              break;
+            case "steal_points": {
+              const leader = players.reduce((a, b) => ((a.score || 0) > (b.score || 0) ? a : b));
+              if (leader.userId !== userId) {
+                players = players.map((p) => {
+                  if (p.userId === leader.userId) return { ...p, score: Math.max(0, (p.score || 0) - 10) };
+                  if (p.userId === userId) return { ...p, score: (p.score || 0) + 10 };
+                  return p;
+                });
+              }
+              break;
+            }
+            case "half_reps":
+              players = players.map((p) =>
+                p.userId === userId ? { ...p, activeEffects: [...(p.activeEffects || []), "half_reps"] } : p
+              );
+              break;
+            case "freeze_others":
+              players = players.map((p) =>
+                p.userId !== userId ? { ...p, activeEffects: [...(p.activeEffects || []), "frozen"] } : p
+              );
+              break;
+            case "bonus_50":
+              players = players.map((p) =>
+                p.userId === userId ? { ...p, score: (p.score || 0) + 50 } : p
+              );
+              break;
+            case "reverse_order":
+              playOrder = [...playOrder].reverse();
+              break;
+          }
+        }
+
+        const nextCardIndex = currentCardIndex + 1;
+        let nextTurnIndex;
+        if (jokerEffect === "reverse_order") {
+          const myNewIndex = playOrder.indexOf(userId);
+          nextTurnIndex = (myNewIndex + 1) % playOrder.length;
+        } else {
+          nextTurnIndex = (currentTurnIndex + 1) % playOrder.length;
+        }
+        const allDone = nextCardIndex >= (roomData.deck?.length || 0);
+
+        const updates = {
+          players,
+          playOrder,
+          currentCardIndex: nextCardIndex,
+          currentTurnIndex: nextTurnIndex,
+          round: Math.floor(nextCardIndex / playOrder.length) + 1,
+          lastActivity: Timestamp.now(),
         };
+
+        if (allDone) {
+          updates.status = "finished";
+          updates.currentPhase = "results";
+          updates.finishedAt = Timestamp.now();
+        }
+
+        transaction.update(roomRef, updates);
+        return { finished: allDone };
       });
 
-      const allDone = players.every((p) => p.currentCardIndex >= roomData.deck.length);
-      const nextRound = Math.max(...players.map((p) => p.currentCardIndex)) + 1;
-
-      const updates = {
-        players,
-        round: nextRound,
-        lastActivity: Timestamp.now(),
-      };
-
-      if (allDone) {
-        updates.status = "finished";
-        updates.currentPhase = "results";
-        updates.finishedAt = Timestamp.now();
-      }
-
-      await updateDoc(roomRef, updates);
-      return { success: true, finished: allDone };
+      return { success: true, finished: result.finished };
     } catch (error) {
       return { success: false, error: error.message };
     }

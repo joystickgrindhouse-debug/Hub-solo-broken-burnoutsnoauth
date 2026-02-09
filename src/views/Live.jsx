@@ -67,8 +67,7 @@ export default function Live({ user, userProfile }) {
         setPhase("results");
         stopMatchTimer();
       }
-      const me = data.players?.find((p) => p.userId === user.uid);
-      if (me) setMyCardIndex(me.currentCardIndex || 0);
+      setMyCardIndex(data.currentCardIndex || 0);
     });
     return () => unsub();
   }, [currentRoomId]);
@@ -130,11 +129,25 @@ export default function Live({ user, userProfile }) {
     }, 1000);
   };
 
+  const isMyTurn = () => {
+    if (!roomData?.playOrder) return false;
+    const currentTurnIndex = roomData.currentTurnIndex || 0;
+    return roomData.playOrder[currentTurnIndex] === user.uid;
+  };
+
+  const getCurrentTurnPlayer = () => {
+    if (!roomData?.playOrder || !roomData?.players) return null;
+    const currentTurnIndex = roomData.currentTurnIndex || 0;
+    const turnUserId = roomData.playOrder[currentTurnIndex];
+    return roomData.players.find((p) => p.userId === turnUserId);
+  };
+
   const handleCompleteCard = async () => {
-    if (cardCompleting || !roomData?.deck) return;
+    if (cardCompleting || !roomData?.deck || !isMyTurn()) return;
     setCardCompleting(true);
 
-    const card = roomData.deck[myCardIndex];
+    const cardIndex = roomData.currentCardIndex || 0;
+    const card = roomData.deck[cardIndex];
     if (!card) { setCardCompleting(false); return; }
 
     const me = roomData.players?.find((p) => p.userId === user.uid);
@@ -142,31 +155,32 @@ export default function Live({ user, userProfile }) {
     const reps = getCardReps(card, me?.activeEffects || []);
     const points = getCardPoints(card, me?.activeEffects || []);
 
+    let finalPoints = points;
+    let jokerEffect = null;
+
     if (card.type === "joker") {
-      await LiveService.applyEffect(currentRoomId, user.uid, card.effect);
+      jokerEffect = card.effect;
       setShowEffectBanner(card);
       setTimeout(() => setShowEffectBanner(null), 3000);
     } else if (card.type === "trick") {
       if (card.effect === "double_or_nothing") {
         const won = Math.random() > 0.5;
-        const finalPoints = won ? points : (reps * 2);
+        finalPoints = won ? points : (reps * 2);
         const resultCard = { ...card, description: won ? `DOUBLED! +${finalPoints} pts for ${card.displayName}!` : `BUSTED! Base pts only for ${card.displayName}!` };
         setShowEffectBanner(resultCard);
-        setTimeout(() => setShowEffectBanner(null), 3000);
-        setIsFlipping(true);
-        setTimeout(() => setIsFlipping(false), 600);
-        await LiveService.completeCard(currentRoomId, user.uid, myCardIndex, reps, finalPoints);
-        setCardCompleting(false);
-        return;
       } else {
         setShowEffectBanner(card);
-        setTimeout(() => setShowEffectBanner(null), 3000);
       }
+      setTimeout(() => setShowEffectBanner(null), 3000);
     }
 
     setIsFlipping(true);
     setTimeout(() => setIsFlipping(false), 600);
-    await LiveService.completeCard(currentRoomId, user.uid, myCardIndex, reps, points);
+
+    const result = await LiveService.completeCard(currentRoomId, user.uid, reps, finalPoints, jokerEffect);
+    if (!result.success) {
+      console.warn("Card completion failed:", result.error);
+    }
 
     setCardCompleting(false);
   };
@@ -194,10 +208,13 @@ export default function Live({ user, userProfile }) {
   if (phase === "results" && roomData) return <ResultsScreen roomData={roomData} user={user} t={t} onPlayAgain={handlePlayAgain} onQuit={handleQuit} matchTime={matchTime} formatTime={formatTime} />;
 
   if (phase === "match" && roomData) {
-    const currentCard = roomData.deck?.[myCardIndex];
+    const sharedCardIndex = roomData.currentCardIndex || 0;
+    const currentCard = roomData.deck?.[sharedCardIndex];
     const me = roomData.players?.find((p) => p.userId === user.uid);
-    const isFinished = myCardIndex >= (roomData.deck?.length || 0);
-    const progress = roomData.deck?.length ? Math.round((myCardIndex / roomData.deck.length) * 100) : 0;
+    const isFinished = sharedCardIndex >= (roomData.deck?.length || 0);
+    const progress = roomData.deck?.length ? Math.round((sharedCardIndex / roomData.deck.length) * 100) : 0;
+    const myTurn = isMyTurn();
+    const turnPlayer = getCurrentTurnPlayer();
 
     return (
       <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #050505 0%, #0a0a0a 100%)", color: "#fff", display: "flex", flexDirection: "column" }}>
@@ -234,7 +251,7 @@ export default function Live({ user, userProfile }) {
               {roomData.showdown?.name?.toUpperCase()}
             </span>
             <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px" }}>{formatTime(matchTime)}</span>
-            <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "10px" }}>Card {myCardIndex + 1}/{roomData.deck?.length}</span>
+            <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "10px" }}>Card {sharedCardIndex + 1}/{roomData.deck?.length}</span>
           </div>
           <button onClick={handleQuit} style={{ background: "transparent", border: `1px solid ${t.accent}`, color: t.accent, padding: "6px 16px", borderRadius: "6px", fontFamily: "'Press Start 2P', cursive", fontSize: "8px", cursor: "pointer" }}>
             EXIT
@@ -245,13 +262,35 @@ export default function Live({ user, userProfile }) {
           <div style={{ width: `${progress}%`, height: "100%", background: `linear-gradient(90deg, ${t.accent}, #FFD700)`, transition: "width 0.5s" }} />
         </div>
 
+        <div style={{
+          padding: "8px 20px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
+          background: myTurn ? `${t.accent}15` : "rgba(255,255,255,0.03)",
+          borderBottom: `1px solid ${myTurn ? t.accent + "30" : "rgba(255,255,255,0.05)"}`,
+        }}>
+          {!isFinished && (
+            myTurn ? (
+              <>
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#00ff88", boxShadow: "0 0 10px #00ff88", animation: "pulse 1s infinite" }} />
+                <span style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "10px", color: "#00ff88" }}>YOUR TURN</span>
+              </>
+            ) : (
+              <>
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#FFD700", animation: "pulse 1s infinite" }} />
+                <span style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "10px", color: "rgba(255,255,255,0.6)" }}>
+                  {turnPlayer?.userName || "Rival"}'s turn
+                </span>
+              </>
+            )
+          )}
+        </div>
+
         <div style={{ flex: 1, display: "flex", padding: "16px", gap: "16px", overflow: "hidden" }}>
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
             {isFinished ? (
               <div style={{ textAlign: "center" }}>
                 <div style={{ fontSize: "48px", marginBottom: "16px" }}>🏁</div>
                 <h2 style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "20px", marginBottom: "8px", color: t.accent }}>DECK COMPLETE!</h2>
-                <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>Waiting for other Rivals to finish...</p>
+                <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>Match is over!</p>
                 <div style={{ marginTop: "16px", fontFamily: "'Press Start 2P', cursive", fontSize: "24px", color: "#FFD700" }}>{me?.score || 0} PTS</div>
               </div>
             ) : currentCard ? (
@@ -334,6 +373,17 @@ export default function Live({ user, userProfile }) {
                   </div>
                 </div>
 
+                {!myTurn && (
+                  <div style={{
+                    width: "100%", marginTop: "20px", padding: "14px",
+                    background: "rgba(255,255,255,0.05)", borderRadius: "12px",
+                    textAlign: "center", fontFamily: "'Press Start 2P', cursive", fontSize: "9px",
+                    color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)"
+                  }}>
+                    Waiting for {turnPlayer?.userName || "rival"}...
+                  </div>
+                )}
+                {myTurn && (
                 <button
                   onClick={handleCompleteCard}
                   disabled={cardCompleting}
@@ -350,8 +400,9 @@ export default function Live({ user, userProfile }) {
                     transition: "all 0.2s"
                   }}
                 >
-                  {cardCompleting ? "..." : currentCard.type === "exercise" ? "COMPLETE REPS ✓" : currentCard.type === "joker" ? `DO ${getCardReps(currentCard, me?.activeEffects || [])} REPS + ACTIVATE!` : `DO ${getCardReps(currentCard, me?.activeEffects || [])} REPS + PLAY!`}
+                  {cardCompleting ? "..." : "COMPLETE REPS ✓"}
                 </button>
+                )}
               </div>
             ) : null}
           </div>
@@ -385,11 +436,14 @@ export default function Live({ user, userProfile }) {
                     <div style={{ width: "28px", height: "28px", borderRadius: "6px", background: "#333" }} />
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "10px", fontWeight: "bold", color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <div style={{ fontSize: "10px", fontWeight: "bold", color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: "6px" }}>
                       {p.userName}{p.userId === user.uid ? " (You)" : ""}
+                      {turnPlayer?.userId === p.userId && !isFinished && (
+                        <span style={{ fontSize: "7px", background: "#00ff88", color: "#000", padding: "1px 4px", borderRadius: "3px", fontFamily: "'Press Start 2P', cursive" }}>TURN</span>
+                      )}
                     </div>
                     <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)" }}>
-                      {p.completedCards || 0}/{roomData.deck?.length} cards
+                      {p.completedCards || 0} cards · {p.totalReps || 0} reps
                     </div>
                   </div>
                   <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "11px", color: i === 0 ? "#FFD700" : "#fff" }}>
