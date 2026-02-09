@@ -37,6 +37,8 @@
     "react-easy-crop": "^5.5.6",
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^6.30.3",
+    "stripe": "^20.3.1",
+    "stripe-replit-sync": "^1.0.0",
     "terser": "^5.46.0",
     "zod": "^4.3.6",
     "zod-validation-error": "^5.0.0"
