@@ -27,8 +27,8 @@ export default function Dashboard() {
 
   const modes = useMemo(
     () => [
-      { id: "solo", name: "Solo", image: "/assets/images/solo.png.png", link: SOLO_URL, external: true },
-      { id: "burnouts", name: "Burnouts", image: "/assets/images/burnouts.png.png", link: BURNOUTS_URL, external: true },
+      { id: "solo", name: "Solo", image: "/assets/images/solo.png.png", link: "/solo", external: false },
+      { id: "burnouts", name: "Burnouts", image: "/assets/images/burnouts.png.png", link: "/burnouts", external: false },
       { id: "live", name: "Live", image: "/assets/images/live.png.png", link: "/live", external: false },
       { id: "run", name: "Run", image: "/assets/images/run.png.png", link: "/run", external: false },
       { id: "raffle", name: "Raffle", image: "/assets/images/raffle.png.png", link: "/raffle", external: false },

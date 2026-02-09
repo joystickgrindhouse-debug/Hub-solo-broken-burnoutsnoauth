@@ -1,7 +1,8 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
-import { auth } from "./firebase.js";
+import { auth, db } from "./firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
+import { doc, onSnapshot } from "firebase/firestore";
 import { UserService } from "./services/userService.js";
 
 import LoadingScreen from "./components/LoadingScreen.jsx";
@@ -182,6 +183,25 @@ export default function App() {
     };
   }, [loadingStartTime]);
 
+  useEffect(() => {
+    if (!user?.uid) {
+      setUserProfile(null);
+      return;
+    }
+    const userDocRef = doc(db, "users", user.uid);
+    const unsubProfile = onSnapshot(userDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setUserProfile(docSnap.data());
+      } else {
+        setUserProfile(null);
+      }
+    }, (error) => {
+      console.error("Profile listener error:", error);
+      setUserProfile(null);
+    });
+    return () => unsubProfile();
+  }, [user?.uid]);
+
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
     setOnboardingComplete(true);
@@ -331,8 +351,14 @@ export default function App() {
           <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
           <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
 
-          {/* Public */}
-          <Route path="/burnouts" element={<Burnouts user={user} userProfile={userProfile} />} />
+          <Route
+            path="/burnouts"
+            element={
+              <ProtectedRoute user={user} userProfile={userProfile}>
+                <Burnouts user={user} userProfile={userProfile} />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Protected */}
           <Route

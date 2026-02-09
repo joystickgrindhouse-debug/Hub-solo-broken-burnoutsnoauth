@@ -10,7 +10,8 @@ import {
   Timestamp,
   doc,
   updateDoc,
-  increment
+  increment,
+  onSnapshot
 } from "firebase/firestore";
 
 /**
@@ -215,6 +216,39 @@ export const LeaderboardService = {
    * @param {string} userId - User ID to filter by
    * @param {string} gameMode - Optional game mode filter
    */
+  listenTopScores(gameMode, limitCount, callback) {
+    const windowStart = getRaffleWindowStart();
+    let q;
+    if (gameMode && gameMode !== "all") {
+      q = query(
+        collection(db, "leaderboard"),
+        where("gameMode", "==", gameMode),
+        where("timestamp", ">=", Timestamp.fromDate(windowStart)),
+        orderBy("timestamp", "desc"),
+        orderBy("score", "desc"),
+        limit(limitCount)
+      );
+    } else {
+      q = query(
+        collection(db, "leaderboard"),
+        where("timestamp", ">=", Timestamp.fromDate(windowStart)),
+        orderBy("timestamp", "desc"),
+        orderBy("score", "desc"),
+        limit(limitCount)
+      );
+    }
+    return onSnapshot(q, (snapshot) => {
+      const scores = [];
+      snapshot.forEach((doc) => {
+        scores.push({ id: doc.id, ...doc.data() });
+      });
+      callback(scores);
+    }, (error) => {
+      console.error("Leaderboard listener error:", error);
+      callback([]);
+    });
+  },
+
   async getUserScores(userId, gameMode = null) {
     try {
       let q;

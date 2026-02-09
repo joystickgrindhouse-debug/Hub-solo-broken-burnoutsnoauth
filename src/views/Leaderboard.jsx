@@ -9,33 +9,29 @@ export default function Leaderboard({ user }) {
   const [filterType, setFilterType] = useState("global"); // 'global' or 'buddies'
 
   useEffect(() => {
-    loadLeaderboard();
-  }, [selectedMode, filterType]);
-
-  const loadLeaderboard = async () => {
     setLoading(true);
-    let result;
-    
-    if (selectedMode === "all") {
-      result = await LeaderboardService.getAllTopScores(100);
-    } else {
-      result = await LeaderboardService.getTopScores(selectedMode, 100);
-    }
+    let cancelled = false;
+    const unsub = LeaderboardService.listenTopScores(selectedMode, 100, async (scores) => {
+      if (cancelled) return;
+      let filteredScores = scores;
 
-    if (result.success) {
-      let filteredScores = result.scores;
-      
       if (filterType === "buddies" && user) {
-        const friendIds = await BuddyService.getFriends(user.uid);
-        const buddySet = new Set([...friendIds, user.uid]);
-        filteredScores = filteredScores.filter(s => buddySet.has(s.userId));
+        try {
+          const friendIds = await BuddyService.getFriends(user.uid);
+          if (cancelled) return;
+          const buddySet = new Set([...friendIds, user.uid]);
+          filteredScores = filteredScores.filter(s => buddySet.has(s.userId));
+        } catch (err) {
+          console.error("Error fetching buddies:", err);
+        }
       }
 
       const aggregated = aggregateScores(filteredScores);
       setLeaderboard(aggregated);
-    }
-    setLoading(false);
-  };
+      setLoading(false);
+    });
+    return () => { cancelled = true; unsub(); };
+  }, [selectedMode, filterType, user?.uid]);
 
   const aggregateScores = (scores) => {
     const userScores = {};
