@@ -275,16 +275,24 @@ FITNESS LEVEL: ${fitnessLevel || "not provided"}
 WORKOUT FREQUENCY: ${workoutFrequency || "not provided"}
 INJURIES/LIMITATIONS: ${injuries || "none"}
 
+CRITICAL: You may ONLY recommend exercises from this approved list (all bodyweight, NO equipment):
+- Arms: Push-ups, Plank Up-Downs, Pike Push-ups, Shoulder Taps
+- Legs: Squats, Lunges, Glute Bridges, Calf Raises
+- Core: Crunches, Plank, Russian Twists, Leg Raises
+- Cardio: Jumping Jacks, High Knees, Burpees, Mountain Climbers
+- Running: Outdoor runs (tracked in Run Mode)
+Do NOT suggest dumbbells, resistance bands, barbells, kettlebells, machines, pull-up bars, or any equipment.
+
 ${isPro ? `Generate a FULL detailed plan with:
-1. **WEEKLY TRAINING SPLIT** — Day-by-day breakdown with exercises, sets, reps, and rest times
+1. **WEEKLY TRAINING SPLIT** — Day-by-day breakdown using ONLY the approved exercises above, with sets, reps, and rest times
 2. **NUTRITION BLUEPRINT** — Daily macro targets, meal timing, sample meals
 3. **RECOVERY PROTOCOL** — Rest days, stretching, sleep recommendations
 4. **MILESTONES** — 4-week, 8-week, and 12-week progress checkpoints
-5. **RIVALIS INTEGRATION** — How to use Solo Mode and Burnouts to complement the plan
+5. **RIVALIS INTEGRATION** — How to use Solo Mode, Burnouts, and Run Mode to complement the plan
 
 Be detailed, specific, and actionable. Use bold headings and bullet points.` : `Generate a SHORT preview plan with:
 1. **WEEKLY OVERVIEW** — Brief 3-4 sentence summary of the recommended training approach
-2. **SAMPLE DAY** — One example workout day with 4-5 exercises (name and sets/reps only)
+2. **SAMPLE DAY** — One example workout day with 4-5 exercises from the approved list (name and sets/reps only)
 3. **TOP 3 TIPS** — Quick actionable tips based on their goals
 
 Keep it concise (under 200 words). At the end, add: "🔒 Unlock your full personalized plan with detailed nutrition, recovery protocols, and 12-week milestones — upgrade to Rivalis Pro."`}
