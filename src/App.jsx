@@ -12,6 +12,7 @@ import Navbar from "./components/Navbar.jsx";
 import AdBanner from "./components/AdBanner.jsx";
 import ChatbotTour from "./components/ChatbotTour/ChatbotTour.jsx";
 import BackgroundShell from "./components/BackgroundShell.jsx";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 
 // Lazy load views for better performance
 const Login = lazy(() => import("./views/Login.jsx"));
@@ -357,8 +358,9 @@ export default function App() {
         </>
       )}
 
+      <ThemeProvider theme={theme}>
       <Suspense
-        fallback={<div style={{ color: "#ff3050", padding: "20px", textAlign: "center" }}>LOADING…</div>}
+        fallback={<div style={{ color: "var(--accent-color, #ff3050)", padding: "20px", textAlign: "center" }}>LOADING…</div>}
       >
         <Routes>
           <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
@@ -512,6 +514,7 @@ export default function App() {
           />
         </Routes>
       </Suspense>
+      </ThemeProvider>
     </BackgroundShell>
   );
 }

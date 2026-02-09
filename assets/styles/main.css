@@ -18,7 +18,6 @@ body, html {
 }
 
 body.theme-red-black {
-  /* Theme 1: Black and Red (Original) */
   --bg-color: #000000;
   --card-bg: rgba(0, 0, 0, 0.6);
   --text-color: #ff3050;
@@ -28,11 +27,16 @@ body.theme-red-black {
   --border-color: #ff3050;
   --logo-color: #ff3050;
   --accent-shadow: rgba(255, 48, 80, 0.8);
+  --accent-shadow-md: rgba(255, 48, 80, 0.5);
+  --accent-shadow-sm: rgba(255, 48, 80, 0.3);
+  --accent-shadow-xs: rgba(255, 48, 80, 0.1);
+  --accent-shadow-xxs: rgba(255, 48, 80, 0.05);
+  --accent-hover-bg: rgba(255, 50, 80, 0.1);
   --bg-image: url('/assets/images/background.png');
+  --tile-img-filter: none;
 }
 
 body.theme-white-black {
-  /* Theme 2: White text everything white text on top of black background */
   --bg-color: #000000;
   --card-bg: rgba(20, 20, 20, 0.8);
   --text-color: #ffffff;
@@ -42,7 +46,13 @@ body.theme-white-black {
   --border-color: #ffffff;
   --logo-color: #ffffff;
   --accent-shadow: rgba(255, 255, 255, 0.8);
+  --accent-shadow-md: rgba(255, 255, 255, 0.5);
+  --accent-shadow-sm: rgba(255, 255, 255, 0.3);
+  --accent-shadow-xs: rgba(255, 255, 255, 0.1);
+  --accent-shadow-xxs: rgba(255, 255, 255, 0.05);
+  --accent-hover-bg: rgba(255, 255, 255, 0.1);
   --bg-image: url('/assets/images/background.png');
+  --tile-img-filter: brightness(0) invert(1);
 }
 
 .hero-background {
@@ -100,10 +110,10 @@ body.theme-white-black {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background: var(--nav-bg);
-  border-bottom: 2px solid var(--border-color);
+  background: var(--nav-bg, #000000);
+  border-bottom: 2px solid var(--border-color, rgba(255, 50, 80, 0.3));
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  color: var(--text-color);
+  color: #fff;
   position: relative;
   z-index: 10000;
 }
@@ -112,8 +122,12 @@ body.theme-white-black {
   font-family: 'Press Start 2P', cursive;
   font-size: 1.2rem;
   font-weight: normal;
-  color: #ffffff !important;
-  text-shadow: 0 0 10px var(--accent-color);
+  color: var(--accent-color, #ff3050);
+  text-shadow:
+    0 0 10px var(--accent-shadow, rgba(255, 48, 80, 0.8)),
+    0 0 20px var(--accent-shadow-md, rgba(255, 48, 80, 0.6)),
+    0 0 30px var(--accent-shadow-sm, rgba(255, 48, 80, 0.4)),
+    0 0 40px var(--accent-shadow-xs, rgba(255, 48, 80, 0.2));
   letter-spacing: 2px;
   text-transform: uppercase;
   animation: flicker 3s infinite;
@@ -146,50 +160,26 @@ button:hover {
 @keyframes flicker {
   0%, 18%, 22%, 25%, 53%, 57%, 100% {
     text-shadow: 
-      0 0 10px rgba(255, 48, 80, 0.8),
-      0 0 20px rgba(255, 48, 80, 0.6),
-      0 0 30px rgba(255, 48, 80, 0.4),
-      0 0 40px rgba(255, 48, 80, 0.2);
+      0 0 10px var(--accent-shadow, rgba(255, 48, 80, 0.8)),
+      0 0 20px var(--accent-shadow-md, rgba(255, 48, 80, 0.6)),
+      0 0 30px var(--accent-shadow-sm, rgba(255, 48, 80, 0.4)),
+      0 0 40px var(--accent-shadow-xs, rgba(255, 48, 80, 0.2));
   }
   20%, 24%, 55% {
     text-shadow: 
-      0 0 5px rgba(255, 48, 80, 0.4),
-      0 0 10px rgba(255, 48, 80, 0.3);
+      0 0 5px var(--accent-shadow-sm, rgba(255, 48, 80, 0.4)),
+      0 0 10px var(--accent-shadow-sm, rgba(255, 48, 80, 0.3));
   }
-}
-
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  background: #000000;
-  border-bottom: 2px solid rgba(255, 50, 80, 0.3);
-  box-shadow: 0 4px 20px rgba(255, 0, 0, 0.2);
-  color: #fff;
-  position: relative;
-  z-index: 10000;
-}
-
-.logo {
-  font-family: 'Press Start 2P', cursive;
-  font-size: 1.2rem;
-  font-weight: normal;
-  color: #ff3050;
-  text-shadow: 
-    0 0 10px rgba(255, 48, 80, 0.8),
-    0 0 20px rgba(255, 48, 80, 0.6),
-    0 0 30px rgba(255, 48, 80, 0.4),
-    0 0 40px rgba(255, 48, 80, 0.2);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  animation: flicker 3s infinite;
 }
 
 .nav-right {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.nav-right > * {
+  filter: drop-shadow(0 0 8px var(--accent-shadow-sm, rgba(255, 48, 80, 0.4)));
 }
 
 .menu {
@@ -211,11 +201,11 @@ button:hover {
   max-height: calc(100vh - 90px);
   overflow-y: auto;
   z-index: 99999;
-  border: 1px solid #ff3050;
+  border: 1px solid var(--accent-color, #ff3050);
   box-shadow: 
-    0 0 15px rgba(255, 48, 80, 0.5),
-    0 0 30px rgba(255, 48, 80, 0.3),
-    inset 0 0 20px rgba(255, 48, 80, 0.05);
+    0 0 15px var(--accent-shadow-md, rgba(255, 48, 80, 0.5)),
+    0 0 30px var(--accent-shadow-sm, rgba(255, 48, 80, 0.3)),
+    inset 0 0 20px var(--accent-shadow-xxs, rgba(255, 48, 80, 0.05));
 }
 
 .dropdown a {
@@ -223,67 +213,57 @@ button:hover {
   text-decoration: none;
   padding: 0.5rem;
   transition: all 0.3s ease;
-  text-shadow: 0 0 8px rgba(255, 48, 80, 0.3);
+  text-shadow: 0 0 8px var(--accent-shadow-sm, rgba(255, 48, 80, 0.3));
 }
 
 .dropdown a:hover {
-  background: rgba(255, 50, 80, 0.1);
+  background: var(--accent-hover-bg, rgba(255, 50, 80, 0.1));
   border-radius: 4px;
-  border-left: 3px solid #ff3050;
+  border-left: 3px solid var(--accent-color, #ff3050);
   padding-left: 0.7rem;
   box-shadow: 
-    0 0 10px rgba(255, 48, 80, 0.4),
-    inset 0 0 10px rgba(255, 48, 80, 0.1);
+    0 0 10px var(--accent-shadow-sm, rgba(255, 48, 80, 0.4)),
+    inset 0 0 10px var(--accent-shadow-xs, rgba(255, 48, 80, 0.1));
 }
 
 .dropdown button {
   background: #000000;
-  border: 1px solid #ff3050;
-  color: #ff3050;
+  border: 1px solid var(--accent-color, #ff3050);
+  color: var(--accent-color, #ff3050);
   margin-top: 0.5rem;
   box-shadow: 
-    0 0 10px rgba(255, 48, 80, 0.5),
-    inset 0 0 10px rgba(255, 48, 80, 0.1);
+    0 0 10px var(--accent-shadow-md, rgba(255, 48, 80, 0.5)),
+    inset 0 0 10px var(--accent-shadow-xs, rgba(255, 48, 80, 0.1));
 }
 
 .dropdown button:hover {
-  background: rgba(255, 48, 80, 0.1);
+  background: var(--accent-hover-bg, rgba(255, 48, 80, 0.1));
   box-shadow: 
-    0 0 15px rgba(255, 48, 80, 0.7),
-    inset 0 0 15px rgba(255, 48, 80, 0.2);
+    0 0 15px var(--accent-shadow, rgba(255, 48, 80, 0.7)),
+    inset 0 0 15px var(--accent-shadow-xs, rgba(255, 48, 80, 0.2));
 }
 
 .menu button {
   background: #000000;
-  border: 1px solid #ff3050;
+  border: 1px solid var(--accent-color, #ff3050);
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
   transition: all 0.3s ease;
-  color: #ff3050;
+  color: var(--accent-color, #ff3050);
   font-weight: 600;
   box-shadow: 
-    0 0 10px rgba(255, 48, 80, 0.5),
-    0 0 20px rgba(255, 48, 80, 0.3),
-    inset 0 0 10px rgba(255, 48, 80, 0.1);
+    0 0 10px var(--accent-shadow-md, rgba(255, 48, 80, 0.5)),
+    0 0 20px var(--accent-shadow-sm, rgba(255, 48, 80, 0.3)),
+    inset 0 0 10px var(--accent-shadow-xs, rgba(255, 48, 80, 0.1));
 }
 
 .menu button:hover {
-  background: rgba(255, 48, 80, 0.1);
+  background: var(--accent-hover-bg, rgba(255, 48, 80, 0.1));
   box-shadow: 
-    0 0 15px rgba(255, 48, 80, 0.7),
-    0 0 25px rgba(255, 48, 80, 0.5),
-    inset 0 0 15px rgba(255, 48, 80, 0.2);
+    0 0 15px var(--accent-shadow, rgba(255, 48, 80, 0.7)),
+    0 0 25px var(--accent-shadow-md, rgba(255, 48, 80, 0.5)),
+    inset 0 0 15px var(--accent-shadow-xs, rgba(255, 48, 80, 0.2));
   transform: translateY(-2px);
-}
-
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.nav-right > * {
-  filter: drop-shadow(0 0 8px rgba(255, 48, 80, 0.4));
 }
 
 .dashboard-grid {
