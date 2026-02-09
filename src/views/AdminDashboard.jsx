@@ -491,7 +491,7 @@ const AdminDashboard = ({ userProfile }) => {
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #ff3050; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent-color, #ff3050); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
       `}</style>

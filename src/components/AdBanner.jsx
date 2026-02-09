@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 const InternalAd = ({ title, subtitle, discount, link, color, visible }) => (
   <a 
@@ -40,18 +41,14 @@ const InternalAd = ({ title, subtitle, discount, link, color, visible }) => (
   </a>
 );
 
-/**
- * AdBanner Component
- * Integrates external and internal ads.
- */
 const AdBanner = () => {
+  const t = useTheme();
   const [currentAd, setCurrentAd] = useState(0);
 
   useEffect(() => {
-    // External Ad (468x60)
     const container1 = document.getElementById("ad-container-69c3ae6b085d581d286b14b236fb4787");
     if (container1) {
-      container1.innerHTML = ''; // Clear if re-rendering
+      container1.innerHTML = '';
       const script1 = document.createElement("script");
       script1.type = "text/javascript";
       script1.innerHTML = `
@@ -71,7 +68,6 @@ const AdBanner = () => {
       container1.appendChild(invoke1);
     }
 
-    // Rotate internal ads every 5 seconds
     const interval = setInterval(() => {
       setCurrentAd(prev => (prev === 0 ? 1 : 0));
     }, 5000);
@@ -118,7 +114,7 @@ const AdBanner = () => {
           subtitle="FOR AN AD FREE EXPERIENCE" 
           discount="50% OFF NOW" 
           link="/subscription" 
-          color="#ff3050"
+          color={t.accent}
           visible={currentAd === 0}
         />
         <InternalAd 

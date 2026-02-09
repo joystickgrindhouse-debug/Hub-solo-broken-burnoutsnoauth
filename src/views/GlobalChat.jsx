@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ChatService } from "../services/chatService.js";
 import CustomEmojiPicker from "../components/CustomEmojiPicker.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 export default function GlobalChat({ user, userProfile, hideNavbar, roomId }) {
+  const t = useTheme();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -81,18 +83,18 @@ export default function GlobalChat({ user, userProfile, hideNavbar, roomId }) {
     display: "flex",
     flexDirection: "column",
     background: "#000000",
-    border: "2px solid #ff3050",
+    border: `2px solid ${t.accent}`,
     borderRadius: "12px",
     padding: "1.5rem",
-    boxShadow: "0 0 30px rgba(255, 48, 80, 0.5), inset 0 0 20px rgba(255, 48, 80, 0.05)"
+    boxShadow: `0 0 30px ${t.shadowMd}, inset 0 0 20px ${t.shadowXxs}`
   };
 
   const content = (
     <div style={containerStyle}>
       {!hideNavbar && (
         <h2 style={{ 
-          color: "#ff3050",
-          textShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
+          color: t.accent,
+          textShadow: `0 0 15px ${t.shadow}`,
           marginBottom: "1rem",
           textTransform: "uppercase",
           letterSpacing: "2px"
@@ -104,17 +106,17 @@ export default function GlobalChat({ user, userProfile, hideNavbar, roomId }) {
         flex: 1, 
         overflowY: "auto", 
         marginBottom: "1rem", 
-        border: "1px solid rgba(255, 48, 80, 0.3)", 
+        border: `1px solid ${t.shadowSm}`, 
         padding: "0.5rem", 
         display: "flex", 
         flexDirection: "column", 
         gap: "0.5rem", 
         background: "rgba(0, 0, 0, 0.5)",
         borderRadius: "8px",
-        boxShadow: "inset 0 0 15px rgba(255, 48, 80, 0.1)"
+        boxShadow: `inset 0 0 15px ${t.shadowXs}`
       }}>
         {messages.length === 0 ? (
-          <div style={{ textAlign: "center", color: "rgba(255, 48, 80, 0.5)", padding: "2rem" }}>
+          <div style={{ textAlign: "center", color: t.shadowMd, padding: "2rem" }}>
             No messages yet. Be the first to send a message!
           </div>
         ) : (
@@ -124,9 +126,9 @@ export default function GlobalChat({ user, userProfile, hideNavbar, roomId }) {
               gap: "0.5rem", 
               alignItems: "flex-start", 
               padding: "0.75rem", 
-              background: "rgba(255, 48, 80, 0.05)", 
+              background: t.shadowXxs, 
               borderRadius: "8px",
-              border: "1px solid rgba(255, 48, 80, 0.2)",
+              border: `1px solid ${t.shadowXs}`,
               transition: "all 0.2s"
             }}>
               {m.avatarURL && (
@@ -138,13 +140,13 @@ export default function GlobalChat({ user, userProfile, hideNavbar, roomId }) {
                     height: "32px", 
                     borderRadius: "50%", 
                     background: "#fff",
-                    border: "2px solid #ff3050"
+                    border: `2px solid ${t.accent}`
                   }}
                 />
               )}
               <div style={{ flex: 1 }}>
                 <div>
-                  <strong style={{ color: "#ff3050", textShadow: "0 0 8px rgba(255, 48, 80, 0.6)" }}>
+                  <strong style={{ color: t.accent, textShadow: `0 0 8px ${t.shadowMd}` }}>
                     {m.nickname}:
                   </strong>{" "}
                   <span style={{ color: "#fff" }}>{m.text}</span>
@@ -163,11 +165,11 @@ export default function GlobalChat({ user, userProfile, hideNavbar, roomId }) {
             resize: "none",
             fontSize: "14px",
             borderRadius: "8px",
-            border: "2px solid #ff3050",
+            border: `2px solid ${t.accent}`,
             boxSizing: "border-box",
             background: "#000000",
             color: "#fff",
-            boxShadow: "0 0 15px rgba(255, 48, 80, 0.3), inset 0 0 10px rgba(255, 48, 80, 0.05)",
+            boxShadow: `0 0 15px ${t.shadowSm}, inset 0 0 10px ${t.shadowXxs}`,
             lineHeight: "1.4"
           }} 
           value={input} 
@@ -182,12 +184,12 @@ export default function GlobalChat({ user, userProfile, hideNavbar, roomId }) {
               padding: "0.75rem 1rem",
               fontSize: "18px",
               background: "#000000",
-              border: "2px solid #ff3050",
+              border: `2px solid ${t.accent}`,
               borderRadius: "8px",
               cursor: "pointer",
-              color: "#ff3050",
+              color: t.accent,
               fontWeight: "bold",
-              boxShadow: "0 0 15px rgba(255, 48, 80, 0.5)",
+              boxShadow: `0 0 15px ${t.shadowMd}`,
               transition: "all 0.2s"
             }}
           >
@@ -199,15 +201,15 @@ export default function GlobalChat({ user, userProfile, hideNavbar, roomId }) {
               flex: 1,
               padding: "0.75rem 1rem",
               fontSize: "16px",
-              background: "#ff3050",
-              border: "2px solid #ff3050",
+              background: t.accent,
+              border: `2px solid ${t.accent}`,
               borderRadius: "8px",
               cursor: "pointer",
               color: "#fff",
               fontWeight: "bold",
               textTransform: "uppercase",
               letterSpacing: "1px",
-              boxShadow: "0 0 20px rgba(255, 48, 80, 0.6)",
+              boxShadow: `0 0 20px ${t.shadowMd}`,
               transition: "all 0.2s"
             }}
           >

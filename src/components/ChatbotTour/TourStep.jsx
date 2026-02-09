@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext.jsx';
 
 const TOUR_STEPS = [
   { 
@@ -106,6 +107,7 @@ const TOUR_STEPS = [
 
 const TourStep = ({ step, onNext, onSkip }) => {
   const navigate = useNavigate();
+  const t = useTheme();
   const [transitioning, setTransitioning] = useState(false);
   const [entered, setEntered] = useState(false);
 
@@ -142,8 +144,8 @@ const TourStep = ({ step, onNext, onSkip }) => {
           elements.forEach(el => {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             el.style.transition = 'all 0.5s ease';
-            el.style.boxShadow = '0 0 30px #FF0000, inset 0 0 20px rgba(255,0,0,0.15)';
-            el.style.border = '2px solid #FF0000';
+            el.style.boxShadow = `0 0 30px ${t.accent}, inset 0 0 20px ${t.shadowXs}`;
+            el.style.border = `2px solid ${t.accent}`;
             
             setTimeout(() => {
               el.style.boxShadow = '';
@@ -170,6 +172,8 @@ const TourStep = ({ step, onNext, onSkip }) => {
       setTransitioning(false);
     }, 200);
   };
+
+  const styles = getStyles(t);
 
   return (
     <div style={{
@@ -211,13 +215,13 @@ const TourStep = ({ step, onNext, onSkip }) => {
   );
 };
 
-const styles = {
+const getStyles = (t) => ({
   container: {
     padding: '20px',
     background: 'linear-gradient(180deg, rgba(15,15,15,0.98) 0%, rgba(5,5,5,0.98) 100%)',
-    border: '1px solid rgba(255,0,0,0.4)',
+    border: `1px solid ${t.shadowSm}`,
     borderRadius: '16px',
-    boxShadow: '0 0 40px rgba(255,0,0,0.15), 0 8px 32px rgba(0,0,0,0.6)',
+    boxShadow: `0 0 40px ${t.shadowXs}, 0 8px 32px rgba(0,0,0,0.6)`,
     color: '#FFF',
     maxWidth: '320px',
     width: '92%',
@@ -231,16 +235,16 @@ const styles = {
     left: 0,
     right: 0,
     height: '3px',
-    background: 'rgba(255,0,0,0.1)',
+    background: t.shadowXs,
     borderRadius: '3px 3px 0 0',
     overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
-    background: 'linear-gradient(90deg, #FF0000, #ff4040)',
+    background: `linear-gradient(90deg, ${t.accent}, #ff4040)`,
     borderRadius: '3px',
     transition: 'width 0.5s ease',
-    boxShadow: '0 0 8px #FF0000',
+    boxShadow: `0 0 8px ${t.accent}`,
   },
   stepCounter: {
     fontSize: '9px',
@@ -258,11 +262,11 @@ const styles = {
   icon: {
     fontSize: '28px',
     display: 'inline-block',
-    filter: 'drop-shadow(0 0 6px rgba(255,0,0,0.4))',
+    filter: `drop-shadow(0 0 6px ${t.shadowSm})`,
   },
   title: {
-    color: '#FF0000',
-    textShadow: '0 0 12px rgba(255,0,0,0.5)',
+    color: t.accent,
+    textShadow: `0 0 12px ${t.shadowMd}`,
     marginBottom: '10px',
     fontSize: '13px',
     fontFamily: "'Press Start 2P', cursive",
@@ -283,7 +287,7 @@ const styles = {
     gap: '10px',
   },
   nextButton: {
-    background: 'linear-gradient(135deg, #FF0000, #cc0000)',
+    background: `linear-gradient(135deg, ${t.accent}, #cc0000)`,
     color: '#FFF',
     border: 'none',
     padding: '10px 20px',
@@ -296,7 +300,7 @@ const styles = {
     alignItems: 'center',
     gap: '8px',
     transition: 'all 0.2s ease',
-    boxShadow: '0 2px 10px rgba(255,0,0,0.3)',
+    boxShadow: `0 2px 10px ${t.shadowSm}`,
     flex: 1,
     justifyContent: 'center',
   },
@@ -316,7 +320,7 @@ const styles = {
     transition: 'all 0.2s ease',
   },
   finishButton: {
-    background: 'linear-gradient(135deg, #FF0000, #cc0000)',
+    background: `linear-gradient(135deg, ${t.accent}, #cc0000)`,
     color: '#FFF',
     border: 'none',
     padding: '12px 20px',
@@ -326,11 +330,11 @@ const styles = {
     width: '100%',
     fontSize: '11px',
     fontFamily: "'Press Start 2P', cursive",
-    boxShadow: '0 2px 15px rgba(255,0,0,0.4)',
+    boxShadow: `0 2px 15px ${t.shadowSm}`,
     transition: 'all 0.2s ease',
     letterSpacing: '1px',
   }
-};
+});
 
 export { TOUR_STEPS };
 export default TourStep;

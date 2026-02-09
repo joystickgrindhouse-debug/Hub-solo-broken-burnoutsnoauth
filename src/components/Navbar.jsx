@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { auth } from "../firebase.js";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 export default function Navbar({ user, userProfile, theme, cycleTheme }) {
   const [open, setOpen] = useState(false);
   const [profileSubmenuOpen, setProfileSubmenuOpen] = useState(false);
+  const t = useTheme();
 
   const handleLogout = () => {
     auth.signOut();
@@ -46,13 +48,13 @@ export default function Navbar({ user, userProfile, theme, cycleTheme }) {
                   height: "40px", 
                   borderRadius: "50%", 
                   background: "#fff",
-                  border: "2px solid #ff4081"
+                  border: `2px solid ${t.accent}`
                 }}
               />
             )}
             <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
               <span style={{ color: "#fff", fontWeight: "600", fontSize: "13px" }}>{nickname}</span>
-              <span style={{ color: "#ff3050", fontSize: "10px", marginTop: "2px" }}>🎟 {userProfile?.ticketBalance ?? 0}</span>
+              <span style={{ color: t.accent, fontSize: "10px", marginTop: "2px" }}>🎟 {userProfile?.ticketBalance ?? 0}</span>
             </div>
           </div>
         )}
@@ -86,11 +88,11 @@ export default function Navbar({ user, userProfile, theme, cycleTheme }) {
                     fontFamily: "inherit"
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 50, 80, 0.1)";
+                    e.currentTarget.style.background = t.hoverBg;
                     e.currentTarget.style.borderRadius = "4px";
-                    e.currentTarget.style.borderLeft = "3px solid #ff3050";
+                    e.currentTarget.style.borderLeft = `3px solid ${t.accent}`;
                     e.currentTarget.style.paddingLeft = "0.7rem";
-                    e.currentTarget.style.boxShadow = "0 0 10px rgba(255, 48, 80, 0.4), inset 0 0 10px rgba(255, 48, 80, 0.1)";
+                    e.currentTarget.style.boxShadow = `0 0 10px ${t.shadowMd}, inset 0 0 10px ${t.shadowXs}`;
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = "transparent";
@@ -108,12 +110,12 @@ export default function Navbar({ user, userProfile, theme, cycleTheme }) {
                     left: "100%",
                     top: "0",
                     background: "#000000",
-                    border: "1px solid #ff3050",
+                    border: `1px solid ${t.accent}`,
                     borderRadius: "8px",
                     padding: "0.5rem",
                     marginLeft: "0.5rem",
                     minWidth: "150px",
-                    boxShadow: "0 0 15px rgba(255, 48, 80, 0.5), 0 0 30px rgba(255, 48, 80, 0.3), inset 0 0 20px rgba(255, 48, 80, 0.05)",
+                    boxShadow: `0 0 15px ${t.shadowMd}, 0 0 30px ${t.shadowSm}, inset 0 0 20px ${t.shadowXxs}`,
                     zIndex: 10000
                   }}>
                     <Link 
@@ -125,14 +127,14 @@ export default function Navbar({ user, userProfile, theme, cycleTheme }) {
                         padding: "0.5rem",
                         display: "block",
                         transition: "all 0.3s ease",
-                        textShadow: "0 0 8px rgba(255, 48, 80, 0.3)"
+                        textShadow: `0 0 8px ${t.shadowSm}`
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 50, 80, 0.1)";
+                        e.currentTarget.style.background = t.hoverBg;
                         e.currentTarget.style.borderRadius = "4px";
-                        e.currentTarget.style.borderLeft = "3px solid #ff3050";
+                        e.currentTarget.style.borderLeft = `3px solid ${t.accent}`;
                         e.currentTarget.style.paddingLeft = "0.7rem";
-                        e.currentTarget.style.boxShadow = "0 0 10px rgba(255, 48, 80, 0.4), inset 0 0 10px rgba(255, 48, 80, 0.1)";
+                        e.currentTarget.style.boxShadow = `0 0 10px ${t.shadowMd}, inset 0 0 10px ${t.shadowXs}`;
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = "transparent";
@@ -153,14 +155,14 @@ export default function Navbar({ user, userProfile, theme, cycleTheme }) {
                         padding: "0.5rem",
                         display: "block",
                         transition: "all 0.3s ease",
-                        textShadow: "0 0 8px rgba(255, 48, 80, 0.3)"
+                        textShadow: `0 0 8px ${t.shadowSm}`
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 50, 80, 0.1)";
+                        e.currentTarget.style.background = t.hoverBg;
                         e.currentTarget.style.borderRadius = "4px";
-                        e.currentTarget.style.borderLeft = "3px solid #ff3050";
+                        e.currentTarget.style.borderLeft = `3px solid ${t.accent}`;
                         e.currentTarget.style.paddingLeft = "0.7rem";
-                        e.currentTarget.style.boxShadow = "0 0 10px rgba(255, 48, 80, 0.4), inset 0 0 10px rgba(255, 48, 80, 0.1)";
+                        e.currentTarget.style.boxShadow = `0 0 10px ${t.shadowMd}, inset 0 0 10px ${t.shadowXs}`;
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = "transparent";
@@ -181,14 +183,14 @@ export default function Navbar({ user, userProfile, theme, cycleTheme }) {
                         padding: "0.5rem",
                         display: "block",
                         transition: "all 0.3s ease",
-                        textShadow: "0 0 8px rgba(255, 48, 80, 0.3)"
+                        textShadow: `0 0 8px ${t.shadowSm}`
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 50, 80, 0.1)";
+                        e.currentTarget.style.background = t.hoverBg;
                         e.currentTarget.style.borderRadius = "4px";
-                        e.currentTarget.style.borderLeft = "3px solid #ff3050";
+                        e.currentTarget.style.borderLeft = `3px solid ${t.accent}`;
                         e.currentTarget.style.paddingLeft = "0.7rem";
-                        e.currentTarget.style.boxShadow = "0 0 10px rgba(255, 48, 80, 0.4), inset 0 0 10px rgba(255, 48, 80, 0.1)";
+                        e.currentTarget.style.boxShadow = `0 0 10px ${t.shadowMd}, inset 0 0 10px ${t.shadowXs}`;
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = "transparent";
@@ -212,9 +214,9 @@ export default function Navbar({ user, userProfile, theme, cycleTheme }) {
                   to="/admin-control" 
                   onClick={closeDropdown}
                   style={{
-                    color: "#ff3050",
+                    color: t.accent,
                     fontWeight: "bold",
-                    textShadow: "0 0 10px rgba(255, 48, 80, 0.3)"
+                    textShadow: `0 0 10px ${t.shadowSm}`
                   }}
                 >
                   Admin Console

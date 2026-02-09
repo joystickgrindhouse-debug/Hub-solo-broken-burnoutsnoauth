@@ -4,18 +4,14 @@ import { storage, auth } from "../firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { UserService } from "../services/userService";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext.jsx";
 
-/**
- * Converts a cropped area to a Base64 string for more reliable transfer
- * in environments where Blobs might have issues.
- */
 const getCroppedImgBase64 = async (imageSrc, pixelCrop) => {
   const image = new Image();
   image.src = imageSrc;
   await new Promise((resolve) => (image.onload = resolve));
 
   const canvas = document.createElement("canvas");
-  // Set smaller fixed dimensions for profile photo to stay under Firestore limits
   canvas.width = 400;
   canvas.height = 400;
   const ctx = canvas.getContext("2d");
@@ -32,10 +28,11 @@ const getCroppedImgBase64 = async (imageSrc, pixelCrop) => {
     400
   );
 
-  return canvas.toDataURL("image/jpeg", 0.6); // Lower quality (0.6) to ensure small size
+  return canvas.toDataURL("image/jpeg", 0.6);
 };
 
 const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
+  const t = useTheme();
   const [image, setImage] = useState(null);
   const [nickname, setNickname] = useState("");
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -76,16 +73,12 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
       
       if (updateResult && updateResult.success) {
         console.log("Profile updated successfully");
-        // Force session update by notifying observers if any, 
-        // but since we are doing a hard redirect, the new load will fetch the updated profile.
         
         await new Promise(r => setTimeout(r, 800));
         
-        // Ensure we clear any local state that might interfere
         if (isUpdating) {
           window.location.reload();
         } else {
-          // Use a cache-busting parameter for the dashboard redirect
           window.location.href = "/dashboard?refresh=" + Date.now();
         }
       } else {
@@ -116,25 +109,24 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
         zIndex: 10, 
         width: "100%",
         background: "rgba(0, 0, 0, 0.9)",
-        border: "2px solid #ff3050",
+        border: `2px solid ${t.accent}`,
         borderRadius: "12px",
         padding: "2.5rem",
-        boxShadow: "0 0 30px rgba(255, 48, 80, 0.4), inset 0 0 20px rgba(255, 48, 80, 0.1)",
+        boxShadow: `0 0 30px ${t.shadowSm}, inset 0 0 20px ${t.shadowXs}`,
         position: "relative",
         overflow: "hidden"
       }}>
-        {/* Decorative corner accents */}
-        <div style={{ position: "absolute", top: "10px", left: "10px", width: "20px", height: "20px", borderTop: "2px solid #ff3050", borderLeft: "2px solid #ff3050" }} />
-        <div style={{ position: "absolute", top: "10px", right: "10px", width: "20px", height: "20px", borderTop: "2px solid #ff3050", borderRight: "2px solid #ff3050" }} />
-        <div style={{ position: "absolute", bottom: "10px", left: "10px", width: "20px", height: "20px", borderBottom: "2px solid #ff3050", borderLeft: "2px solid #ff3050" }} />
-        <div style={{ position: "absolute", bottom: "10px", right: "10px", width: "20px", height: "20px", borderBottom: "2px solid #ff3050", borderRight: "2px solid #ff3050" }} />
+        <div style={{ position: "absolute", top: "10px", left: "10px", width: "20px", height: "20px", borderTop: `2px solid ${t.accent}`, borderLeft: `2px solid ${t.accent}` }} />
+        <div style={{ position: "absolute", top: "10px", right: "10px", width: "20px", height: "20px", borderTop: `2px solid ${t.accent}`, borderRight: `2px solid ${t.accent}` }} />
+        <div style={{ position: "absolute", bottom: "10px", left: "10px", width: "20px", height: "20px", borderBottom: `2px solid ${t.accent}`, borderLeft: `2px solid ${t.accent}` }} />
+        <div style={{ position: "absolute", bottom: "10px", right: "10px", width: "20px", height: "20px", borderBottom: `2px solid ${t.accent}`, borderRight: `2px solid ${t.accent}` }} />
 
         <h1 style={{ 
           fontFamily: "'Press Start 2P', cursive", 
-          color: "#ff3050",
+          color: t.accent,
           marginBottom: "2rem",
           fontSize: "1.4rem",
-          textShadow: "0 0 10px rgba(255, 48, 80, 0.6)",
+          textShadow: `0 0 10px ${t.shadowMd}`,
           letterSpacing: "2px"
         }}>
           {isUpdating ? "UPDATE PROFILE" : "PROFILE SETUP"}
@@ -145,7 +137,7 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
             display: "block", 
             fontFamily: "'Press Start 2P', cursive", 
             fontSize: "0.7rem", 
-            color: "#ff3050", 
+            color: t.accent, 
             marginBottom: "10px" 
           }}>
             NICKNAME
@@ -158,8 +150,8 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
             style={{
               width: "100%",
               padding: "12px",
-              background: "rgba(255, 48, 80, 0.1)",
-              border: "2px solid #ff3050",
+              background: t.shadowXs,
+              border: `2px solid ${t.accent}`,
               color: "#fff",
               fontFamily: "system-ui, sans-serif",
               borderRadius: "4px",
@@ -171,10 +163,10 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
         {!image ? (
           <>
             <div style={{
-              background: "rgba(255, 48, 80, 0.05)",
+              background: t.shadowXxs,
               padding: "1.5rem",
               borderRadius: "8px",
-              border: "1px dashed rgba(255, 48, 80, 0.3)",
+              border: `1px dashed ${t.shadowSm}`,
               marginBottom: "2rem"
             }}>
               <p style={{ 
@@ -194,14 +186,14 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
               <label style={{
                 display: "inline-block",
                 padding: "1.2rem 2.5rem",
-                background: "linear-gradient(135deg, #ff3050 0%, #a30019 100%)",
+                background: t.accent,
                 color: "#fff",
                 fontFamily: "'Press Start 2P', cursive",
                 fontSize: "0.8rem",
                 cursor: "pointer",
                 borderRadius: "4px",
                 border: "2px solid #fff",
-                boxShadow: "0 0 20px rgba(255, 48, 80, 0.6)",
+                boxShadow: `0 0 20px ${t.shadowMd}`,
                 transition: "transform 0.2s"
               }}>
                 CHOOSE PHOTO
@@ -214,13 +206,13 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
                   style={{
                     padding: "1.2rem 2.5rem",
                     background: "rgba(0, 0, 0, 0.5)",
-                    border: "2px solid #ff3050",
-                    color: "#ff3050",
+                    border: `2px solid ${t.accent}`,
+                    color: t.accent,
                     fontFamily: "'Press Start 2P', cursive",
                     fontSize: "0.8rem",
                     cursor: "pointer",
                     borderRadius: "4px",
-                    boxShadow: "0 0 10px rgba(255, 48, 80, 0.2)"
+                    boxShadow: `0 0 10px ${t.shadowXs}`
                   }}
                 >
                   CANCEL
@@ -240,15 +232,14 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
             display: "flex", 
             flexDirection: "column" 
           }}>
-            {/* Cropper UI with scanline effect */}
-            <div style={{ flex: 1, position: "relative", borderBottom: "3px solid #ff3050" }}>
+            <div style={{ flex: 1, position: "relative", borderBottom: `3px solid ${t.accent}` }}>
               <div style={{
                 position: "absolute",
                 top: 0,
                 left: 0,
                 right: 0,
                 bottom: 0,
-                background: "linear-gradient(rgba(255, 48, 80, 0.05) 50%, transparent 50%)",
+                background: `linear-gradient(${t.shadowXxs} 50%, transparent 50%)`,
                 backgroundSize: "100% 4px",
                 zIndex: 2,
                 pointerEvents: "none"
@@ -263,7 +254,7 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
                 onCropComplete={onCropComplete}
                 style={{
                   containerStyle: { background: "#000" },
-                  cropAreaStyle: { border: "3px solid #ff3050", boxShadow: "0 0 50px rgba(255, 48, 80, 0.5)" }
+                  cropAreaStyle: { border: `3px solid ${t.accent}`, boxShadow: `0 0 50px ${t.shadowMd}` }
                 }}
               />
             </div>
@@ -275,11 +266,10 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
               flexDirection: "column",
               gap: "1.5rem", 
               alignItems: "center",
-              borderTop: "1px solid rgba(255, 48, 80, 0.3)"
+              borderTop: `1px solid ${t.shadowSm}`
             }}>
-              {/* Zoom control */}
               <div style={{ width: "100%", maxWidth: "300px", display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ color: "#ff3050", fontFamily: "'Press Start 2P', cursive", fontSize: "0.6rem" }}>ZOOM</span>
+                <span style={{ color: t.accent, fontFamily: "'Press Start 2P', cursive", fontSize: "0.6rem" }}>ZOOM</span>
                 <input 
                   type="range"
                   min={1}
@@ -287,7 +277,7 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
                   step={0.1}
                   value={zoom}
                   onChange={(e) => setZoom(parseFloat(e.target.value))}
-                  style={{ flex: 1, accentColor: "#ff3050" }}
+                  style={{ flex: 1, accentColor: t.accent }}
                 />
               </div>
 
@@ -299,8 +289,8 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
                     maxWidth: "150px",
                     padding: "1rem",
                     background: "rgba(0, 0, 0, 0.5)",
-                    border: "2px solid #ff3050",
-                    color: "#ff3050",
+                    border: `2px solid ${t.accent}`,
+                    color: t.accent,
                     fontFamily: "'Press Start 2P', cursive",
                     fontSize: "0.7rem",
                     cursor: "pointer",
@@ -316,14 +306,14 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
                     flex: 1,
                     maxWidth: "200px",
                     padding: "1rem",
-                    background: "linear-gradient(135deg, #ff3050 0%, #a30019 100%)",
+                    background: t.accent,
                     color: "#fff",
                     border: "2px solid #fff",
                     fontFamily: "'Press Start 2P', cursive",
                     fontSize: "0.7rem",
                     cursor: "pointer",
                     borderRadius: "4px",
-                    boxShadow: "0 0 20px rgba(255, 48, 80, 0.4)",
+                    boxShadow: `0 0 20px ${t.shadowSm}`,
                     opacity: uploading ? 0.5 : 1
                   }}
                 >
@@ -340,8 +330,8 @@ const WaitingForUpload = ({ user, onSetupComplete, isUpdating = false }) => {
           background: radial-gradient(circle at center, #1a0000 0%, #000 100%);
         }
         @keyframes pulse-glow {
-          0%, 100% { box-shadow: 0 0 30px rgba(255, 48, 80, 0.4); }
-          50% { box-shadow: 0 0 50px rgba(255, 48, 80, 0.6); }
+          0%, 100% { box-shadow: 0 0 30px ${t.shadowSm}; }
+          50% { box-shadow: 0 0 50px ${t.shadowMd}; }
         }
       `}</style>
     </div>

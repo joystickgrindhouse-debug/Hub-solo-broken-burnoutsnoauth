@@ -9,6 +9,7 @@ import ChatBubble from './ChatBubble.jsx';
 import TourStep, { TOUR_STEPS } from './TourStep.jsx';
 import LogsGraph from './LogsGraph.jsx';
 import NutritionalCoach from './NutritionalCoach.jsx';
+import { useTheme } from '../../context/ThemeContext.jsx';
 
 const INTAKE_START_STEP = 3;
 
@@ -34,6 +35,7 @@ const MOTIVATIONAL_QUOTES = [
 ];
 
 const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
+  const t = useTheme();
   const [messages, setMessages] = useState([]);
   const [tourStep, setTourStep] = useState(0);
   const [showTour, setShowTour] = useState(false);
@@ -263,7 +265,6 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
                 ));
               }
             } catch (e) {
-              // skip malformed chunks
             }
           }
         }
@@ -380,6 +381,187 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
     }
   };
 
+  const styles = {
+    container: {
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      background: '#000',
+      border: '1px solid rgba(51,51,51,0.6)',
+      borderRadius: '12px',
+      overflow: 'hidden',
+      position: 'relative',
+      transition: 'all 0.3s ease',
+    },
+    header: {
+      padding: '10px 15px',
+      background: 'linear-gradient(180deg, #111 0%, #0a0a0a 100%)',
+      borderBottom: `1px solid ${t.shadowXs}`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: '10px',
+    },
+    statusDot: {
+      width: '8px',
+      height: '8px',
+      borderRadius: '50%',
+      background: '#00ff44',
+      boxShadow: '0 0 8px #00ff44',
+      animation: 'pulse 2s infinite',
+    },
+    headerTitle: {
+      color: t.accent,
+      fontSize: '11px',
+      fontWeight: 'bold',
+      letterSpacing: '1px',
+      textShadow: `0 0 6px ${t.shadowSm}`,
+      fontFamily: "'Press Start 2P', cursive",
+    },
+    proBadge: {
+      background: t.accent,
+      color: '#fff',
+      padding: '2px 6px',
+      borderRadius: '4px',
+      fontSize: '8px',
+      fontWeight: 'bold',
+      fontFamily: "'Press Start 2P', cursive",
+      letterSpacing: '1px',
+    },
+    exportBtn: {
+      background: 'transparent',
+      border: `1px solid ${t.shadowSm}`,
+      color: t.shadowMd,
+      padding: '4px 10px',
+      borderRadius: '6px',
+      fontSize: '9px',
+      cursor: 'pointer',
+      fontFamily: "'Press Start 2P', cursive",
+      transition: 'all 0.2s ease',
+    },
+    chatArea: {
+      flex: 1,
+      padding: '12px 10px',
+      overflowY: 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '4px',
+      WebkitOverflowScrolling: 'touch',
+    },
+    inputArea: {
+      padding: '10px',
+      background: 'linear-gradient(180deg, #0a0a0a 0%, #111 100%)',
+      borderTop: `1px solid ${t.shadowXs}`,
+      display: 'flex',
+      gap: '8px',
+    },
+    input: {
+      flex: 1,
+      background: '#000',
+      border: '1px solid rgba(51,51,51,0.6)',
+      borderRadius: '10px',
+      padding: '12px 15px',
+      color: '#FFF',
+      outline: 'none',
+      fontSize: '16px',
+      transition: 'border-color 0.2s ease',
+    },
+    sendButton: {
+      background: t.accent,
+      border: 'none',
+      borderRadius: '10px',
+      width: '44px',
+      color: '#FFF',
+      cursor: 'pointer',
+      fontSize: '18px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      transition: 'all 0.2s ease',
+      boxShadow: `0 2px 8px ${t.shadowXs}`,
+    },
+    tourOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0,0,0,0.75)',
+      backdropFilter: 'blur(4px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 10,
+      padding: '20px',
+    },
+    resumeTab: {
+      background: t.accent,
+      padding: '10px 20px',
+      borderRadius: '20px 20px 0 0',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      boxShadow: `0 -4px 20px ${t.shadowSm}`,
+      pointerEvents: 'auto',
+      position: 'absolute',
+      bottom: 0,
+      right: '20px',
+      animation: 'slideUp 0.3s ease-out',
+    },
+    resumeText: {
+      color: '#FFF',
+      fontSize: '9px',
+      fontFamily: "'Press Start 2P', cursive",
+      letterSpacing: '0.5px',
+    },
+    resumePulse: {
+      width: '8px',
+      height: '8px',
+      borderRadius: '50%',
+      background: '#FFF',
+      animation: 'pulse 1.5s infinite',
+    },
+    proActions: {
+      display: 'flex',
+      gap: '6px',
+      padding: '6px 10px',
+      background: '#0a0a0a',
+      borderTop: `1px solid ${t.shadowXs}`,
+      overflowX: 'auto',
+    },
+    proActionBtn: {
+      background: t.shadowXxs,
+      border: `1px solid ${t.shadowSm}`,
+      color: '#fff',
+      padding: '6px 10px',
+      borderRadius: '8px',
+      fontSize: '11px',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      flexShrink: 0,
+      transition: 'all 0.2s ease',
+    },
+    upgradeBar: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: '8px',
+      padding: '6px 10px',
+      background: t.shadowXxs,
+      borderTop: `1px solid ${t.shadowXs}`,
+    },
+    upgradeLink: {
+      color: t.accent,
+      fontSize: '10px',
+      fontWeight: 'bold',
+      fontFamily: "'Press Start 2P', cursive",
+      textDecoration: 'none',
+      textShadow: `0 0 5px ${t.shadowMd}`,
+      flexShrink: 0,
+    },
+  };
+
   return (
     <div style={styles.container}>
       <style>{`
@@ -397,7 +579,7 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
         }
         .chatbot-scrollbar::-webkit-scrollbar { width: 4px; }
         .chatbot-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .chatbot-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,0,0,0.3); border-radius: 4px; }
+        .chatbot-scrollbar::-webkit-scrollbar-thumb { background: ${t.shadowSm}; border-radius: 4px; }
       `}</style>
 
       <div style={styles.header}>
@@ -507,187 +689,6 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       )}
     </div>
   );
-};
-
-const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-    background: '#000',
-    border: '1px solid rgba(51,51,51,0.6)',
-    borderRadius: '12px',
-    overflow: 'hidden',
-    position: 'relative',
-    transition: 'all 0.3s ease',
-  },
-  header: {
-    padding: '10px 15px',
-    background: 'linear-gradient(180deg, #111 0%, #0a0a0a 100%)',
-    borderBottom: '1px solid rgba(255,0,0,0.15)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '10px',
-  },
-  statusDot: {
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
-    background: '#00ff44',
-    boxShadow: '0 0 8px #00ff44',
-    animation: 'pulse 2s infinite',
-  },
-  headerTitle: {
-    color: '#FF0000',
-    fontSize: '11px',
-    fontWeight: 'bold',
-    letterSpacing: '1px',
-    textShadow: '0 0 6px rgba(255,0,0,0.4)',
-    fontFamily: "'Press Start 2P', cursive",
-  },
-  proBadge: {
-    background: 'linear-gradient(135deg, #ff3050, #ff6080)',
-    color: '#fff',
-    padding: '2px 6px',
-    borderRadius: '4px',
-    fontSize: '8px',
-    fontWeight: 'bold',
-    fontFamily: "'Press Start 2P', cursive",
-    letterSpacing: '1px',
-  },
-  exportBtn: {
-    background: 'transparent',
-    border: '1px solid rgba(255,0,0,0.3)',
-    color: 'rgba(255,0,0,0.7)',
-    padding: '4px 10px',
-    borderRadius: '6px',
-    fontSize: '9px',
-    cursor: 'pointer',
-    fontFamily: "'Press Start 2P', cursive",
-    transition: 'all 0.2s ease',
-  },
-  chatArea: {
-    flex: 1,
-    padding: '12px 10px',
-    overflowY: 'auto',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-    WebkitOverflowScrolling: 'touch',
-  },
-  inputArea: {
-    padding: '10px',
-    background: 'linear-gradient(180deg, #0a0a0a 0%, #111 100%)',
-    borderTop: '1px solid rgba(255,0,0,0.1)',
-    display: 'flex',
-    gap: '8px',
-  },
-  input: {
-    flex: 1,
-    background: '#000',
-    border: '1px solid rgba(51,51,51,0.6)',
-    borderRadius: '10px',
-    padding: '12px 15px',
-    color: '#FFF',
-    outline: 'none',
-    fontSize: '16px',
-    transition: 'border-color 0.2s ease',
-  },
-  sendButton: {
-    background: 'linear-gradient(135deg, #FF0000, #cc0000)',
-    border: 'none',
-    borderRadius: '10px',
-    width: '44px',
-    color: '#FFF',
-    cursor: 'pointer',
-    fontSize: '18px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.2s ease',
-    boxShadow: '0 2px 8px rgba(255,0,0,0.2)',
-  },
-  tourOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(0,0,0,0.75)',
-    backdropFilter: 'blur(4px)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-    padding: '20px',
-  },
-  resumeTab: {
-    background: 'linear-gradient(135deg, #FF0000, #cc0000)',
-    padding: '10px 20px',
-    borderRadius: '20px 20px 0 0',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    boxShadow: '0 -4px 20px rgba(255,0,0,0.3)',
-    pointerEvents: 'auto',
-    position: 'absolute',
-    bottom: 0,
-    right: '20px',
-    animation: 'slideUp 0.3s ease-out',
-  },
-  resumeText: {
-    color: '#FFF',
-    fontSize: '9px',
-    fontFamily: "'Press Start 2P', cursive",
-    letterSpacing: '0.5px',
-  },
-  resumePulse: {
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
-    background: '#FFF',
-    animation: 'pulse 1.5s infinite',
-  },
-  proActions: {
-    display: 'flex',
-    gap: '6px',
-    padding: '6px 10px',
-    background: '#0a0a0a',
-    borderTop: '1px solid rgba(255,0,0,0.1)',
-    overflowX: 'auto',
-  },
-  proActionBtn: {
-    background: 'rgba(255,48,80,0.08)',
-    border: '1px solid rgba(255,48,80,0.25)',
-    color: '#fff',
-    padding: '6px 10px',
-    borderRadius: '8px',
-    fontSize: '11px',
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    flexShrink: 0,
-    transition: 'all 0.2s ease',
-  },
-  upgradeBar: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '8px',
-    padding: '6px 10px',
-    background: 'rgba(255,48,80,0.04)',
-    borderTop: '1px solid rgba(255,48,80,0.1)',
-  },
-  upgradeLink: {
-    color: '#ff3050',
-    fontSize: '10px',
-    fontWeight: 'bold',
-    fontFamily: "'Press Start 2P', cursive",
-    textDecoration: 'none',
-    textShadow: '0 0 5px rgba(255,48,80,0.5)',
-    flexShrink: 0,
-  },
 };
 
 export default ChatbotTour;

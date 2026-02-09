@@ -133,12 +133,12 @@ export default function Login() {
                 width: "36px",
                 height: "20px",
                 borderRadius: "10px",
-                background: rememberMe ? "#ff3050" : "rgba(255,255,255,0.2)",
+                background: rememberMe ? "var(--accent-color, #ff3050)" : "rgba(255,255,255,0.2)",
                 position: "relative",
                 transition: "background 0.3s",
                 flexShrink: 0,
                 border: "1px solid rgba(255,255,255,0.3)",
-                boxShadow: rememberMe ? "0 0 8px rgba(255,48,80,0.5)" : "none"
+                boxShadow: rememberMe ? "0 0 8px var(--accent-shadow-md, rgba(255,48,80,0.5))" : "none"
               }}>
               <div style={{
                 width: "16px",

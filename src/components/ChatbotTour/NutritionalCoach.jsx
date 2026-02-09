@@ -1,6 +1,9 @@
 import React from 'react';
+import { useTheme } from '../../context/ThemeContext.jsx';
 
 const NutritionalCoach = () => {
+  const t = useTheme();
+
   const plans = [
     { type: 'Cutting', calories: '1800', macros: '40P/40C/20F' },
     { type: 'Bulking', calories: '3200', macros: '30P/50C/20F' },
@@ -9,7 +12,7 @@ const NutritionalCoach = () => {
 
   return (
     <div style={styles.container}>
-      <h4 style={styles.title}>NUTRITIONAL COACH</h4>
+      <h4 style={{ ...styles.title, color: t.accent }}>NUTRITIONAL COACH</h4>
       <div style={styles.planList}>
         {plans.map((plan, i) => (
           <div key={i} style={styles.planCard}>
@@ -18,7 +21,7 @@ const NutritionalCoach = () => {
           </div>
         ))}
       </div>
-      <button style={styles.button}>Get Meal Suggestions</button>
+      <button style={{ ...styles.button, color: t.accent, border: `1px solid ${t.accent}` }}>Get Meal Suggestions</button>
     </div>
   );
 };
@@ -32,7 +35,6 @@ const styles = {
     margin: '10px 0',
   },
   title: {
-    color: '#FF0000',
     fontSize: '12px',
     marginBottom: '10px',
   },
@@ -60,8 +62,6 @@ const styles = {
   button: {
     width: '100%',
     background: 'transparent',
-    color: '#FF0000',
-    border: '1px solid #FF0000',
     padding: '8px',
     borderRadius: '6px',
     cursor: 'pointer',

@@ -4,6 +4,7 @@ import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, serverTimest
 import { LiveService } from "../services/liveService";
 import { UserService } from "../services/userService";
 import GlobalChat from "./GlobalChat";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 const SHOWDOWNS = [
   { id: "arms", name: "Arms", category: "Arms", exercises: ["Pushups", "Bicep Curls", "Dips"] },
@@ -13,6 +14,7 @@ const SHOWDOWNS = [
 ];
 
 export default function Live({ user, userProfile }) {
+  const t = useTheme();
   const [selectedShowdown, setSelectedShowdown] = useState(null);
   const [rivals, setRivals] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
@@ -26,22 +28,18 @@ export default function Live({ user, userProfile }) {
   const [currentRoomId, setCurrentRoomId] = useState(null);
   const [roomData, setRoomData] = useState(null);
 
-  // Online Status & Presence
   useEffect(() => {
     if (!user) return;
     
-    // Heartbeat
     const heartbeat = setInterval(() => {
       UserService.updateHeartbeat(user.uid);
     }, 60000);
     UserService.updateHeartbeat(user.uid);
 
-    // Online Users Subscription
     const unsubscribeOnline = UserService.subscribeToOnlineUsers((users) => {
       setOnlineUsers(users.filter(u => u.userId !== user.uid));
     });
 
-    // Rooms Subscription
     const unsubscribeRooms = LiveService.subscribeToRooms((rooms) => {
       setActiveRooms(rooms);
     });
@@ -53,7 +51,6 @@ export default function Live({ user, userProfile }) {
     };
   }, [user]);
 
-  // Room Specific Logic
   useEffect(() => {
     if (!currentRoomId) return;
 
@@ -65,16 +62,14 @@ export default function Live({ user, userProfile }) {
         
         if (data.status === "playing") {
           setLobbyStatus("ACTIVE");
-          // Determine active player (simple turn-based for now)
           const readyPlayers = data.players.filter(p => p.ready);
           if (readyPlayers.length > 0) {
-            setActivePlayerId(readyPlayers[0].userId); // Simplified logic
+            setActivePlayerId(readyPlayers[0].userId);
           }
         } else {
           setLobbyStatus("WAITING");
         }
       } else {
-        // Room deleted
         handleQuit();
       }
     });
@@ -120,7 +115,6 @@ export default function Live({ user, userProfile }) {
   const handleCardComplete = async () => {
     if (activePlayerId !== user.uid || isEliminated || lobbyStatus !== "ACTIVE") return;
     
-    // Chance to trigger joker on completion
     if (Math.random() > 0.7 && roomData.currentJokerIndex < 3) {
       await LiveService.triggerJoker(currentRoomId);
     }
@@ -128,7 +122,6 @@ export default function Live({ user, userProfile }) {
     const nextIndex = (currentCardIndex + 1) % selectedShowdown.exercises.length;
     let points = 10;
 
-    // Apply joker effects
     if (roomData.currentJokerIndex >= 0) {
       const activeJoker = roomData.jokers[roomData.currentJokerIndex];
       const jokerActive = roomData.jokerActiveUntil?.toMillis() > Date.now();
@@ -167,12 +160,11 @@ export default function Live({ user, userProfile }) {
         overflow: "hidden",
         color: "#fff"
       }}>
-        {/* Left Sidebar: Activity & Social */}
         <div style={{ 
           width: "380px", 
           background: "rgba(10, 10, 10, 0.8)", 
           backdropFilter: "blur(10px)",
-          borderRight: "1px solid rgba(255, 48, 80, 0.2)", 
+          borderRight: `1px solid ${t.shadowXs}`, 
           display: "flex", 
           flexDirection: "column", 
           padding: "24px",
@@ -181,16 +173,15 @@ export default function Live({ user, userProfile }) {
           <div style={{ marginBottom: "40px" }}>
             <h1 style={{ 
               fontFamily: "'Press Start 2P', cursive", 
-              color: "#ff3050", 
+              color: t.accent, 
               fontSize: "18px",
               letterSpacing: "2px",
               marginBottom: "10px",
-              textShadow: "0 0 15px rgba(255, 48, 80, 0.4)"
+              textShadow: `0 0 15px ${t.shadowSm}`
             }}>LIVE HUB</h1>
             <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "10px", fontFamily: "'Press Start 2P', cursive" }}>ELITE ARENA</p>
           </div>
           
-          {/* Online Status Section */}
           <div style={{ marginBottom: "32px", padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
               <h3 style={{ color: "#fff", fontSize: "10px", fontFamily: "'Press Start 2P', cursive", margin: 0 }}>RIVALS ONLINE</h3>
@@ -199,7 +190,7 @@ export default function Live({ user, userProfile }) {
             <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "8px", scrollbarWidth: "none" }}>
               {onlineUsers.map(u => (
                 <div key={u.userId} style={{ textAlign: "center", position: "relative" }}>
-                  <img src={u.avatarURL} alt="" style={{ width: "48px", height: "48px", borderRadius: "12px", border: "2px solid rgba(255, 48, 80, 0.3)", padding: "2px", background: "#000" }} />
+                  <img src={u.avatarURL} alt="" style={{ width: "48px", height: "48px", borderRadius: "12px", border: `2px solid ${t.shadowSm}`, padding: "2px", background: "#000" }} />
                   <div style={{ position: "absolute", bottom: "4px", right: "4px", width: "10px", height: "10px", background: "#0f0", borderRadius: "50%", border: "2px solid #000" }} />
                 </div>
               ))}
@@ -207,7 +198,6 @@ export default function Live({ user, userProfile }) {
             </div>
           </div>
 
-          {/* Quick Actions / Rooms Scroll */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
             <h3 style={{ color: "rgba(255,255,255,0.7)", fontSize: "10px", fontFamily: "'Press Start 2P', cursive", marginBottom: "20px" }}>ARENA LOBBIES</h3>
             <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "16px", paddingRight: "4px" }}>
@@ -241,7 +231,6 @@ export default function Live({ user, userProfile }) {
           </div>
         </div>
 
-        {/* Center: Hero/Creation Area */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "40px", position: "relative" }}>
           <div style={{ maxWidth: "900px", margin: "0 auto", width: "100%" }}>
             <div style={{ marginBottom: "40px" }}>
@@ -253,8 +242,8 @@ export default function Live({ user, userProfile }) {
               {SHOWDOWNS.map((s) => (
                 <div key={s.id} style={{ 
                   padding: "32px", 
-                  background: "rgba(255,48,80,0.03)", 
-                  border: "1px solid rgba(255, 48, 80, 0.15)", 
+                  background: t.shadowXxs, 
+                  border: `1px solid ${t.shadowXs}`, 
                   borderRadius: "20px",
                   display: "flex",
                   flexDirection: "column",
@@ -263,9 +252,9 @@ export default function Live({ user, userProfile }) {
                   position: "relative",
                   overflow: "hidden"
                 }} className="showdown-card">
-                  <div style={{ position: "absolute", top: "-20px", right: "-20px", fontSize: "80px", color: "rgba(255,48,80,0.03)", fontWeight: "bold" }}>{s.name[0]}</div>
+                  <div style={{ position: "absolute", top: "-20px", right: "-20px", fontSize: "80px", color: t.shadowXxs, fontWeight: "bold" }}>{s.name[0]}</div>
                   <div style={{ zIndex: 1 }}>
-                    <div style={{ color: "#ff3050", fontSize: "10px", fontFamily: "'Press Start 2P', cursive", marginBottom: "12px" }}>{s.category}</div>
+                    <div style={{ color: t.accent, fontSize: "10px", fontFamily: "'Press Start 2P', cursive", marginBottom: "12px" }}>{s.category}</div>
                     <h3 style={{ color: "#fff", fontSize: "18px", fontFamily: "'Press Start 2P', cursive", marginBottom: "20px" }}>{s.name}</h3>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "32px" }}>
                       {s.exercises.slice(0, 3).map(ex => (
@@ -279,16 +268,16 @@ export default function Live({ user, userProfile }) {
                       width: "100%", 
                       padding: "16px", 
                       background: "transparent", 
-                      color: "#ff3050", 
-                      border: "2px solid #ff3050", 
+                      color: t.accent, 
+                      border: `2px solid ${t.accent}`, 
                       borderRadius: "12px",
                       fontFamily: "'Press Start 2P', cursive", 
                       fontSize: "12px", 
                       cursor: "pointer",
                       transition: "all 0.2s"
                     }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = "#ff3050"; e.currentTarget.style.color = "#fff"; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#ff3050"; }}
+                    onMouseOver={(e) => { e.currentTarget.style.background = t.accent; e.currentTarget.style.color = "#fff"; }}
+                    onMouseOut={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = t.accent; }}
                   >
                     CREATE MATCH
                   </button>
@@ -297,19 +286,18 @@ export default function Live({ user, userProfile }) {
             </div>
           </div>
           
-          {/* Integrated Lobby Chat */}
           <div style={{ 
             marginTop: "auto", 
             height: "300px", 
             background: "rgba(0,0,0,0.4)", 
             borderRadius: "20px", 
-            border: "1px solid rgba(255,48,80,0.1)",
+            border: `1px solid ${t.shadowXs}`,
             overflow: "hidden",
             display: "flex",
             flexDirection: "column"
           }}>
-             <div style={{ padding: "16px 24px", background: "rgba(255,48,80,0.05)", borderBottom: "1px solid rgba(255,48,80,0.1)", display: "flex", alignItems: "center", gap: "12px" }}>
-                <div style={{ width: "8px", height: "8px", background: "#ff3050", borderRadius: "50%", boxShadow: "0 0 10px #ff3050" }} />
+             <div style={{ padding: "16px 24px", background: t.shadowXxs, borderBottom: `1px solid ${t.shadowXs}`, display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ width: "8px", height: "8px", background: t.accent, borderRadius: "50%", boxShadow: `0 0 10px ${t.accent}` }} />
                 <span style={{ fontFamily: "'Press Start 2P', cursive", color: "#fff", fontSize: "10px" }}>LOBBY COMMS</span>
              </div>
              <div style={{ flex: 1 }}>
@@ -321,8 +309,8 @@ export default function Live({ user, userProfile }) {
         <style>{`
           .showdown-card:hover {
             transform: translateY(-8px);
-            background: rgba(255,48,80,0.06);
-            border-color: rgba(255,48,80,0.4);
+            background: ${t.shadowXxs};
+            border-color: ${t.shadowSm};
             box-shadow: 0 15px 40px rgba(0,0,0,0.4);
           }
           @keyframes blink {
@@ -351,32 +339,31 @@ export default function Live({ user, userProfile }) {
     }}>
       {jokerActive && (
         <div style={{ 
-          background: activeJoker.type === "positive" ? "rgba(15, 255, 0, 0.9)" : "rgba(255, 48, 80, 0.9)", 
+          background: activeJoker.type === "positive" ? "rgba(15, 255, 0, 0.9)" : t.shadow, 
           color: "#000", 
           padding: "12px", 
           textAlign: "center", 
           fontFamily: "'Press Start 2P', cursive", 
           fontSize: "12px", 
           animation: "blink 1s infinite",
-          boxShadow: `0 0 20px ${activeJoker.type === "positive" ? "#0f0" : "#ff3050"}`,
+          boxShadow: `0 0 20px ${activeJoker.type === "positive" ? "#0f0" : t.accent}`,
           zIndex: 100
         }}>
           ⚠️ {activeJoker.effect.toUpperCase()} ⚠️
         </div>
       )}
       
-      {/* Top Header Bar */}
       <div style={{ 
         padding: "20px 30px", 
         background: "rgba(0,0,0,0.8)", 
         backdropFilter: "blur(10px)",
-        borderBottom: "1px solid rgba(255, 48, 80, 0.3)", 
+        borderBottom: `1px solid ${t.shadowSm}`, 
         display: "flex", 
         justifyContent: "space-between", 
         alignItems: "center" 
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <div style={{ background: "#ff3050", color: "#fff", padding: "8px 16px", borderRadius: "4px", fontFamily: "'Press Start 2P', cursive", fontSize: "12px" }}>
+          <div style={{ background: t.accent, color: "#fff", padding: "8px 16px", borderRadius: "4px", fontFamily: "'Press Start 2P', cursive", fontSize: "12px" }}>
             {selectedShowdown.name.toUpperCase()}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -387,9 +374,9 @@ export default function Live({ user, userProfile }) {
         <button 
           onClick={handleQuit} 
           style={{ 
-            background: "rgba(255, 48, 80, 0.1)", 
-            border: "1px solid #ff3050", 
-            color: "#ff3050", 
+            background: t.shadowXs, 
+            border: `1px solid ${t.accent}`, 
+            color: t.accent, 
             padding: "10px 20px", 
             borderRadius: "8px",
             fontSize: "10px", 
@@ -397,13 +384,12 @@ export default function Live({ user, userProfile }) {
             cursor: "pointer",
             transition: "all 0.2s"
           }}
-          onMouseOver={(e) => e.currentTarget.style.background = "#ff3050"}
-          onMouseOut={(e) => e.currentTarget.style.background = "rgba(255, 48, 80, 0.1)"}
+          onMouseOver={(e) => e.currentTarget.style.background = t.accent}
+          onMouseOut={(e) => e.currentTarget.style.background = t.shadowXs}
         >EXIT ARENA</button>
       </div>
 
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        {/* Main Game Area */}
         <div style={{ 
           flex: 1, 
           display: "flex", 
@@ -431,14 +417,14 @@ export default function Live({ user, userProfile }) {
                   onClick={handleToggleReady}
                   style={{ 
                     padding: "24px 48px", 
-                    background: myPlayerData?.ready ? "linear-gradient(135deg, #0f0 0%, #0a0 100%)" : "linear-gradient(135deg, #ff3050 0%, #a00 100%)", 
+                    background: myPlayerData?.ready ? "linear-gradient(135deg, #0f0 0%, #0a0 100%)" : t.accent, 
                     color: myPlayerData?.ready ? "#000" : "#fff", 
                     border: "none", 
                     borderRadius: "16px",
                     fontFamily: "'Press Start 2P', cursive", 
                     fontSize: "14px", 
                     cursor: "pointer",
-                    boxShadow: myPlayerData?.ready ? "0 0 30px rgba(0,255,0,0.3)" : "0 0 30px rgba(255,48,80,0.3)",
+                    boxShadow: myPlayerData?.ready ? "0 0 30px rgba(0,255,0,0.3)" : `0 0 30px ${t.shadowSm}`,
                     transition: "all 0.3s transform"
                   }}
                   onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.95)"}
@@ -471,7 +457,7 @@ export default function Live({ user, userProfile }) {
             </div>
           ) : isEliminated ? (
             <div style={{ textAlign: "center" }}>
-              <h2 style={{ color: "#ff3050", fontFamily: "'Press Start 2P', cursive", fontSize: "40px", textShadow: "0 0 30px #ff3050" }}>WAVED OFF</h2>
+              <h2 style={{ color: t.accent, fontFamily: "'Press Start 2P', cursive", fontSize: "40px", textShadow: `0 0 30px ${t.accent}` }}>WAVED OFF</h2>
               <p style={{ color: "rgba(255,255,255,0.5)", marginTop: "20px" }}>BETTER LUCK NEXT TIME, RIVAL.</p>
             </div>
           ) : (
@@ -483,7 +469,6 @@ export default function Live({ user, userProfile }) {
               transition: "transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)", 
               transform: isFlipping ? "rotateY(180deg)" : "rotateY(0deg)" 
             }}>
-              {/* Card Front */}
               <div style={{ 
                 position: "absolute", 
                 width: "100%", 
@@ -496,13 +481,13 @@ export default function Live({ user, userProfile }) {
                 flexDirection: "column", 
                 alignItems: "center", 
                 justifyContent: "space-between", 
-                boxShadow: "0 30px 60px rgba(0,0,0,0.8), 0 0 40px rgba(255, 48, 80, 0.2)", 
+                boxShadow: `0 30px 60px rgba(0,0,0,0.8), 0 0 40px ${t.shadowXs}`, 
                 color: "black", 
                 border: "12px solid #1a1a1a" 
               }}>
                 <div style={{ width: "100%", display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: "24px", fontFamily: "'Press Start 2P', cursive" }}>
                   <span>{currentCardIndex + 1}</span>
-                  <span style={{ color: "#ff3050" }}>♦</span>
+                  <span style={{ color: t.accent }}>♦</span>
                 </div>
                 
                 <div style={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
@@ -517,14 +502,14 @@ export default function Live({ user, userProfile }) {
                     style={{ 
                       width: "100%", 
                       padding: "20px", 
-                      background: "#ff3050", 
+                      background: t.accent, 
                       color: "white", 
                       border: "none", 
                       borderRadius: "12px",
                       fontFamily: "'Press Start 2P', cursive", 
                       fontSize: "12px", 
                       cursor: "pointer",
-                      boxShadow: "0 10px 20px rgba(255, 48, 80, 0.3)"
+                      boxShadow: `0 10px 20px ${t.shadowSm}`
                     }}
                   >NEXT REP</button>
                 ) : (
@@ -535,7 +520,7 @@ export default function Live({ user, userProfile }) {
                     width: "100%", 
                     textAlign: "center",
                     fontSize: "10px", 
-                    color: "#ff3050", 
+                    color: t.accent, 
                     fontWeight: "bold", 
                     fontFamily: "'Press Start 2P', cursive" 
                   }}>RIVAL'S TURN</div>
@@ -543,25 +528,24 @@ export default function Live({ user, userProfile }) {
 
                 <div style={{ width: "100%", display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: "24px", transform: "rotate(180deg)", fontFamily: "'Press Start 2P', cursive" }}>
                   <span>{currentCardIndex + 1}</span>
-                  <span style={{ color: "#ff3050" }}>♦</span>
+                  <span style={{ color: t.accent }}>♦</span>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Right Sidebar: Contenders */}
         <div style={{ 
           width: "320px", 
           padding: "30px", 
           background: "rgba(0,0,0,0.5)", 
           backdropFilter: "blur(5px)",
-          borderLeft: "1px solid rgba(255, 48, 80, 0.2)",
+          borderLeft: `1px solid ${t.shadowXs}`,
           display: "flex",
           flexDirection: "column"
         }}>
           <h3 style={{ 
-            color: "#ff3050", 
+            color: t.accent, 
             fontFamily: "'Press Start 2P', cursive", 
             fontSize: "12px", 
             marginBottom: "30px", 
@@ -577,14 +561,14 @@ export default function Live({ user, userProfile }) {
                 gap: "12px",
                 padding: "16px", 
                 borderRadius: "12px",
-                background: rival.userId === activePlayerId ? "rgba(255,48,80,0.15)" : "rgba(255,255,255,0.03)", 
-                border: `1px solid ${rival.userId === activePlayerId ? "#ff3050" : "rgba(255,255,255,0.05)"}`,
+                background: rival.userId === activePlayerId ? t.shadowXs : "rgba(255,255,255,0.03)", 
+                border: `1px solid ${rival.userId === activePlayerId ? t.accent : "rgba(255,255,255,0.05)"}`,
                 opacity: rival.isEliminated ? 0.3 : 1,
                 position: "relative",
                 transition: "all 0.3s"
               }}>
                 <div style={{ position: "relative" }}>
-                   <div style={{ width: "40px", height: "40px", borderRadius: "8px", background: "#222", border: `2px solid ${rival.userId === activePlayerId ? "#ff3050" : "#444"}` }} />
+                   <div style={{ width: "40px", height: "40px", borderRadius: "8px", background: "#222", border: `2px solid ${rival.userId === activePlayerId ? t.accent : "#444"}` }} />
                    {rival.ready && <div style={{ position: "absolute", top: "-5px", right: "-5px", background: "#0f0", color: "#000", fontSize: "8px", padding: "2px", borderRadius: "2px", fontWeight: "bold" }}>RDY</div>}
                 </div>
                 <div style={{ flex: 1 }}>
@@ -597,7 +581,7 @@ export default function Live({ user, userProfile }) {
             ))}
           </div>
           
-          <div style={{ marginTop: "auto", padding: "20px", background: "rgba(255,48,80,0.05)", borderRadius: "12px", border: "1px solid rgba(255,48,80,0.1)" }}>
+          <div style={{ marginTop: "auto", padding: "20px", background: t.shadowXxs, borderRadius: "12px", border: `1px solid ${t.shadowXs}` }}>
              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "9px", lineHeight: "1.6", textAlign: "center" }}>ELIMINATION ROUNDS.<br/>KEEP PUSHING.</p>
           </div>
         </div>

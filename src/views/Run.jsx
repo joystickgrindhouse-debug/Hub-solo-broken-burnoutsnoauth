@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Polyline, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { useTheme } from "../context/ThemeContext.jsx";
 
-// Fix Leaflet icon issue
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
@@ -11,7 +11,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-// Component to auto-center map
 function MapAutoCenter({ center }) {
   const map = useMap();
   useEffect(() => {
@@ -24,15 +23,16 @@ import { UserService } from "../services/userService.js";
 import { LeaderboardService } from "../services/leaderboardService.js";
 
 export default function Run({ user, userProfile }) {
+  const t = useTheme();
   const [isActive, setIsActive] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [distance, setDistance] = useState(0); // miles
-  const [duration, setDuration] = useState(0); // seconds
+  const [distance, setDistance] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [ticketsEarned, setTicketsEarned] = useState(0);
   const [lastPos, setLastPos] = useState(null);
   const [error, setError] = useState(null);
   const [isVerified, setIsVerified] = useState(true);
-  const [shareRoute, setShareRoute] = useState(true); // Default to true for better UX
+  const [shareRoute, setShareRoute] = useState(true);
   const [route, setRoute] = useState([]);
   const [currentPos, setCurrentPos] = useState(null);
 
@@ -54,8 +54,8 @@ export default function Run({ user, userProfile }) {
         const globalGhosts = result.scores.map(score => ({
           id: score.userId,
           name: `Rival: ${score.userName}`,
-          distance: score.score / 100, // Assuming score is stored as miles * 100
-          duration: score.duration || 600, // Fallback if duration not stored
+          distance: score.score / 100,
+          duration: score.duration || 600,
           date: new Date(score.timestamp).toLocaleDateString()
         }));
         setRecentRuns(prev => [...prev, ...globalGhosts]);
@@ -85,12 +85,10 @@ export default function Run({ user, userProfile }) {
     setIsPaused(false);
     setError(null);
 
-    // Start timer
     timerRef.current = setInterval(() => {
       setDuration(prev => prev + 1);
     }, 1000);
 
-    // Start tracking
     const options = { 
       enableHighAccuracy: true, 
       timeout: 15000,
@@ -104,7 +102,7 @@ export default function Run({ user, userProfile }) {
         if (isPaused) return;
 
         const { latitude, longitude, accuracy } = pos.coords;
-        if (accuracy > 100) return; // Increased accuracy threshold for city running
+        if (accuracy > 100) return;
 
         const newPos = { lat: latitude, lng: longitude };
         setCurrentPos([latitude, longitude]);
@@ -117,7 +115,6 @@ export default function Run({ user, userProfile }) {
 
           console.log("Distance increment:", d);
 
-          // Cheat detection - increased threshold slightly for GPS jitter
           if (RunLogic.isRealisticSpeed(d, 1)) { 
              setDistance(prev => {
                const newDist = prev + d;
@@ -168,16 +165,14 @@ export default function Run({ user, userProfile }) {
     clearInterval(timerRef.current);
     setIsActive(false);
 
-    // Competitive multiplier for ghost racing
     let finalTickets = ticketsEarned;
     if (ghostMode && ghostData) {
       if (distance >= ghostData.distance && duration < ghostData.duration) {
-        finalTickets = Math.floor(ticketsEarned * 1.5); // 50% bonus for beating ghost
+        finalTickets = Math.floor(ticketsEarned * 1.5);
         alert("GHOST DEFEATED! 1.5x Ticket Multiplier Active!");
       }
     }
 
-    // Save stats
     const avgPace = distance > 0 ? (duration / 60) / distance : 0;
     const runData = {
       totalDistance: distance,
@@ -189,7 +184,6 @@ export default function Run({ user, userProfile }) {
       source: "internal"
     };
 
-    // Update user profile and leaderboard
     if (user) {
       try {
         await UserService.updateUserProfile(user.uid, {
@@ -202,7 +196,7 @@ export default function Run({ user, userProfile }) {
           userId: user.uid, 
           userName: userProfile?.nickname || "Runner", 
           gameMode: "run", 
-          score: finalTickets, // Store tickets as the score
+          score: finalTickets,
           duration: duration
         });
       } catch (err) {
@@ -210,7 +204,6 @@ export default function Run({ user, userProfile }) {
       }
     }
 
-    // Reset local state
     alert(`Run Ended! \nDistance: ${distance.toFixed(2)} miles\nTickets Earned: ${finalTickets}`);
     setDistance(0);
     setDuration(0);
@@ -230,6 +223,112 @@ export default function Run({ user, userProfile }) {
     { id: 1, name: "Your Previous Best", distance: 1.0, duration: 480, date: "2025-12-25" },
     { id: 2, name: "Global Ghost: Sonic", distance: 0.5, duration: 180, date: "2025-12-24" }
   ]);
+
+  const styles = {
+    container: {
+      padding: "20px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: "20px",
+      paddingBottom: "100px"
+    },
+    ghostCard: {
+      background: "rgba(255, 255, 255, 0.05)",
+      border: `1px solid ${t.shadowSm}`,
+      padding: "15px",
+      borderRadius: "12px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      color: "#fff"
+    },
+    ghostButton: {
+      background: t.accent,
+      color: "#fff",
+      border: "none",
+      padding: "8px 15px",
+      borderRadius: "6px",
+      cursor: "pointer",
+      fontWeight: "bold"
+    },
+    title: {
+      color: t.accent,
+      textShadow: `0 0 10px ${t.shadow}`,
+      fontSize: "2.5rem",
+      textAlign: "center"
+    },
+    statsContainer: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr",
+      gap: "15px",
+      width: "100%",
+      maxWidth: "500px"
+    },
+    statBox: {
+      background: t.shadowXs,
+      border: `2px solid ${t.accent}`,
+      padding: "15px",
+      borderRadius: "12px",
+      textAlign: "center",
+      boxShadow: `0 0 15px ${t.shadowSm}`
+    },
+    statLabel: { color: "rgba(255, 255, 255, 0.7)", fontSize: "0.8rem", marginBottom: "5px" },
+    statValue: { color: "#fff", fontSize: "1.5rem", fontWeight: "bold" },
+    button: {
+      padding: "15px 40px",
+      fontSize: "1.2rem",
+      background: "#000",
+      color: t.accent,
+      border: `2px solid ${t.accent}`,
+      borderRadius: "8px",
+      cursor: "pointer",
+      fontWeight: "bold",
+      boxShadow: `0 0 15px ${t.shadowMd}`,
+      margin: "10px"
+    },
+    error: { color: t.accent, background: t.shadowXs, padding: "10px", borderRadius: "8px" },
+    controls: { display: "flex", gap: "10px" },
+    trackContainer: {
+      width: "100%",
+      maxWidth: "500px",
+      marginTop: "40px",
+      textAlign: "center"
+    },
+    track: {
+      width: "100%",
+      height: "10px",
+      background: t.shadowSm,
+      borderRadius: "5px",
+      position: "relative",
+      marginTop: "20px",
+      border: `1px solid ${t.accent}`
+    },
+    runner: {
+      position: "absolute",
+      top: "-30px",
+      fontSize: "2rem",
+      transform: "translateX(-50%) scaleX(-1)"
+    },
+    finishLine: {
+      position: "absolute",
+      right: "0",
+      top: "-25px",
+      fontSize: "1.5rem"
+    },
+    background: {
+      minHeight: "100vh",
+      width: "100%",
+      backgroundImage: 'linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url("/assets/images/run-bg.png")',
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+      backgroundAttachment: "scroll",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center"
+    }
+  };
 
   return (
     <div style={styles.background}>
@@ -274,7 +373,7 @@ export default function Run({ user, userProfile }) {
               <button style={styles.button} onClick={() => startRun()}>START SOLO RUN</button>
             </div>
 
-            <h3 style={{color: '#ff3050', marginBottom: '10px', textAlign: 'center'}}>GHOST RACING</h3>
+            <h3 style={{color: t.accent, marginBottom: '10px', textAlign: 'center'}}>GHOST RACING</h3>
             <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
               {recentRuns.map(run => (
                 <div key={run.id} style={styles.ghostCard}>
@@ -300,7 +399,7 @@ export default function Run({ user, userProfile }) {
               ) : (
                 <button style={styles.button} onClick={pauseRun}>PAUSE</button>
               )}
-              <button style={{...styles.button, background: '#ff3050', color: '#fff'}} onClick={endRun}>STOP</button>
+              <button style={{...styles.button, background: t.accent, color: '#fff'}} onClick={endRun}>STOP</button>
             </div>
 
             <div style={styles.trackContainer}>
@@ -326,109 +425,3 @@ export default function Run({ user, userProfile }) {
     </div>
   );
 }
-
-const styles = {
-  container: {
-    padding: "20px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "20px",
-    paddingBottom: "100px"
-  },
-  ghostCard: {
-    background: "rgba(255, 255, 255, 0.05)",
-    border: "1px solid rgba(255, 48, 80, 0.3)",
-    padding: "15px",
-    borderRadius: "12px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    color: "#fff"
-  },
-  ghostButton: {
-    background: "#ff3050",
-    color: "#fff",
-    border: "none",
-    padding: "8px 15px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "bold"
-  },
-  title: {
-    color: "#ff3050",
-    textShadow: "0 0 10px rgba(255, 48, 80, 0.8)",
-    fontSize: "2.5rem",
-    textAlign: "center"
-  },
-  statsContainer: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr",
-    gap: "15px",
-    width: "100%",
-    maxWidth: "500px"
-  },
-  statBox: {
-    background: "rgba(255, 48, 80, 0.1)",
-    border: "2px solid #ff3050",
-    padding: "15px",
-    borderRadius: "12px",
-    textAlign: "center",
-    boxShadow: "0 0 15px rgba(255, 48, 80, 0.3)"
-  },
-  statLabel: { color: "rgba(255, 255, 255, 0.7)", fontSize: "0.8rem", marginBottom: "5px" },
-  statValue: { color: "#fff", fontSize: "1.5rem", fontWeight: "bold" },
-  button: {
-    padding: "15px 40px",
-    fontSize: "1.2rem",
-    background: "#000",
-    color: "#ff3050",
-    border: "2px solid #ff3050",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "bold",
-    boxShadow: "0 0 15px rgba(255, 48, 80, 0.5)",
-    margin: "10px"
-  },
-  error: { color: "#ff3050", background: "rgba(255, 48, 80, 0.2)", padding: "10px", borderRadius: "8px" },
-  controls: { display: "flex", gap: "10px" },
-  trackContainer: {
-    width: "100%",
-    maxWidth: "500px",
-    marginTop: "40px",
-    textAlign: "center"
-  },
-  track: {
-    width: "100%",
-    height: "10px",
-    background: "rgba(255, 48, 80, 0.3)",
-    borderRadius: "5px",
-    position: "relative",
-    marginTop: "20px",
-    border: "1px solid #ff3050"
-  },
-  runner: {
-    position: "absolute",
-    top: "-30px",
-    fontSize: "2rem",
-    transform: "translateX(-50%) scaleX(-1)"
-  },
-  finishLine: {
-    position: "absolute",
-    right: "0",
-    top: "-25px",
-    fontSize: "1.5rem"
-  },
-  background: {
-    minHeight: "100vh",
-    width: "100%",
-    backgroundImage: 'linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url("/assets/images/run-bg.png")',
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-    backgroundAttachment: "scroll",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center"
-  }
-};

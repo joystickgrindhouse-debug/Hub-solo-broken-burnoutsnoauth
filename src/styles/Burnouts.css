@@ -25,7 +25,7 @@
   pointer-events: auto;
   background: rgba(0,0,0,0.8);
   padding: 10px 20px;
-  border-bottom: 1px solid #ff0000;
+  border-bottom: 1px solid var(--accent-color, #ff0000);
 }
 
 .burnouts-container .session-stats {
@@ -36,8 +36,8 @@
   padding: 8px 16px;
   border-radius: 12px;
   backdrop-filter: blur(8px);
-  border: 1px solid #ff0000;
-  box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
+  border: 1px solid var(--accent-color, #ff0000);
+  box-shadow: 0 0 10px var(--accent-shadow-md, rgba(255, 0, 0, 0.6));
 }
 
 .burnouts-container .stat-item {
@@ -55,19 +55,19 @@
 .burnouts-container .stat-value {
   font-size: 18px;
   font-weight: 800;
-  color: #ff0000;
-  text-shadow: 0 0 5px rgba(255, 0, 0, 0.6);
+  color: var(--accent-color, #ff0000);
+  text-shadow: 0 0 5px var(--accent-shadow-md, rgba(255, 0, 0, 0.6));
 }
 
 .burnouts-container .status-badge {
-  background: rgba(255, 0, 0, 0.3);
+  background: var(--accent-shadow-sm, rgba(255, 0, 0, 0.3));
   color: #fff;
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 800;
-  border: 1px solid #ff0000;
-  box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+  border: 1px solid var(--accent-color, #ff0000);
+  box-shadow: 0 0 15px var(--accent-shadow-md, rgba(255, 0, 0, 0.6));
 }
 
 .burnouts-stats-container {
@@ -88,16 +88,16 @@
   font-weight: 800;
   line-height: 1;
   color: #ffffff;
-  text-shadow: 0 0 30px rgba(255, 0, 0, 0.6);
+  text-shadow: 0 0 30px var(--accent-shadow-md, rgba(255, 0, 0, 0.6));
   display: block;
 }
 
 .burnouts-container .label {
   font-size: 14px;
   letter-spacing: 2px;
-  color: #ff0000;
+  color: var(--accent-color, #ff0000);
   font-weight: 600;
-  text-shadow: 0 0 5px rgba(255, 0, 0, 0.6);
+  text-shadow: 0 0 5px var(--accent-shadow-md, rgba(255, 0, 0, 0.6));
 }
 
 .burnouts-container .feedback-box {
@@ -105,16 +105,16 @@
   padding: 12px 24px;
   border-radius: 12px;
   backdrop-filter: blur(4px);
-  border: 1px solid #ff0000;
-  box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+  border: 1px solid var(--accent-color, #ff0000);
+  box-shadow: 0 0 15px var(--accent-shadow-md, rgba(255, 0, 0, 0.6));
 }
 
 .burnouts-container .state-indicator {
   font-size: 32px;
   font-weight: 800;
   text-transform: uppercase;
-  color: #ff0000;
-  text-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+  color: var(--accent-color, #ff0000);
+  text-shadow: 0 0 15px var(--accent-shadow-md, rgba(255, 0, 0, 0.6));
 }
 
 .burnouts-container .sub-text {
@@ -133,15 +133,15 @@
 
 .burnouts-primary-btn {
   background: #000;
-  color: #ff0000;
-  border: 2px solid #ff0000;
+  color: var(--accent-color, #ff0000);
+  border: 2px solid var(--accent-color, #ff0000);
   padding: 16px 48px;
   border-radius: 30px;
   font-size: 18px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 2px;
-  box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+  box-shadow: 0 0 20px var(--accent-shadow-md, rgba(255, 0, 0, 0.6));
   transition: all 0.2s;
   cursor: pointer;
   font-family: inherit;
@@ -149,14 +149,14 @@
 
 .burnouts-primary-btn:active {
   transform: scale(0.95);
-  box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
-  background: #ff0000;
+  box-shadow: 0 0 10px var(--accent-shadow-md, rgba(255, 0, 0, 0.6));
+  background: var(--accent-color, #ff0000);
   color: #000;
 }
 
 .burnouts-card-display {
   background: #000;
-  color: #ff0000;
+  color: var(--accent-color, #ff0000);
   width: 100%;
   height: 100%;
   display: flex;
@@ -185,7 +185,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-around;
-  border-top: 2px solid #ff0000;
+  border-top: 2px solid var(--accent-color, #ff0000);
   box-shadow: 0 -10px 20px rgba(0,0,0,0.5);
   z-index: 10;
 }
@@ -200,8 +200,8 @@
   justify-content: space-between;
   font-size: 32px;
   font-weight: 800;
-  color: #ff0000;
-  text-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
+  color: var(--accent-color, #ff0000);
+  text-shadow: 0 0 10px var(--accent-shadow-md, rgba(255, 0, 0, 0.6));
   margin-bottom: 10px;
 }
 
@@ -220,7 +220,7 @@
   text-align: center;
   line-height: 1.1;
   color: #fff;
-  text-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+  text-shadow: 0 0 20px var(--accent-shadow-md, rgba(255, 0, 0, 0.6));
   text-transform: uppercase;
   letter-spacing: 2px;
   margin: 0;
@@ -236,9 +236,9 @@
 .burnouts-card-display .reps-left {
   font-size: 64px;
   font-weight: 900;
-  color: #ff0000;
+  color: var(--accent-color, #ff0000);
   line-height: 1;
-  text-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+  text-shadow: 0 0 15px var(--accent-shadow-md, rgba(255, 0, 0, 0.6));
 }
 
 .burnouts-card-display .reps-label {
@@ -260,10 +260,10 @@
 
 .burnouts-progress-bar {
   height: 100%;
-  background: #ff0000;
+  background: var(--accent-color, #ff0000);
   width: 0%;
   transition: width 0.3s ease;
-  box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+  box-shadow: 0 0 15px var(--accent-shadow-md, rgba(255, 0, 0, 0.6));
 }
 
 .burnouts-card-display .target-text {
@@ -289,12 +289,12 @@
 }
 
 .burnouts-hero-text .rivalis-title {
-  color: #ff0000;
+  color: var(--accent-color, #ff0000);
   font-size: 32px;
   font-weight: 800;
   text-transform: uppercase;
   margin-bottom: 5px;
-  text-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+  text-shadow: 0 0 20px var(--accent-shadow-md, rgba(255, 0, 0, 0.6));
 }
 
 .burnouts-subtitle {
@@ -315,7 +315,7 @@
 
 .burnouts-button-card {
   background: rgba(20, 0, 0, 0.8);
-  border: 2px solid #ff0000;
+  border: 2px solid var(--accent-color, #ff0000);
   border-radius: 15px;
   padding: 20px;
   display: flex;
@@ -324,13 +324,13 @@
   gap: 15px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+  box-shadow: 0 0 15px var(--accent-shadow-md, rgba(255, 0, 0, 0.6));
 }
 
 .burnouts-button-card:hover,
 .burnouts-button-card:active {
   transform: translateY(-5px);
-  background: #ff0000;
+  background: var(--accent-color, #ff0000);
   color: #000;
 }
 
@@ -363,7 +363,7 @@
 }
 
 .burnouts-back-btn:hover {
-  background: rgba(255, 0, 0, 0.1);
+  background: var(--accent-shadow-xs, rgba(255, 0, 0, 0.1));
 }
 
 @media (max-width: 600px) {

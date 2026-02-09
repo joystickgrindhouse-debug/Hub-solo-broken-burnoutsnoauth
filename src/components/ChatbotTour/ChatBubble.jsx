@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '../../context/ThemeContext.jsx';
 
-const TypingIndicator = () => (
-  <div style={styles.typingContainer}>
-    <div style={styles.typingDot} className="typing-dot-1" />
-    <div style={{ ...styles.typingDot, animationDelay: '0.15s' }} className="typing-dot-2" />
-    <div style={{ ...styles.typingDot, animationDelay: '0.3s' }} className="typing-dot-3" />
+const TypingIndicator = ({ accent }) => (
+  <div style={typingStyles.typingContainer}>
+    <div style={{ ...typingStyles.typingDot, background: accent }} className="typing-dot-1" />
+    <div style={{ ...typingStyles.typingDot, background: accent, animationDelay: '0.15s' }} className="typing-dot-2" />
+    <div style={{ ...typingStyles.typingDot, background: accent, animationDelay: '0.3s' }} className="typing-dot-3" />
     <style>{`
       @keyframes typingBounce {
         0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
@@ -15,12 +16,13 @@ const TypingIndicator = () => (
 );
 
 const ChatBubble = ({ message, isBot, isTyping = false, animate = true }) => {
+  const t = useTheme();
   const [visible, setVisible] = useState(!animate);
 
   useEffect(() => {
     if (animate) {
-      const t = requestAnimationFrame(() => setVisible(true));
-      return () => cancelAnimationFrame(t);
+      const timer = requestAnimationFrame(() => setVisible(true));
+      return () => cancelAnimationFrame(timer);
     }
   }, [animate]);
 
@@ -36,12 +38,22 @@ const ChatBubble = ({ message, isBot, isTyping = false, animate = true }) => {
       transition: 'opacity 0.3s ease, transform 0.3s ease',
     }}>
       {isBot && (
-        <div style={styles.botAvatar}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF0000" strokeWidth="2">
+        <div style={{
+          width: '28px',
+          height: '28px',
+          borderRadius: '50%',
+          background: t.shadowXs,
+          border: `1px solid ${t.shadowSm}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.accent} strokeWidth="2">
             <path d="M12 2a4 4 0 014 4v2H8V6a4 4 0 014-4z"/>
             <rect x="4" y="8" width="16" height="12" rx="2"/>
-            <circle cx="9" cy="14" r="1.5" fill="#FF0000"/>
-            <circle cx="15" cy="14" r="1.5" fill="#FF0000"/>
+            <circle cx="9" cy="14" r="1.5" fill={t.accent}/>
+            <circle cx="15" cy="14" r="1.5" fill={t.accent}/>
             <path d="M9 18h6" strokeLinecap="round"/>
           </svg>
         </div>
@@ -54,14 +66,14 @@ const ChatBubble = ({ message, isBot, isTyping = false, animate = true }) => {
           ? 'linear-gradient(135deg, #1a1a1a 0%, #111 100%)'
           : 'linear-gradient(135deg, #e60000 0%, #cc0000 100%)',
         color: '#FFF',
-        border: isBot ? '1px solid rgba(255,0,0,0.3)' : 'none',
+        border: isBot ? `1px solid ${t.shadowSm}` : 'none',
         boxShadow: isBot
-          ? '0 2px 8px rgba(255,0,0,0.1)'
-          : '0 2px 8px rgba(255,0,0,0.25)',
+          ? `0 2px 8px ${t.shadowXs}`
+          : `0 2px 8px ${t.shadowSm}`,
         position: 'relative',
       }}>
         {isTyping ? (
-          <TypingIndicator />
+          <TypingIndicator accent={t.accent} />
         ) : (
           <div style={{
             fontSize: '13px',
@@ -75,18 +87,7 @@ const ChatBubble = ({ message, isBot, isTyping = false, animate = true }) => {
   );
 };
 
-const styles = {
-  botAvatar: {
-    width: '28px',
-    height: '28px',
-    borderRadius: '50%',
-    background: 'rgba(255,0,0,0.1)',
-    border: '1px solid rgba(255,0,0,0.3)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
+const typingStyles = {
   typingContainer: {
     display: 'flex',
     gap: '4px',
@@ -98,7 +99,6 @@ const styles = {
     width: '6px',
     height: '6px',
     borderRadius: '50%',
-    background: '#FF0000',
     animation: 'typingBounce 0.8s ease-in-out infinite',
   },
 };

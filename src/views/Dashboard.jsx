@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 function SafeImg({ src, alt, className, style }) {
   const [err, setErr] = useState(false);
@@ -18,6 +19,7 @@ function SafeImg({ src, alt, className, style }) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const t = useTheme();
 
   const MERCH_URL = "https://rivalis.printful.me";
 
@@ -67,7 +69,7 @@ export default function Dashboard() {
     aspectRatio: "1 / 1",
     borderRadius: "12px",
     overflow: "hidden",
-    border: "1px solid rgba(255,0,60,0.25)",
+    border: `1px solid ${t.tileBorder}`,
     background: "rgba(10,10,10,0.25)",
     backdropFilter: "blur(2px)",
     WebkitBackdropFilter: "blur(2px)",
@@ -95,6 +97,7 @@ export default function Dashboard() {
     height: "100%",
     objectFit: "cover",
     display: "block",
+    filter: t.imgFilter,
   };
 
   const labelStyle = {
@@ -111,7 +114,7 @@ export default function Dashboard() {
     <div style={{ padding: "16px 12px", minHeight: "100vh" }}>
       <div style={{ marginBottom: "16px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#ff003c", boxShadow: "0 0 18px rgba(255,0,60,0.9)" }} />
+          <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: t.dot, boxShadow: `0 0 18px ${t.dotShadow}` }} />
           <h1 style={{ fontSize: "20px", fontWeight: 800, color: "#fff", margin: 0 }}>Rivalis</h1>
         </div>
         <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px", marginTop: "4px" }}>Pick a mode.</p>
@@ -142,7 +145,7 @@ export default function Dashboard() {
       {showComingSoon && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)" }} onClick={() => setShowComingSoon(false)} />
-          <div style={{ position: "relative", width: "100%", maxWidth: "320px", borderRadius: "16px", border: "1px solid rgba(255,0,60,0.3)", background: "rgba(10,10,10,0.95)", padding: "20px" }}>
+          <div style={{ position: "relative", width: "100%", maxWidth: "320px", borderRadius: "16px", border: `1px solid ${t.tileBorder}`, background: "rgba(10,10,10,0.95)", padding: "20px" }}>
             <div style={{ fontSize: "18px", fontWeight: 700, color: "#fff" }}>Coming Soon</div>
             <div style={{ color: "rgba(255,255,255,0.7)", fontSize: "14px", marginTop: "4px" }}>New modes + upgrades are on the way.</div>
             <button

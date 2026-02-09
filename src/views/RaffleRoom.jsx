@@ -1,23 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { LeaderboardService } from "../services/leaderboardService.js";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 export default function RaffleRoom({ user, userProfile }) {
+  const t = useTheme();
   const [isSpinning, setIsSpinning] = useState(false);
   const [winner, setWinner] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [drawHistory, setDrawHistory] = useState([]);
 
-  const isAdmin = userProfile?.role === "admin" || user?.email === "admin@rivalis.com" || user?.email === "Socalturfexperts@gmail.com" || user?.uid === "v3h9WiCKKoTPH5Cyi5dVr0Pb2f03"; // Add your admin email here
+  const isAdmin = userProfile?.role === "admin" || user?.email === "admin@rivalis.com" || user?.email === "Socalturfexperts@gmail.com" || user?.uid === "v3h9WiCKKoTPH5Cyi5dVr0Pb2f03";
 
   useEffect(() => {
     loadLeaderboard();
-    const interval = setInterval(loadLeaderboard, 30000); // Refresh every 30s
+    const interval = setInterval(loadLeaderboard, 30000);
     return () => clearInterval(interval);
   }, []);
 
   const loadLeaderboard = async () => {
-    const result = await LeaderboardService.getAllTopScores(100); // Get more for a bigger pool
+    const result = await LeaderboardService.getAllTopScores(100);
     if (result.success) {
       setLeaderboard(result.scores);
     }
@@ -35,7 +37,6 @@ export default function RaffleRoom({ user, userProfile }) {
     const nextSunday = new Date(lastSunday);
     nextSunday.setDate(lastSunday.getDate() + 7);
     
-    // Check if drawing is happening now (Sunday 8:00 PM - 8:15 PM)
     const isDrawingTime = now >= nextSunday && now < new Date(nextSunday.getTime() + 15 * 60000);
     
     if (isDrawingTime) {
@@ -50,7 +51,6 @@ export default function RaffleRoom({ user, userProfile }) {
     setIsSpinning(true);
     setWinner(null);
 
-    // Collect all unique ticket references from all users
     const allTickets = [];
     leaderboard.forEach(player => {
       if (player.ticketRefs) {
@@ -58,7 +58,6 @@ export default function RaffleRoom({ user, userProfile }) {
           allTickets.push({ ref, userName: player.userName, userId: player.userId });
         });
       } else {
-        // Fallback for mock data without refs
         for (let i = 0; i < player.score; i++) {
           allTickets.push({ 
             ref: `MOCK-${player.userId}-${i}`, 
@@ -69,7 +68,6 @@ export default function RaffleRoom({ user, userProfile }) {
       }
     });
 
-    // Simulate wheel spin
     setTimeout(() => {
       const luckyTicket = allTickets[Math.floor(Math.random() * allTickets.length)];
       setWinner(luckyTicket);
@@ -93,10 +91,176 @@ export default function RaffleRoom({ user, userProfile }) {
     }
   };
 
+  const styles = {
+    container: {
+      minHeight: "100vh",
+      padding: "100px 20px 40px",
+      display: "flex",
+      justifyContent: "center",
+    },
+    roomLayout: {
+      display: "flex",
+      gap: "40px",
+      maxWidth: "1200px",
+      width: "100%",
+      flexWrap: "wrap",
+      justifyContent: "center"
+    },
+    wheelSection: {
+      flex: "1",
+      minWidth: "300px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      background: "rgba(0,0,0,0.7)",
+      padding: "30px",
+      borderRadius: "20px",
+      border: `2px solid ${t.accent}`,
+      boxShadow: `0 0 30px ${t.shadowSm}`
+    },
+    title: {
+      fontSize: "32px",
+      color: "#fff",
+      marginBottom: "10px",
+      fontFamily: "'Arial Black', sans-serif"
+    },
+    periodText: {
+      color: t.accent,
+      fontSize: "12px",
+      marginBottom: "30px",
+      fontWeight: "bold",
+      letterSpacing: "1px"
+    },
+    wheel: {
+      width: "250px",
+      height: "250px",
+      borderRadius: "50%",
+      border: `8px solid ${t.accent}`,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      position: "relative",
+      background: "radial-gradient(circle, #222 0%, #000 100%)",
+      marginBottom: "40px",
+      boxShadow: `0 0 50px ${t.shadowMd}`
+    },
+    wheelInner: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center"
+    },
+    pointer: {
+      position: "absolute",
+      top: "-30px",
+      fontSize: "40px",
+      color: t.accent,
+      textShadow: `0 0 10px ${t.accent}`
+    },
+    bingoBall: {
+      fontSize: "80px",
+      filter: "drop-shadow(0 0 20px rgba(255,255,255,0.3))"
+    },
+    button: {
+      padding: "15px 40px",
+      background: t.accent,
+      color: "#fff",
+      border: "none",
+      borderRadius: "30px",
+      fontSize: "18px",
+      fontWeight: "bold",
+      cursor: "pointer",
+      boxShadow: `0 0 20px ${t.shadowMd}`,
+      transition: "transform 0.2s"
+    },
+    leaderboardSection: {
+      flex: "1",
+      minWidth: "300px",
+      background: "rgba(0,0,0,0.8)",
+      padding: "30px",
+      borderRadius: "20px",
+      border: "2px solid #667eea",
+      boxShadow: "0 0 30px rgba(102, 126, 234, 0.3)"
+    },
+    subTitle: {
+      color: "#667eea",
+      fontSize: "24px",
+      marginBottom: "20px",
+      textAlign: "center"
+    },
+    leaderboardList: {
+      display: "flex",
+      flexDirection: "column",
+      gap: "10px"
+    },
+    playerRow: {
+      background: "rgba(255,255,255,0.05)",
+      padding: "15px",
+      borderRadius: "8px",
+      display: "flex",
+      alignItems: "center",
+      gap: "15px"
+    },
+    rank: { color: t.accent, fontWeight: "bold", width: "30px" },
+    name: { color: "#fff", flex: 1, fontWeight: "500" },
+    tickets: { color: t.accent, fontWeight: "bold" },
+    winnerAnnouncement: {
+      marginTop: "30px",
+      textAlign: "center",
+      color: "#fff",
+      animation: "fadeIn 0.5s ease-out"
+    },
+    winnerName: {
+      fontSize: "24px",
+      color: "#ffd700",
+      fontWeight: "bold",
+      margin: "10px 0"
+    },
+    historySection: {
+      marginTop: "40px",
+      width: "100%",
+      borderTop: `1px solid ${t.shadowXs}`,
+      paddingTop: "20px"
+    },
+    historyTitle: {
+      color: "#fff",
+      fontSize: "14px",
+      marginBottom: "15px",
+      textAlign: "center",
+      opacity: 0.8
+    },
+    historyList: {
+      display: "flex",
+      flexDirection: "column",
+      gap: "8px",
+      maxHeight: "150px",
+      overflowY: "auto"
+    },
+    historyItem: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      background: "rgba(255,255,255,0.05)",
+      padding: "8px 12px",
+      borderRadius: "4px",
+      fontSize: "0.9rem",
+      color: "#fff"
+    },
+    adminOnlyMessage: {
+      padding: "15px 30px",
+      background: t.shadowXs,
+      border: `2px solid ${t.shadowSm}`,
+      borderRadius: "30px",
+      color: "#fff",
+      textAlign: "center",
+      fontFamily: "'Arial Black', sans-serif",
+      fontSize: "14px",
+      opacity: 0.8
+    }
+  };
+
   return (
     <div className="hero-background" style={styles.container}>
       <div style={styles.roomLayout}>
-        {/* Left Side: Raffle Wheel */}
         <div style={styles.wheelSection}>
           <h1 className="rivalis-text" style={styles.title}>RAFFLE ROOM</h1>
           <p style={styles.periodText}>{getRafflePeriodMessage()}</p>
@@ -138,12 +302,11 @@ export default function RaffleRoom({ user, userProfile }) {
             <div style={styles.winnerAnnouncement}>
               <h2>CONGRATULATIONS!</h2>
               <p style={styles.winnerName}>{winner.userName}</p>
-              <p style={{fontFamily: "monospace", color: "#ff3050"}}>REF: {winner.ref}</p>
+              <p style={{fontFamily: "monospace", color: t.accent}}>REF: {winner.ref}</p>
               <p>HAS WON THE RAFFLE!</p>
             </div>
           )}
 
-          {/* Draw History */}
           <div style={styles.historySection}>
             <h3 style={styles.historyTitle}>📜 DRAW HISTORY</h3>
             <div style={styles.historyList}>
@@ -159,7 +322,6 @@ export default function RaffleRoom({ user, userProfile }) {
           </div>
         </div>
 
-        {/* Right Side: Real-time Leaderboard */}
         <div style={styles.leaderboardSection}>
           <h2 style={styles.subTitle}>LIVE TICKETS</h2>
           <div style={styles.leaderboardList}>
@@ -169,7 +331,7 @@ export default function RaffleRoom({ user, userProfile }) {
               leaderboard.map((player, idx) => (
                 <div key={idx} style={{
                   ...styles.playerRow,
-                  borderLeft: `4px solid ${idx === 0 ? "#FFD700" : "#ff3050"}`
+                  borderLeft: `4px solid ${idx === 0 ? "#FFD700" : t.accent}`
                 }}>
                   <span style={styles.rank}>#{idx + 1}</span>
                   <span style={styles.name}>{player.userName}</span>
@@ -187,176 +349,9 @@ export default function RaffleRoom({ user, userProfile }) {
           100% { transform: rotate(1080deg); }
         }
         .rivalis-text {
-          text-shadow: 0 0 15px #ff3050, 0 0 30px #ff3050;
+          text-shadow: 0 0 15px ${t.accent}, 0 0 30px ${t.accent};
         }
       `}</style>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    minHeight: "100vh",
-    padding: "100px 20px 40px",
-    display: "flex",
-    justifyContent: "center",
-  },
-  roomLayout: {
-    display: "flex",
-    gap: "40px",
-    maxWidth: "1200px",
-    width: "100%",
-    flexWrap: "wrap",
-    justifyContent: "center"
-  },
-  wheelSection: {
-    flex: "1",
-    minWidth: "300px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    background: "rgba(0,0,0,0.7)",
-    padding: "30px",
-    borderRadius: "20px",
-    border: "2px solid #ff3050",
-    boxShadow: "0 0 30px rgba(255, 48, 80, 0.3)"
-  },
-  title: {
-    fontSize: "32px",
-    color: "#fff",
-    marginBottom: "10px",
-    fontFamily: "'Arial Black', sans-serif"
-  },
-  periodText: {
-    color: "#ff3050",
-    fontSize: "12px",
-    marginBottom: "30px",
-    fontWeight: "bold",
-    letterSpacing: "1px"
-  },
-  wheel: {
-    width: "250px",
-    height: "250px",
-    borderRadius: "50%",
-    border: "8px solid #ff3050",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-    background: "radial-gradient(circle, #222 0%, #000 100%)",
-    marginBottom: "40px",
-    boxShadow: "0 0 50px rgba(255, 48, 80, 0.5)"
-  },
-  wheelInner: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center"
-  },
-  pointer: {
-    position: "absolute",
-    top: "-30px",
-    fontSize: "40px",
-    color: "#ff3050",
-    textShadow: "0 0 10px #ff3050"
-  },
-  bingoBall: {
-    fontSize: "80px",
-    filter: "drop-shadow(0 0 20px rgba(255,255,255,0.3))"
-  },
-  button: {
-    padding: "15px 40px",
-    background: "#ff3050",
-    color: "#fff",
-    border: "none",
-    borderRadius: "30px",
-    fontSize: "18px",
-    fontWeight: "bold",
-    cursor: "pointer",
-    boxShadow: "0 0 20px rgba(255, 48, 80, 0.5)",
-    transition: "transform 0.2s"
-  },
-  leaderboardSection: {
-    flex: "1",
-    minWidth: "300px",
-    background: "rgba(0,0,0,0.8)",
-    padding: "30px",
-    borderRadius: "20px",
-    border: "2px solid #667eea",
-    boxShadow: "0 0 30px rgba(102, 126, 234, 0.3)"
-  },
-  subTitle: {
-    color: "#667eea",
-    fontSize: "24px",
-    marginBottom: "20px",
-    textAlign: "center"
-  },
-  leaderboardList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px"
-  },
-  playerRow: {
-    background: "rgba(255,255,255,0.05)",
-    padding: "15px",
-    borderRadius: "8px",
-    display: "flex",
-    alignItems: "center",
-    gap: "15px"
-  },
-  rank: { color: "#ff3050", fontWeight: "bold", width: "30px" },
-  name: { color: "#fff", flex: 1, fontWeight: "500" },
-  tickets: { color: "#ff3050", fontWeight: "bold" },
-  winnerAnnouncement: {
-    marginTop: "30px",
-    textAlign: "center",
-    color: "#fff",
-    animation: "fadeIn 0.5s ease-out"
-  },
-  winnerName: {
-    fontSize: "24px",
-    color: "#ffd700",
-    fontWeight: "bold",
-    margin: "10px 0"
-  },
-  historySection: {
-    marginTop: "40px",
-    width: "100%",
-    borderTop: "1px solid rgba(255, 48, 80, 0.2)",
-    paddingTop: "20px"
-  },
-  historyTitle: {
-    color: "#fff",
-    fontSize: "14px",
-    marginBottom: "15px",
-    textAlign: "center",
-    opacity: 0.8
-  },
-  historyList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-    maxHeight: "150px",
-    overflowY: "auto"
-  },
-  historyItem: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    background: "rgba(255,255,255,0.05)",
-    padding: "8px 12px",
-    borderRadius: "4px",
-    fontSize: "0.9rem",
-    color: "#fff"
-  },
-  adminOnlyMessage: {
-    padding: "15px 30px",
-    background: "rgba(255, 48, 80, 0.1)",
-    border: "2px solid rgba(255, 48, 80, 0.3)",
-    borderRadius: "30px",
-    color: "#fff",
-    textAlign: "center",
-    fontFamily: "'Arial Black', sans-serif",
-    fontSize: "14px",
-    opacity: 0.8
-  }
-};

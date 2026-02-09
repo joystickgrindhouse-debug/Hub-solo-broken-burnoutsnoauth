@@ -1,4 +1,5 @@
 import React from "react";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 const gamingEmojis = [
   "😠", "💀", "🎮", "❓", "📻", "🖕", "💪", "😢",
@@ -8,14 +9,16 @@ const gamingEmojis = [
 ];
 
 export default function CustomEmojiPicker({ onEmojiSelect, onClose }) {
+  const t = useTheme();
+
   return (
     <div 
       style={{
         background: "#000000",
-        border: "2px solid #ff3050",
+        border: `2px solid ${t.accent}`,
         borderRadius: "12px",
         padding: "1rem",
-        boxShadow: "0 0 20px rgba(255, 48, 80, 0.6), inset 0 0 20px rgba(255, 48, 80, 0.1)",
+        boxShadow: `0 0 20px ${t.shadow}, inset 0 0 20px ${t.shadowXs}`,
         maxWidth: "300px",
         position: "relative"
       }}
@@ -26,12 +29,12 @@ export default function CustomEmojiPicker({ onEmojiSelect, onClose }) {
         alignItems: "center",
         marginBottom: "0.5rem",
         paddingBottom: "0.5rem",
-        borderBottom: "1px solid rgba(255, 48, 80, 0.3)"
+        borderBottom: `1px solid ${t.shadowSm}`
       }}>
         <h4 style={{ 
           margin: 0, 
-          color: "#ff3050",
-          textShadow: "0 0 10px rgba(255, 48, 80, 0.8)",
+          color: t.accent,
+          textShadow: `0 0 10px ${t.shadow}`,
           fontSize: "14px"
         }}>
           GAMING EMOJIS
@@ -40,8 +43,8 @@ export default function CustomEmojiPicker({ onEmojiSelect, onClose }) {
           onClick={onClose}
           style={{
             background: "transparent",
-            border: "1px solid #ff3050",
-            color: "#ff3050",
+            border: `1px solid ${t.accent}`,
+            color: t.accent,
             cursor: "pointer",
             padding: "0.25rem 0.5rem",
             borderRadius: "4px",
@@ -64,8 +67,8 @@ export default function CustomEmojiPicker({ onEmojiSelect, onClose }) {
             key={index}
             onClick={() => onEmojiSelect(emoji)}
             style={{
-              background: "rgba(255, 48, 80, 0.1)",
-              border: "1px solid rgba(255, 48, 80, 0.3)",
+              background: t.shadowXs,
+              border: `1px solid ${t.shadowSm}`,
               borderRadius: "6px",
               padding: "0.5rem",
               cursor: "pointer",
@@ -78,12 +81,12 @@ export default function CustomEmojiPicker({ onEmojiSelect, onClose }) {
               justifyContent: "center"
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255, 48, 80, 0.3)";
-              e.currentTarget.style.boxShadow = "0 0 10px rgba(255, 48, 80, 0.6)";
+              e.currentTarget.style.background = t.shadowSm;
+              e.currentTarget.style.boxShadow = `0 0 10px ${t.shadow}`;
               e.currentTarget.style.transform = "scale(1.1)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255, 48, 80, 0.1)";
+              e.currentTarget.style.background = t.shadowXs;
               e.currentTarget.style.boxShadow = "none";
               e.currentTarget.style.transform = "scale(1)";
             }}

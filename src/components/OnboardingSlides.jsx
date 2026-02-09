@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 export default function OnboardingSlides({ onComplete }) {
+  const t = useTheme();
   const [currentSlide, setCurrentSlide] = useState(0);
   
   const slides = [
@@ -26,10 +28,9 @@ export default function OnboardingSlides({ onComplete }) {
       if (currentSlide < slides.length - 1) {
         setCurrentSlide(currentSlide + 1);
       } else {
-        // All slides shown, trigger completion
         onComplete();
       }
-    }, 4000); // 4 seconds per slide
+    }, 4000);
 
     return () => clearTimeout(timer);
   }, [currentSlide, onComplete, slides.length]);
@@ -46,10 +47,10 @@ export default function OnboardingSlides({ onComplete }) {
         maxWidth: "600px",
         width: "90%",
         background: "rgba(0, 0, 0, 0.85)",
-        border: "2px solid #ff3050",
+        border: `2px solid ${t.accent}`,
         borderRadius: "12px",
         padding: "3rem 2rem",
-        boxShadow: "0 0 30px rgba(255, 48, 80, 0.5), inset 0 0 20px rgba(255, 48, 80, 0.05)",
+        boxShadow: `0 0 30px ${t.shadowMd}, inset 0 0 20px ${t.shadowXxs}`,
         animation: "slideIn 0.5s ease-out"
       }}>
         <div style={{
@@ -63,7 +64,7 @@ export default function OnboardingSlides({ onComplete }) {
         
         <h2 style={{ 
           fontFamily: "'Press Start 2P', cursive",
-          color: "#ff3050",
+          color: t.accent,
           fontSize: "clamp(1rem, 3vw, 1.5rem)",
           fontWeight: "normal",
           textTransform: "uppercase",
@@ -71,9 +72,9 @@ export default function OnboardingSlides({ onComplete }) {
           textAlign: "center",
           lineHeight: "1.8",
           textShadow: `
-            0 0 10px rgba(255, 48, 80, 0.8),
-            0 0 20px rgba(255, 48, 80, 0.6),
-            0 0 30px rgba(255, 48, 80, 0.4)
+            0 0 10px ${t.shadow},
+            0 0 20px ${t.shadowMd},
+            0 0 30px ${t.shadowSm}
           `,
           marginBottom: "1.5rem",
           animation: "fadeInUp 0.6s ease-out"
@@ -93,7 +94,6 @@ export default function OnboardingSlides({ onComplete }) {
           {slides[currentSlide].description}
         </p>
 
-        {/* Progress dots */}
         <div style={{
           display: "flex",
           justifyContent: "center",
@@ -107,8 +107,8 @@ export default function OnboardingSlides({ onComplete }) {
                 width: index === currentSlide ? "40px" : "12px",
                 height: "12px",
                 borderRadius: "6px",
-                backgroundColor: index === currentSlide ? "#ff3050" : "rgba(255, 48, 80, 0.3)",
-                boxShadow: index === currentSlide ? "0 0 10px rgba(255, 48, 80, 0.8)" : "none",
+                backgroundColor: index === currentSlide ? t.accent : t.shadowSm,
+                boxShadow: index === currentSlide ? `0 0 10px ${t.shadow}` : "none",
                 transition: "all 0.3s ease"
               }}
             />

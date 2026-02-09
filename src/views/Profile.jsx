@@ -6,6 +6,7 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
 import WaitingForUpload from "./WaitingForUpload.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 const avatarStyles = [
   { id: "adventurer", name: "Adventurer" },
@@ -40,6 +41,7 @@ const parseDicebearURL = (url) => {
 };
 
 export default function Profile({ user, userProfile }) {
+  const t = useTheme();
   const [bio, setBio] = useState(userProfile?.bio || "");
   const [nickname, setNickname] = useState(userProfile?.nickname || "");
   const [isEditing, setIsEditing] = useState(false);
@@ -159,13 +161,11 @@ export default function Profile({ user, userProfile }) {
     }
   }, [userProfile]);
 
-  // When opening edit mode, reset the preview states to blank
   useEffect(() => {
     if (isEditingAvatar) {
       setCurrentAvatar("");
       setSelectedStyle("");
       setIsDicebearAvatar(false);
-      // Generate a seed ready for when they pick a style, but don't show the avatar yet
       setSeed(user?.email?.split('@')[0] || Math.random().toString(36).substring(7));
     }
   }, [isEditingAvatar, user]);
@@ -212,10 +212,8 @@ export default function Profile({ user, userProfile }) {
       
       console.log("Saving Avatar URL:", avatarURL);
       
-      // Update Firebase Auth
       await updateProfile(user, { photoURL: avatarURL });
       
-      // Update Firestore
       const result = await UserService.updateUserProfile(user.uid, { avatarURL });
       
       if (result.success) {
@@ -251,12 +249,10 @@ export default function Profile({ user, userProfile }) {
     try {
       setIsSavingAvatar(true);
       
-      // 1. Instant Preview
       const objectUrl = URL.createObjectURL(file);
       setCurrentAvatar(objectUrl);
       setIsDicebearAvatar(false);
 
-      // 2. Upload to Storage
       const timestamp = Date.now();
       const fileRef = ref(storage, `avatars/${user.uid}/${timestamp}-${file.name}`);
       const metadata = { contentType: file.type };
@@ -265,7 +261,6 @@ export default function Profile({ user, userProfile }) {
       await uploadBytes(fileRef, file, metadata);
       const downloadURL = await getDownloadURL(fileRef);
       
-      // 3. Update State & Database
       setCurrentAvatar(downloadURL);
       console.log("Uploading to Firestore...");
       const updateResult = await UserService.updateUserProfile(user.uid, { avatarURL: downloadURL });
@@ -312,10 +307,10 @@ export default function Profile({ user, userProfile }) {
         maxWidth: "900px",
         minHeight: "80vh",
         background: "#000000",
-        border: "2px solid #ff3050",
+        border: `2px solid ${t.accent}`,
         borderRadius: "12px",
         padding: "2rem",
-        boxShadow: "0 0 30px rgba(255, 48, 80, 0.5), inset 0 0 20px rgba(255, 48, 80, 0.05)"
+        boxShadow: `0 0 30px ${t.shadowMd}, inset 0 0 20px ${t.shadowXxs}`
       }}>
         <div style={{
           display: "flex",
@@ -349,14 +344,14 @@ export default function Profile({ user, userProfile }) {
                       height: "120px", 
                       borderRadius: "50%", 
                       background: "#fff",
-                      border: "4px solid #ff3050",
-                      boxShadow: "0 0 20px rgba(255, 48, 80, 0.6)"
+                      border: `4px solid ${t.accent}`,
+                      boxShadow: `0 0 20px ${t.shadowMd}`
                     }}
                   />
                 )}
                 <h2 style={{ 
-                  color: "#ff3050",
-                  textShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
+                  color: t.accent,
+                  textShadow: `0 0 15px ${t.shadow}`,
                   margin: "10px 0"
                 }}>
                   {displayNicknameValue}
@@ -367,9 +362,9 @@ export default function Profile({ user, userProfile }) {
                   style={{
                     padding: "6px 12px",
                     background: "#000000",
-                    border: "2px solid #ff3050",
+                    border: `2px solid ${t.accent}`,
                     borderRadius: "6px",
-                    color: "#ff3050",
+                    color: t.accent,
                     fontWeight: "bold",
                     cursor: "pointer",
                     fontSize: "12px",
@@ -385,8 +380,8 @@ export default function Profile({ user, userProfile }) {
 
           <div style={{ flex: 1, minWidth: "300px" }}>
             <h3 style={{ 
-              color: "#ff3050",
-              textShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
+              color: t.accent,
+              textShadow: `0 0 15px ${t.shadow}`,
               marginBottom: "1rem"
             }}>
               Identity Details
@@ -395,7 +390,7 @@ export default function Profile({ user, userProfile }) {
             {isEditing ? (
               <div>
                 <div style={{ marginBottom: "1rem" }}>
-                  <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.8rem", fontFamily: "'Press Start 2P', cursive" }}>NICKNAME</label>
+                  <label style={{ color: t.accent, display: "block", marginBottom: "0.5rem", fontSize: "0.8rem", fontFamily: "'Press Start 2P', cursive" }}>NICKNAME</label>
                   <input 
                     type="text"
                     value={nickname}
@@ -404,16 +399,16 @@ export default function Profile({ user, userProfile }) {
                       width: "100%",
                       padding: "0.75rem",
                       background: "#000000",
-                      border: "2px solid #ff3050",
+                      border: `2px solid ${t.accent}`,
                       borderRadius: "8px",
                       color: "#fff",
                       fontSize: "14px",
-                      boxShadow: "0 0 15px rgba(255, 48, 80, 0.3)"
+                      boxShadow: `0 0 15px ${t.shadowSm}`
                     }}
                   />
                 </div>
                 <div style={{ marginBottom: "1rem" }}>
-                  <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.8rem", fontFamily: "'Press Start 2P', cursive" }}>BIO</label>
+                  <label style={{ color: t.accent, display: "block", marginBottom: "0.5rem", fontSize: "0.8rem", fontFamily: "'Press Start 2P', cursive" }}>BIO</label>
                   <textarea 
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
@@ -423,24 +418,24 @@ export default function Profile({ user, userProfile }) {
                       minHeight: "100px",
                       padding: "0.75rem",
                       background: "#000000",
-                      border: "2px solid #ff3050",
+                      border: `2px solid ${t.accent}`,
                       borderRadius: "8px",
                       color: "#fff",
                       fontSize: "14px",
                       resize: "vertical",
-                      boxShadow: "0 0 15px rgba(255, 48, 80, 0.3), inset 0 0 10px rgba(255, 48, 80, 0.05)"
+                      boxShadow: `0 0 15px ${t.shadowSm}, inset 0 0 10px ${t.shadowXxs}`
                     }}
                   />
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1rem" }}>
                   <div>
-                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>AGE</label>
-                    <input type="number" value={age} onChange={(e) => setAge(e.target.value)} placeholder="25" style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }} />
+                    <label style={{ color: t.accent, display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>AGE</label>
+                    <input type="number" value={age} onChange={(e) => setAge(e.target.value)} placeholder="25" style={{ width: "100%", padding: "0.6rem", background: "#000", border: `2px solid ${t.accent}`, borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: `0 0 10px ${t.shadowXs}` }} />
                   </div>
                   <div>
-                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>GENDER</label>
-                    <select value={gender} onChange={(e) => setGender(e.target.value)} style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }}>
+                    <label style={{ color: t.accent, display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>GENDER</label>
+                    <select value={gender} onChange={(e) => setGender(e.target.value)} style={{ width: "100%", padding: "0.6rem", background: "#000", border: `2px solid ${t.accent}`, borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: `0 0 10px ${t.shadowXs}` }}>
                       <option value="">Select...</option>
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
@@ -449,20 +444,20 @@ export default function Profile({ user, userProfile }) {
                     </select>
                   </div>
                   <div>
-                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>HEIGHT (FT)</label>
-                    <input type="number" value={heightFeet} onChange={(e) => setHeightFeet(e.target.value)} placeholder="5" style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }} />
+                    <label style={{ color: t.accent, display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>HEIGHT (FT)</label>
+                    <input type="number" value={heightFeet} onChange={(e) => setHeightFeet(e.target.value)} placeholder="5" style={{ width: "100%", padding: "0.6rem", background: "#000", border: `2px solid ${t.accent}`, borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: `0 0 10px ${t.shadowXs}` }} />
                   </div>
                   <div>
-                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>HEIGHT (IN)</label>
-                    <input type="number" value={heightInches} onChange={(e) => setHeightInches(e.target.value)} placeholder="10" style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }} />
+                    <label style={{ color: t.accent, display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>HEIGHT (IN)</label>
+                    <input type="number" value={heightInches} onChange={(e) => setHeightInches(e.target.value)} placeholder="10" style={{ width: "100%", padding: "0.6rem", background: "#000", border: `2px solid ${t.accent}`, borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: `0 0 10px ${t.shadowXs}` }} />
                   </div>
                   <div>
-                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>WEIGHT (LBS)</label>
-                    <input type="number" value={profileWeight} onChange={(e) => setProfileWeight(e.target.value)} placeholder="175" style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }} />
+                    <label style={{ color: t.accent, display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>WEIGHT (LBS)</label>
+                    <input type="number" value={profileWeight} onChange={(e) => setProfileWeight(e.target.value)} placeholder="175" style={{ width: "100%", padding: "0.6rem", background: "#000", border: `2px solid ${t.accent}`, borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: `0 0 10px ${t.shadowXs}` }} />
                   </div>
                   <div>
-                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>FITNESS LEVEL</label>
-                    <select value={fitnessLevel} onChange={(e) => setFitnessLevel(e.target.value)} style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }}>
+                    <label style={{ color: t.accent, display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>FITNESS LEVEL</label>
+                    <select value={fitnessLevel} onChange={(e) => setFitnessLevel(e.target.value)} style={{ width: "100%", padding: "0.6rem", background: "#000", border: `2px solid ${t.accent}`, borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: `0 0 10px ${t.shadowXs}` }}>
                       <option value="">Select...</option>
                       <option value="Beginner">Beginner</option>
                       <option value="Intermediate">Intermediate</option>
@@ -471,8 +466,8 @@ export default function Profile({ user, userProfile }) {
                     </select>
                   </div>
                   <div>
-                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>DAYS/WEEK</label>
-                    <select value={workoutFrequency} onChange={(e) => setWorkoutFrequency(e.target.value)} style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }}>
+                    <label style={{ color: t.accent, display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>DAYS/WEEK</label>
+                    <select value={workoutFrequency} onChange={(e) => setWorkoutFrequency(e.target.value)} style={{ width: "100%", padding: "0.6rem", background: "#000", border: `2px solid ${t.accent}`, borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: `0 0 10px ${t.shadowXs}` }}>
                       <option value="">Select...</option>
                       <option value="0-1">0-1</option>
                       <option value="2-3">2-3</option>
@@ -481,8 +476,8 @@ export default function Profile({ user, userProfile }) {
                     </select>
                   </div>
                   <div style={{ gridColumn: "1 / -1" }}>
-                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>INJURIES / LIMITATIONS</label>
-                    <input type="text" value={profileInjuries} onChange={(e) => setProfileInjuries(e.target.value)} placeholder="None" style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }} />
+                    <label style={{ color: t.accent, display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>INJURIES / LIMITATIONS</label>
+                    <input type="text" value={profileInjuries} onChange={(e) => setProfileInjuries(e.target.value)} placeholder="None" style={{ width: "100%", padding: "0.6rem", background: "#000", border: `2px solid ${t.accent}`, borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: `0 0 10px ${t.shadowXs}` }} />
                   </div>
                   {(() => {
                     const ft = parseFloat(heightFeet) || 0;
@@ -497,7 +492,7 @@ export default function Profile({ user, userProfile }) {
                       else if (bmiVal >= 25 && bmiVal < 30) { cat = "Overweight"; col = "#f59e0b"; }
                       else if (bmiVal >= 30) { cat = "Obese"; col = "#ef4444"; }
                       return (
-                        <div style={{ gridColumn: "1 / -1", background: "rgba(255,48,80,0.06)", border: "1px solid rgba(255,48,80,0.2)", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
+                        <div style={{ gridColumn: "1 / -1", background: t.shadowXxs, border: `1px solid ${t.shadowXs}`, borderRadius: "8px", padding: "10px", textAlign: "center" }}>
                           <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.7rem", letterSpacing: "1px" }}>LIVE BMI: </span>
                           <span style={{ color: col, fontSize: "1.1rem", fontWeight: "bold", fontFamily: "'Press Start 2P', cursive" }}>{liveBmi}</span>
                           <span style={{ color: col, fontSize: "0.7rem", marginLeft: "8px" }}>({cat})</span>
@@ -509,7 +504,7 @@ export default function Profile({ user, userProfile }) {
                 </div>
 
                 <div style={{ marginBottom: "1.5rem" }}>
-                  <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.8rem", fontFamily: "'Press Start 2P', cursive" }}>FITNESS GOALS</label>
+                  <label style={{ color: t.accent, display: "block", marginBottom: "0.5rem", fontSize: "0.8rem", fontFamily: "'Press Start 2P', cursive" }}>FITNESS GOALS</label>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                     {fitnessGoalOptions.map(goal => (
                       <button
@@ -517,8 +512,8 @@ export default function Profile({ user, userProfile }) {
                         onClick={() => toggleFitnessGoal(goal)}
                         style={{
                           padding: "0.5rem 1rem",
-                          background: fitnessGoals.includes(goal) ? "#ff3050" : "#000",
-                          border: "1px solid #ff3050",
+                          background: fitnessGoals.includes(goal) ? t.accent : "#000",
+                          border: `1px solid ${t.accent}`,
                           borderRadius: "20px",
                           color: "#fff",
                           fontSize: "0.8rem",
@@ -533,7 +528,7 @@ export default function Profile({ user, userProfile }) {
                 </div>
 
                 <div style={{ marginBottom: "1.5rem" }}>
-                  <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.8rem", fontFamily: "'Press Start 2P', cursive" }}>SEEKING IN RIVALIS</label>
+                  <label style={{ color: t.accent, display: "block", marginBottom: "0.5rem", fontSize: "0.8rem", fontFamily: "'Press Start 2P', cursive" }}>SEEKING IN RIVALIS</label>
                   <select 
                     value={appSeeking}
                     onChange={(e) => setAppSeeking(e.target.value)}
@@ -541,11 +536,11 @@ export default function Profile({ user, userProfile }) {
                       width: "100%",
                       padding: "0.75rem",
                       background: "#000000",
-                      border: "2px solid #ff3050",
+                      border: `2px solid ${t.accent}`,
                       borderRadius: "8px",
                       color: "#fff",
                       fontSize: "14px",
-                      boxShadow: "0 0 15px rgba(255, 48, 80, 0.3)"
+                      boxShadow: `0 0 15px ${t.shadowSm}`
                     }}
                   >
                     <option value="">Select an option...</option>
@@ -559,13 +554,13 @@ export default function Profile({ user, userProfile }) {
                     onClick={saveBio}
                     style={{
                       padding: "0.5rem 1rem",
-                      background: "#ff3050",
-                      border: "2px solid #ff3050",
+                      background: t.accent,
+                      border: `2px solid ${t.accent}`,
                       borderRadius: "8px",
                       color: "#fff",
                       fontWeight: "bold",
                       cursor: "pointer",
-                      boxShadow: "0 0 15px rgba(255, 48, 80, 0.6)"
+                      boxShadow: `0 0 15px ${t.shadowMd}`
                     }}
                   >
                     Save
@@ -579,9 +574,9 @@ export default function Profile({ user, userProfile }) {
                     style={{
                       padding: "0.5rem 1rem",
                       background: "#000000",
-                      border: "2px solid #ff3050",
+                      border: `2px solid ${t.accent}`,
                       borderRadius: "8px",
-                      color: "#ff3050",
+                      color: t.accent,
                       fontWeight: "bold",
                       cursor: "pointer"
                     }}
@@ -603,27 +598,27 @@ export default function Profile({ user, userProfile }) {
                 {(userProfile?.age || userProfile?.height || userProfile?.weight || userProfile?.bmi) && (
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: "0.5rem", marginBottom: "1rem" }}>
                     {userProfile?.age && (
-                      <div style={{ background: "rgba(255,48,80,0.08)", padding: "8px", borderRadius: "8px", textAlign: "center", border: "1px solid rgba(255,48,80,0.15)" }}>
+                      <div style={{ background: t.shadowXxs, padding: "8px", borderRadius: "8px", textAlign: "center", border: `1px solid ${t.shadowXs}` }}>
                         <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.6rem", letterSpacing: "1px", marginBottom: "4px" }}>AGE</div>
                         <div style={{ color: "#fff", fontSize: "1rem", fontWeight: "bold" }}>{userProfile.age}</div>
                       </div>
                     )}
                     {userProfile?.height && (
-                      <div style={{ background: "rgba(255,48,80,0.08)", padding: "8px", borderRadius: "8px", textAlign: "center", border: "1px solid rgba(255,48,80,0.15)" }}>
+                      <div style={{ background: t.shadowXxs, padding: "8px", borderRadius: "8px", textAlign: "center", border: `1px solid ${t.shadowXs}` }}>
                         <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.6rem", letterSpacing: "1px", marginBottom: "4px" }}>HEIGHT</div>
                         <div style={{ color: "#fff", fontSize: "1rem", fontWeight: "bold" }}>{userProfile.height}</div>
                       </div>
                     )}
                     {userProfile?.weight && (
-                      <div style={{ background: "rgba(255,48,80,0.08)", padding: "8px", borderRadius: "8px", textAlign: "center", border: "1px solid rgba(255,48,80,0.15)" }}>
+                      <div style={{ background: t.shadowXxs, padding: "8px", borderRadius: "8px", textAlign: "center", border: `1px solid ${t.shadowXs}` }}>
                         <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.6rem", letterSpacing: "1px", marginBottom: "4px" }}>WEIGHT</div>
                         <div style={{ color: "#fff", fontSize: "1rem", fontWeight: "bold" }}>{userProfile.weight} lbs</div>
                       </div>
                     )}
                     {userProfile?.bmi && (
-                      <div style={{ background: "rgba(255,48,80,0.08)", padding: "8px", borderRadius: "8px", textAlign: "center", border: "1px solid rgba(255,48,80,0.15)" }}>
+                      <div style={{ background: t.shadowXxs, padding: "8px", borderRadius: "8px", textAlign: "center", border: `1px solid ${t.shadowXs}` }}>
                         <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.6rem", letterSpacing: "1px", marginBottom: "4px" }}>BMI</div>
-                        <div style={{ color: "#ff3050", fontSize: "1rem", fontWeight: "bold" }}>{userProfile.bmi}</div>
+                        <div style={{ color: t.accent, fontSize: "1rem", fontWeight: "bold" }}>{userProfile.bmi}</div>
                       </div>
                     )}
                   </div>
@@ -631,32 +626,32 @@ export default function Profile({ user, userProfile }) {
 
                 {(userProfile?.fitnessLevel || userProfile?.workoutFrequency || userProfile?.gender) && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginBottom: "1rem" }}>
-                    {userProfile?.gender && <span style={{ background: "rgba(255,48,80,0.1)", padding: "3px 8px", borderRadius: "4px", fontSize: "0.75rem", border: "1px solid rgba(255,48,80,0.2)", color: "rgba(255,255,255,0.7)" }}>{userProfile.gender}</span>}
-                    {userProfile?.fitnessLevel && <span style={{ background: "rgba(255,48,80,0.1)", padding: "3px 8px", borderRadius: "4px", fontSize: "0.75rem", border: "1px solid rgba(255,48,80,0.2)", color: "rgba(255,255,255,0.7)" }}>{userProfile.fitnessLevel}</span>}
-                    {userProfile?.workoutFrequency && <span style={{ background: "rgba(255,48,80,0.1)", padding: "3px 8px", borderRadius: "4px", fontSize: "0.75rem", border: "1px solid rgba(255,48,80,0.2)", color: "rgba(255,255,255,0.7)" }}>{userProfile.workoutFrequency} days/week</span>}
+                    {userProfile?.gender && <span style={{ background: t.shadowXs, padding: "3px 8px", borderRadius: "4px", fontSize: "0.75rem", border: `1px solid ${t.shadowXs}`, color: "rgba(255,255,255,0.7)" }}>{userProfile.gender}</span>}
+                    {userProfile?.fitnessLevel && <span style={{ background: t.shadowXs, padding: "3px 8px", borderRadius: "4px", fontSize: "0.75rem", border: `1px solid ${t.shadowXs}`, color: "rgba(255,255,255,0.7)" }}>{userProfile.fitnessLevel}</span>}
+                    {userProfile?.workoutFrequency && <span style={{ background: t.shadowXs, padding: "3px 8px", borderRadius: "4px", fontSize: "0.75rem", border: `1px solid ${t.shadowXs}`, color: "rgba(255,255,255,0.7)" }}>{userProfile.workoutFrequency} days/week</span>}
                   </div>
                 )}
 
                 {userProfile?.injuries && userProfile.injuries !== "none" && userProfile.injuries !== "None" && (
                   <div style={{ marginBottom: "1rem" }}>
-                    <div style={{ color: "#ff3050", fontSize: "0.6rem", fontFamily: "'Press Start 2P', cursive", marginBottom: "0.3rem" }}>INJURIES</div>
+                    <div style={{ color: t.accent, fontSize: "0.6rem", fontFamily: "'Press Start 2P', cursive", marginBottom: "0.3rem" }}>INJURIES</div>
                     <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.85rem" }}>{userProfile.injuries}</div>
                   </div>
                 )}
 
                 {fitnessGoals.length > 0 && (
                   <div style={{ marginBottom: "1rem" }}>
-                    <div style={{ color: "#ff3050", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive", marginBottom: "0.5rem" }}>GOALS</div>
+                    <div style={{ color: t.accent, fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive", marginBottom: "0.5rem" }}>GOALS</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
                       {fitnessGoals.map(goal => (
-                        <span key={goal} style={{ background: "rgba(255, 48, 80, 0.2)", padding: "2px 8px", borderRadius: "4px", fontSize: "0.8rem", border: "1px solid #ff3050" }}>{goal}</span>
+                        <span key={goal} style={{ background: t.hoverBg, padding: "2px 8px", borderRadius: "4px", fontSize: "0.8rem", border: `1px solid ${t.accent}` }}>{goal}</span>
                       ))}
                     </div>
                   </div>
                 )}
                 {appSeeking && (
                   <div style={{ marginBottom: "1.5rem" }}>
-                    <div style={{ color: "#ff3050", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive", marginBottom: "0.5rem" }}>SEEKING</div>
+                    <div style={{ color: t.accent, fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive", marginBottom: "0.5rem" }}>SEEKING</div>
                     <div style={{ fontSize: "0.9rem" }}>{appSeeking}</div>
                   </div>
                 )}
@@ -665,9 +660,9 @@ export default function Profile({ user, userProfile }) {
                   style={{
                     padding: "0.5rem 1rem",
                     background: "#000000",
-                    border: "2px solid #ff3050",
+                    border: `2px solid ${t.accent}`,
                     borderRadius: "8px",
-                    color: "#ff3050",
+                    color: t.accent,
                     fontWeight: "bold",
                     cursor: "pointer"
                   }}
@@ -687,75 +682,75 @@ export default function Profile({ user, userProfile }) {
           marginBottom: "2rem"
         }}>
           <div style={{
-            background: "rgba(255, 48, 80, 0.1)",
-            border: "2px solid #ff3050",
+            background: t.shadowXs,
+            border: `2px solid ${t.accent}`,
             borderRadius: "12px",
             padding: "1.5rem",
             textAlign: "center",
-            boxShadow: "0 0 20px rgba(255, 48, 80, 0.3)"
+            boxShadow: `0 0 20px ${t.shadowSm}`
           }}>
             <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🔥</div>
-            <div style={{ color: "#ff3050", fontSize: "2rem", fontWeight: "bold", textShadow: "0 0 10px rgba(255, 48, 80, 0.8)" }}>
+            <div style={{ color: t.accent, fontSize: "2rem", fontWeight: "bold", textShadow: `0 0 10px ${t.shadow}` }}>
               {streaks.current}
             </div>
             <div style={{ color: "#fff", fontSize: "0.9rem" }}>Current Streak</div>
           </div>
 
           <div style={{
-            background: "rgba(255, 48, 80, 0.1)",
-            border: "2px solid #ff3050",
+            background: t.shadowXs,
+            border: `2px solid ${t.accent}`,
             borderRadius: "12px",
             padding: "1.5rem",
             textAlign: "center",
-            boxShadow: "0 0 20px rgba(255, 48, 80, 0.3)"
+            boxShadow: `0 0 20px ${t.shadowSm}`
           }}>
             <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>⭐</div>
-            <div style={{ color: "#ff3050", fontSize: "2rem", fontWeight: "bold", textShadow: "0 0 10px rgba(255, 48, 80, 0.8)" }}>
+            <div style={{ color: t.accent, fontSize: "2rem", fontWeight: "bold", textShadow: `0 0 10px ${t.shadow}` }}>
               {streaks.longest}
             </div>
             <div style={{ color: "#fff", fontSize: "0.9rem" }}>Longest Streak</div>
           </div>
 
           <div style={{
-            background: "rgba(255, 48, 80, 0.1)",
-            border: "2px solid #ff3050",
+            background: t.shadowXs,
+            border: `2px solid ${t.accent}`,
             borderRadius: "12px",
             padding: "1.5rem",
             textAlign: "center",
-            boxShadow: "0 0 20px rgba(255, 48, 80, 0.3)"
+            boxShadow: `0 0 20px ${t.shadowSm}`
           }}>
             <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>💪</div>
-            <div style={{ color: "#ff3050", fontSize: "2rem", fontWeight: "bold", textShadow: "0 0 10px rgba(255, 48, 80, 0.8)" }}>
+            <div style={{ color: t.accent, fontSize: "2rem", fontWeight: "bold", textShadow: `0 0 10px ${t.shadow}` }}>
               {totalReps}
             </div>
             <div style={{ color: "#fff", fontSize: "0.9rem" }}>Total Reps</div>
           </div>
 
           <div style={{
-            background: "rgba(255, 48, 80, 0.1)",
-            border: "2px solid #ff3050",
+            background: t.shadowXs,
+            border: `2px solid ${t.accent}`,
             borderRadius: "12px",
             padding: "1.5rem",
             textAlign: "center",
-            boxShadow: "0 0 20px rgba(255, 48, 80, 0.3)"
+            boxShadow: `0 0 20px ${t.shadowSm}`
           }}>
             <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🏃</div>
-            <div style={{ color: "#ff3050", fontSize: "2rem", fontWeight: "bold", textShadow: "0 0 10px rgba(255, 48, 80, 0.8)" }}>
+            <div style={{ color: t.accent, fontSize: "2rem", fontWeight: "bold", textShadow: `0 0 10px ${t.shadow}` }}>
               {totalMiles.toFixed(1)}
             </div>
             <div style={{ color: "#fff", fontSize: "0.9rem" }}>Total Miles</div>
           </div>
 
           <div style={{
-            background: "rgba(255, 48, 80, 0.1)",
-            border: "2px solid #ff3050",
+            background: t.shadowXs,
+            border: `2px solid ${t.accent}`,
             borderRadius: "12px",
             padding: "1.5rem",
             textAlign: "center",
-            boxShadow: "0 0 20px rgba(255, 48, 80, 0.3)"
+            boxShadow: `0 0 20px ${t.shadowSm}`
           }}>
             <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🎟️</div>
-            <div style={{ color: "#ff3050", fontSize: "2rem", fontWeight: "bold", textShadow: "0 0 10px rgba(255, 48, 80, 0.8)" }}>
+            <div style={{ color: t.accent, fontSize: "2rem", fontWeight: "bold", textShadow: `0 0 10px ${t.shadow}` }}>
               {ticketBalance}
             </div>
             <div style={{ color: "#fff", fontSize: "0.9rem" }}>Ticket Balance</div>
@@ -764,7 +759,7 @@ export default function Profile({ user, userProfile }) {
 
         {userProfile?.activeTicketRefs?.length > 0 && (
           <div style={{ marginBottom: "2rem" }}>
-            <h3 style={{ color: "#ff3050", marginBottom: "1rem" }}>🎟️ Active Ticket References</h3>
+            <h3 style={{ color: t.accent, marginBottom: "1rem" }}>🎟️ Active Ticket References</h3>
             <div style={{ 
               display: "grid", 
               gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", 
@@ -772,9 +767,9 @@ export default function Profile({ user, userProfile }) {
               maxHeight: "200px",
               overflowY: "auto",
               padding: "1rem",
-              background: "rgba(255, 48, 80, 0.05)",
+              background: t.shadowXxs,
               borderRadius: "8px",
-              border: "1px solid rgba(255, 48, 80, 0.2)"
+              border: `1px solid ${t.shadowXs}`
             }}>
               {userProfile.activeTicketRefs.map((ref, idx) => (
                 <div key={idx} style={{ 
@@ -785,7 +780,7 @@ export default function Profile({ user, userProfile }) {
                   padding: "4px 8px",
                   borderRadius: "4px",
                   textAlign: "center",
-                  border: "1px solid rgba(255, 48, 80, 0.3)"
+                  border: `1px solid ${t.shadowSm}`
                 }}>
                   {ref}
                 </div>
@@ -794,16 +789,15 @@ export default function Profile({ user, userProfile }) {
           </div>
         )}
 
-        {/* Workout Buddy System */}
         <div style={{
           marginTop: "2rem",
           padding: "1.5rem",
-          background: "rgba(255, 48, 80, 0.05)",
-          border: "1px solid #ff3050",
+          background: t.shadowXxs,
+          border: `1px solid ${t.accent}`,
           borderRadius: "12px",
           marginBottom: "2rem"
         }}>
-          <h3 style={{ color: "#ff3050", marginBottom: "1rem", fontFamily: "'Press Start 2P', cursive", fontSize: "0.8rem" }}>WORKOUT BUDDIES</h3>
+          <h3 style={{ color: t.accent, marginBottom: "1rem", fontFamily: "'Press Start 2P', cursive", fontSize: "0.8rem" }}>WORKOUT BUDDIES</h3>
           
           <div style={{ display: "flex", gap: "10px", marginBottom: "1.5rem" }}>
             <input 
@@ -811,12 +805,12 @@ export default function Profile({ user, userProfile }) {
               placeholder="Enter friend's email..." 
               value={searchEmail}
               onChange={(e) => setSearchEmail(e.target.value)}
-              style={{ flex: 1, padding: "8px", background: "#000", border: "1px solid #ff3050", color: "#fff", borderRadius: "4px" }}
+              style={{ flex: 1, padding: "8px", background: "#000", border: `1px solid ${t.accent}`, color: "#fff", borderRadius: "4px" }}
             />
-            <button onClick={handleSendFriendRequest} style={{ background: "#ff3050", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "4px", cursor: "pointer" }}>Add Buddy</button>
+            <button onClick={handleSendFriendRequest} style={{ background: t.accent, color: "#fff", border: "none", padding: "8px 16px", borderRadius: "4px", cursor: "pointer" }}>Add Buddy</button>
           </div>
 
-          <div style={{ marginBottom: "1.5rem", padding: "10px", background: "rgba(255, 48, 80, 0.1)", borderRadius: "8px", border: "1px dashed #ff3050" }}>
+          <div style={{ marginBottom: "1.5rem", padding: "10px", background: t.shadowXs, borderRadius: "8px", border: `1px dashed ${t.accent}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: "0.7rem", color: "#fff" }}>LOOKING FOR BUDDY?</span>
               <button 
@@ -838,7 +832,7 @@ export default function Profile({ user, userProfile }) {
 
           {potentialBuddies.length > 0 && (
             <div style={{ marginBottom: "1.5rem" }}>
-              <h4 style={{ color: "#ff3050", fontSize: "0.7rem", marginBottom: "0.5rem" }}>DISCOVER BUDDIES</h4>
+              <h4 style={{ color: t.accent, fontSize: "0.7rem", marginBottom: "0.5rem" }}>DISCOVER BUDDIES</h4>
               <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "10px" }}>
                 {potentialBuddies.filter(b => b.userId !== user.uid).map(buddy => (
                   <div key={buddy.userId} style={{ minWidth: "80px", textAlign: "center", background: "#111", padding: "8px", borderRadius: "8px" }}>
@@ -846,7 +840,7 @@ export default function Profile({ user, userProfile }) {
                     <div style={{ fontSize: "0.5rem", color: "#fff", marginTop: "4px", whiteSpace: "nowrap", overflow: "hidden" }}>{buddy.nickname}</div>
                     <button 
                       onClick={() => { setSearchEmail(buddy.email); handleSendFriendRequest(); }}
-                      style={{ background: "#ff3050", border: "none", color: "#fff", fontSize: "0.5rem", padding: "2px 6px", borderRadius: "4px", marginTop: "4px" }}
+                      style={{ background: t.accent, border: "none", color: "#fff", fontSize: "0.5rem", padding: "2px 6px", borderRadius: "4px", marginTop: "4px" }}
                     >Add</button>
                   </div>
                 ))}
@@ -856,7 +850,7 @@ export default function Profile({ user, userProfile }) {
 
           {pendingRequests.length > 0 && (
             <div style={{ marginBottom: "1rem" }}>
-              <h4 style={{ color: "#ff3050", fontSize: "0.7rem", marginBottom: "0.5rem" }}>PENDING REQUESTS</h4>
+              <h4 style={{ color: t.accent, fontSize: "0.7rem", marginBottom: "0.5rem" }}>PENDING REQUESTS</h4>
               {pendingRequests.map(req => (
                 <div key={req.id} style={{ display: "flex", justifyContent: "space-between", background: "#111", padding: "10px", marginBottom: "5px", borderRadius: "4px" }}>
                   <span>Request from {req.from}</span>
@@ -866,11 +860,11 @@ export default function Profile({ user, userProfile }) {
             </div>
           )}
 
-          <h4 style={{ color: "#ff3050", fontSize: "0.7rem", marginBottom: "0.5rem" }}>YOUR BUDDIES</h4>
+          <h4 style={{ color: t.accent, fontSize: "0.7rem", marginBottom: "0.5rem" }}>YOUR BUDDIES</h4>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: "1rem" }}>
             {friends.map(friend => (
               <div key={friend.userId} style={{ textAlign: "center" }}>
-                <img src={friend.avatarURL} alt={friend.nickname} style={{ width: "50px", height: "50px", borderRadius: "50%", border: "2px solid #ff3050" }} />
+                <img src={friend.avatarURL} alt={friend.nickname} style={{ width: "50px", height: "50px", borderRadius: "50%", border: `2px solid ${t.accent}` }} />
                 <div style={{ fontSize: "0.7rem", marginTop: "5px" }}>{friend.nickname}</div>
               </div>
             ))}
@@ -880,8 +874,8 @@ export default function Profile({ user, userProfile }) {
 
         <div>
           <h3 style={{ 
-            color: "#ff3050",
-            textShadow: "0 0 15px rgba(255, 48, 80, 0.8)",
+            color: t.accent,
+            textShadow: `0 0 15px ${t.shadow}`,
             marginBottom: "1rem"
           }}>
             🏆 Achievements
@@ -896,25 +890,25 @@ export default function Profile({ user, userProfile }) {
                 key={achievement.id}
                 className={`achievement-card ${achievement.unlocked ? 'unlocked' : 'locked'}`}
                 style={{
-                  background: achievement.unlocked ? "rgba(255, 48, 80, 0.15)" : "rgba(255, 255, 255, 0.05)",
-                  border: `2px solid ${achievement.unlocked ? "#ff3050" : "#333"}`,
+                  background: achievement.unlocked ? t.shadowXs : "rgba(255, 255, 255, 0.05)",
+                  border: `2px solid ${achievement.unlocked ? t.accent : "#333"}`,
                   borderRadius: "12px",
                   padding: "1.5rem",
                   textAlign: "center",
                   opacity: achievement.unlocked ? 1 : 0.6,
                   transition: "all 0.3s ease",
-                  boxShadow: achievement.unlocked ? "0 0 15px rgba(255, 48, 80, 0.3)" : "none",
+                  boxShadow: achievement.unlocked ? `0 0 15px ${t.shadowSm}` : "none",
                   filter: achievement.unlocked ? "none" : "grayscale(100%)"
                 }}
               >
                 <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>{achievement.icon}</div>
-                <h4 style={{ color: achievement.unlocked ? "#ff3050" : "#999", marginBottom: "0.5rem", fontSize: "1rem" }}>{achievement.name}</h4>
+                <h4 style={{ color: achievement.unlocked ? t.accent : "#999", marginBottom: "0.5rem", fontSize: "1rem" }}>{achievement.name}</h4>
                 <p style={{ fontSize: "0.8rem", color: "#ccc" }}>{achievement.description}</p>
                 {!achievement.unlocked && (
                   <div style={{ 
                     marginTop: "1rem", 
                     fontSize: "0.7rem", 
-                    color: "#ff3050",
+                    color: t.accent,
                     fontFamily: "'Press Start 2P', cursive"
                   }}>
                     LOCKED

@@ -1,18 +1,21 @@
 import React from 'react';
+import { useTheme } from '../../context/ThemeContext.jsx';
 
 const LogsGraph = ({ data, type }) => {
+  const t = useTheme();
+
   return (
     <div style={styles.container}>
-      <h4 style={styles.title}>{type.toUpperCase()} TRENDS</h4>
+      <h4 style={{ ...styles.title, color: t.accent }}>{type.toUpperCase()} TRENDS</h4>
       <div style={styles.graphPlaceholder}>
         <div style={{ color: '#666', fontSize: '12px' }}>Graph visualization for {type} data...</div>
-        {/* In a real scenario, use a library like Recharts here */}
         <div style={styles.barContainer}>
           {[40, 70, 50, 90, 60, 80, 55].map((h, i) => (
             <div key={i} style={{
               ...styles.bar,
               height: `${h}%`,
-              boxShadow: '0 0 5px #FF0000',
+              background: t.accent,
+              boxShadow: `0 0 5px ${t.accent}`,
             }} />
           ))}
         </div>
@@ -30,7 +33,6 @@ const styles = {
     margin: '10px 0',
   },
   title: {
-    color: '#FF0000',
     fontSize: '12px',
     marginBottom: '10px',
     letterSpacing: '1px',
@@ -59,7 +61,6 @@ const styles = {
   },
   bar: {
     width: '10%',
-    background: '#FF0000',
     borderRadius: '2px 2px 0 0',
   }
 };

@@ -14,25 +14,25 @@
 .solo-title {
   font-size: clamp(1.5rem, 8vw, 3rem);
   font-family: 'Press Start 2P', cursive;
-  color: #ff3050;
+  color: var(--accent-color, #ff3050);
   margin-bottom: 1.5rem;
-  text-shadow: 0 0 20px rgba(255, 48, 80, 0.8);
+  text-shadow: 0 0 20px var(--accent-shadow, rgba(255, 48, 80, 0.8));
   text-align: center;
 }
 
 .solo-button {
   padding: 1rem 2rem;
   font-size: 1.2rem;
-  background: #ff3050;
+  background: var(--accent-color, #ff3050);
   color: #fff;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
-  box-shadow: 0 0 20px rgba(255, 48, 80, 0.5);
+  box-shadow: 0 0 20px var(--accent-shadow-md, rgba(255, 48, 80, 0.5));
 }
 
 .solo-button:hover {
   background: #ff1a3c;
-  box-shadow: 0 0 30px rgba(255, 48, 80, 0.8);
+  box-shadow: 0 0 30px var(--accent-shadow, rgba(255, 48, 80, 0.8));
 }

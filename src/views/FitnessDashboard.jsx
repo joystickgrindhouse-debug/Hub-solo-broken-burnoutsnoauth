@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 function getBmiCategory(bmi) {
   if (!bmi) return { label: "Unknown", color: "#666" };
@@ -17,6 +18,7 @@ function getBmiNeedleAngle(bmi) {
 
 export default function FitnessDashboard({ user, userProfile }) {
   const navigate = useNavigate();
+  const t = useTheme();
   const isPro = userProfile?.subscriptionStatus === "active";
 
   const age = userProfile?.age || "—";
@@ -55,6 +57,266 @@ export default function FitnessDashboard({ user, userProfile }) {
     { label: "Workout Days/Week", value: workoutFrequency },
     { label: "Injuries", value: injuries },
   ];
+
+  const s = {
+    page: {
+      padding: "16px 12px",
+      minHeight: "100vh",
+      maxWidth: "700px",
+      margin: "0 auto",
+    },
+    header: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: "20px",
+    },
+    headerLeft: {
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+    },
+    dot: {
+      width: "10px",
+      height: "10px",
+      borderRadius: "50%",
+      background: t.dot,
+      boxShadow: `0 0 18px ${t.dotShadow}`,
+    },
+    title: {
+      fontSize: "13px",
+      fontWeight: 800,
+      color: t.accent,
+      margin: 0,
+      fontFamily: "'Press Start 2P', cursive",
+      textShadow: `0 0 10px ${t.shadowMd}`,
+    },
+    editBtn: {
+      background: "transparent",
+      border: `1px solid ${t.shadowSm}`,
+      color: t.accent,
+      padding: "6px 12px",
+      borderRadius: "8px",
+      fontSize: "9px",
+      fontFamily: "'Press Start 2P', cursive",
+      cursor: "pointer",
+    },
+    statsRow: {
+      display: "grid",
+      gridTemplateColumns: "repeat(4, 1fr)",
+      gap: "8px",
+      marginBottom: "20px",
+    },
+    statCard: {
+      background: t.shadowXxs,
+      border: `1px solid ${t.shadowXs}`,
+      borderRadius: "12px",
+      padding: "12px 6px",
+      textAlign: "center",
+    },
+    statIcon: {
+      fontSize: "20px",
+      marginBottom: "4px",
+    },
+    statValue: {
+      color: t.accent,
+      fontSize: "16px",
+      fontWeight: "bold",
+      fontFamily: "'Press Start 2P', cursive",
+      textShadow: `0 0 8px ${t.shadowMd}`,
+    },
+    statLabel: {
+      color: "rgba(255,255,255,0.5)",
+      fontSize: "9px",
+      marginTop: "4px",
+      letterSpacing: "0.5px",
+    },
+    bmiSection: {
+      background: t.shadowXxs,
+      border: `1px solid ${t.shadowXs}`,
+      borderRadius: "16px",
+      padding: "20px",
+      marginBottom: "16px",
+      textAlign: "center",
+    },
+    sectionTitle: {
+      color: t.accent,
+      fontSize: "10px",
+      fontFamily: "'Press Start 2P', cursive",
+      letterSpacing: "1px",
+      marginBottom: "12px",
+      textShadow: `0 0 6px ${t.shadowSm}`,
+    },
+    bmiGauge: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: "8px",
+    },
+    bmiCategory: {
+      fontSize: "12px",
+      fontWeight: "bold",
+      fontFamily: "'Press Start 2P', cursive",
+      letterSpacing: "1px",
+    },
+    gridTwo: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: "12px",
+      marginBottom: "16px",
+    },
+    card: {
+      background: t.shadowXxs,
+      border: `1px solid ${t.shadowXs}`,
+      borderRadius: "16px",
+      padding: "16px",
+    },
+    bioList: {
+      display: "flex",
+      flexDirection: "column",
+      gap: "0",
+    },
+    bioRow: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: "8px 0",
+      borderBottom: "1px solid rgba(255,255,255,0.05)",
+    },
+    bioLabel: {
+      color: "rgba(255,255,255,0.4)",
+      fontSize: "10px",
+      letterSpacing: "0.5px",
+    },
+    bioValue: {
+      color: "#fff",
+      fontSize: "12px",
+      fontWeight: "bold",
+      textAlign: "right",
+    },
+    objectiveItem: {
+      padding: "10px 0",
+      borderBottom: "1px solid rgba(255,255,255,0.05)",
+    },
+    objLabel: {
+      color: "rgba(255,255,255,0.4)",
+      fontSize: "9px",
+      letterSpacing: "1px",
+      marginBottom: "6px",
+    },
+    objBadge: {
+      display: "inline-block",
+      background: t.shadowXs,
+      border: `1px solid ${t.shadowSm}`,
+      padding: "4px 10px",
+      borderRadius: "6px",
+      color: "#fff",
+      fontSize: "12px",
+      fontWeight: "bold",
+    },
+    aiSection: {
+      background: t.shadowXxs,
+      border: `1px solid ${t.shadowXs}`,
+      borderRadius: "16px",
+      padding: "20px",
+      marginBottom: "16px",
+    },
+    proBadge: {
+      background: `linear-gradient(135deg, ${t.accent}, ${t.shadowMd})`,
+      color: "#fff",
+      padding: "3px 8px",
+      borderRadius: "4px",
+      fontSize: "8px",
+      fontWeight: "bold",
+      fontFamily: "'Press Start 2P', cursive",
+      letterSpacing: "1px",
+    },
+    aiDesc: {
+      color: "rgba(255,255,255,0.7)",
+      fontSize: "13px",
+      lineHeight: "1.6",
+      marginBottom: "16px",
+    },
+    aiActions: {
+      display: "flex",
+      gap: "8px",
+      flexWrap: "wrap",
+    },
+    aiBtn: {
+      background: `linear-gradient(135deg, ${t.accent}, ${t.shadowMd})`,
+      color: "#fff",
+      border: "none",
+      padding: "10px 16px",
+      borderRadius: "8px",
+      fontSize: "11px",
+      fontFamily: "'Press Start 2P', cursive",
+      cursor: "pointer",
+      boxShadow: `0 2px 10px ${t.shadowSm}`,
+    },
+    aiBtnOutline: {
+      background: "transparent",
+      color: t.accent,
+      border: `1px solid ${t.shadowSm}`,
+      padding: "10px 16px",
+      borderRadius: "8px",
+      fontSize: "11px",
+      fontFamily: "'Press Start 2P', cursive",
+      cursor: "pointer",
+    },
+    aiPlanDetails: {
+      marginTop: "16px",
+      background: "rgba(0,0,0,0.3)",
+      borderRadius: "8px",
+      padding: "12px",
+      border: `1px solid ${t.shadowXs}`,
+    },
+    aiPlanRow: {
+      display: "flex",
+      justifyContent: "space-between",
+      padding: "8px 0",
+      borderBottom: "1px solid rgba(255,255,255,0.05)",
+      color: "rgba(255,255,255,0.7)",
+      fontSize: "12px",
+    },
+    lockedOverlay: {
+      textAlign: "center",
+      padding: "20px 10px",
+      background: "rgba(0,0,0,0.3)",
+      borderRadius: "12px",
+      border: `1px dashed ${t.shadowSm}`,
+    },
+    lockIcon: {
+      fontSize: "36px",
+      marginBottom: "12px",
+    },
+    lockText: {
+      color: "rgba(255,255,255,0.5)",
+      fontSize: "13px",
+      lineHeight: "1.6",
+      marginBottom: "16px",
+      maxWidth: "300px",
+      margin: "0 auto 16px",
+    },
+    unlockBtn: {
+      background: `linear-gradient(135deg, ${t.accent}, ${t.shadowMd})`,
+      color: "#fff",
+      border: "none",
+      padding: "12px 24px",
+      borderRadius: "8px",
+      fontSize: "11px",
+      fontFamily: "'Press Start 2P', cursive",
+      cursor: "pointer",
+      boxShadow: `0 2px 15px ${t.shadowSm}`,
+      letterSpacing: "1px",
+    },
+    emptyState: {
+      textAlign: "center",
+      padding: "30px 20px",
+      background: t.shadowXxs,
+      border: `1px dashed ${t.shadowXs}`,
+      borderRadius: "16px",
+    },
+  };
 
   return (
     <div style={s.page}>
@@ -96,7 +358,7 @@ export default function FitnessDashboard({ user, userProfile }) {
               y2={100 + 55 * Math.sin((needleAngle * Math.PI) / 180)}
               stroke="#fff" strokeWidth="2.5" strokeLinecap="round"
             />
-            <circle cx="100" cy="100" r="5" fill="#ff3050" />
+            <circle cx="100" cy="100" r="5" fill={t.accent} />
             <text x="100" y="80" textAnchor="middle" fill="#fff" fontSize="22" fontWeight="bold" fontFamily="'Press Start 2P', cursive">
               {bmi ? bmi : "—"}
             </text>
@@ -200,270 +462,10 @@ export default function FitnessDashboard({ user, userProfile }) {
             Complete your Biometric Intake with the AI Coach to populate your dashboard.
           </p>
           <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
-            Type <span style={{ color: "#ff3050", fontFamily: "'Press Start 2P', cursive", fontSize: "10px" }}>/tour</span> in the chat to restart the intake process.
+            Type <span style={{ color: t.accent, fontFamily: "'Press Start 2P', cursive", fontSize: "10px" }}>/tour</span> in the chat to restart the intake process.
           </p>
         </div>
       )}
     </div>
   );
 }
-
-const s = {
-  page: {
-    padding: "16px 12px",
-    minHeight: "100vh",
-    maxWidth: "700px",
-    margin: "0 auto",
-  },
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: "20px",
-  },
-  headerLeft: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-  },
-  dot: {
-    width: "10px",
-    height: "10px",
-    borderRadius: "50%",
-    background: "#ff003c",
-    boxShadow: "0 0 18px rgba(255,0,60,0.9)",
-  },
-  title: {
-    fontSize: "13px",
-    fontWeight: 800,
-    color: "#ff3050",
-    margin: 0,
-    fontFamily: "'Press Start 2P', cursive",
-    textShadow: "0 0 10px rgba(255,48,80,0.5)",
-  },
-  editBtn: {
-    background: "transparent",
-    border: "1px solid rgba(255,48,80,0.4)",
-    color: "#ff3050",
-    padding: "6px 12px",
-    borderRadius: "8px",
-    fontSize: "9px",
-    fontFamily: "'Press Start 2P', cursive",
-    cursor: "pointer",
-  },
-  statsRow: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "8px",
-    marginBottom: "20px",
-  },
-  statCard: {
-    background: "rgba(255,48,80,0.06)",
-    border: "1px solid rgba(255,48,80,0.2)",
-    borderRadius: "12px",
-    padding: "12px 6px",
-    textAlign: "center",
-  },
-  statIcon: {
-    fontSize: "20px",
-    marginBottom: "4px",
-  },
-  statValue: {
-    color: "#ff3050",
-    fontSize: "16px",
-    fontWeight: "bold",
-    fontFamily: "'Press Start 2P', cursive",
-    textShadow: "0 0 8px rgba(255,48,80,0.6)",
-  },
-  statLabel: {
-    color: "rgba(255,255,255,0.5)",
-    fontSize: "9px",
-    marginTop: "4px",
-    letterSpacing: "0.5px",
-  },
-  bmiSection: {
-    background: "rgba(255,48,80,0.04)",
-    border: "1px solid rgba(255,48,80,0.2)",
-    borderRadius: "16px",
-    padding: "20px",
-    marginBottom: "16px",
-    textAlign: "center",
-  },
-  sectionTitle: {
-    color: "#ff3050",
-    fontSize: "10px",
-    fontFamily: "'Press Start 2P', cursive",
-    letterSpacing: "1px",
-    marginBottom: "12px",
-    textShadow: "0 0 6px rgba(255,48,80,0.4)",
-  },
-  bmiGauge: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "8px",
-  },
-  bmiCategory: {
-    fontSize: "12px",
-    fontWeight: "bold",
-    fontFamily: "'Press Start 2P', cursive",
-    letterSpacing: "1px",
-  },
-  gridTwo: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "12px",
-    marginBottom: "16px",
-  },
-  card: {
-    background: "rgba(255,48,80,0.04)",
-    border: "1px solid rgba(255,48,80,0.2)",
-    borderRadius: "16px",
-    padding: "16px",
-  },
-  bioList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0",
-  },
-  bioRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "8px 0",
-    borderBottom: "1px solid rgba(255,255,255,0.05)",
-  },
-  bioLabel: {
-    color: "rgba(255,255,255,0.4)",
-    fontSize: "10px",
-    letterSpacing: "0.5px",
-  },
-  bioValue: {
-    color: "#fff",
-    fontSize: "12px",
-    fontWeight: "bold",
-    textAlign: "right",
-  },
-  objectiveItem: {
-    padding: "10px 0",
-    borderBottom: "1px solid rgba(255,255,255,0.05)",
-  },
-  objLabel: {
-    color: "rgba(255,255,255,0.4)",
-    fontSize: "9px",
-    letterSpacing: "1px",
-    marginBottom: "6px",
-  },
-  objBadge: {
-    display: "inline-block",
-    background: "rgba(255,48,80,0.15)",
-    border: "1px solid rgba(255,48,80,0.3)",
-    padding: "4px 10px",
-    borderRadius: "6px",
-    color: "#fff",
-    fontSize: "12px",
-    fontWeight: "bold",
-  },
-  aiSection: {
-    background: "rgba(255,48,80,0.04)",
-    border: "1px solid rgba(255,48,80,0.2)",
-    borderRadius: "16px",
-    padding: "20px",
-    marginBottom: "16px",
-  },
-  proBadge: {
-    background: "linear-gradient(135deg, #ff3050, #ff6080)",
-    color: "#fff",
-    padding: "3px 8px",
-    borderRadius: "4px",
-    fontSize: "8px",
-    fontWeight: "bold",
-    fontFamily: "'Press Start 2P', cursive",
-    letterSpacing: "1px",
-  },
-  aiDesc: {
-    color: "rgba(255,255,255,0.7)",
-    fontSize: "13px",
-    lineHeight: "1.6",
-    marginBottom: "16px",
-  },
-  aiActions: {
-    display: "flex",
-    gap: "8px",
-    flexWrap: "wrap",
-  },
-  aiBtn: {
-    background: "linear-gradient(135deg, #ff3050, #cc0000)",
-    color: "#fff",
-    border: "none",
-    padding: "10px 16px",
-    borderRadius: "8px",
-    fontSize: "11px",
-    fontFamily: "'Press Start 2P', cursive",
-    cursor: "pointer",
-    boxShadow: "0 2px 10px rgba(255,0,0,0.3)",
-  },
-  aiBtnOutline: {
-    background: "transparent",
-    color: "#ff3050",
-    border: "1px solid rgba(255,48,80,0.4)",
-    padding: "10px 16px",
-    borderRadius: "8px",
-    fontSize: "11px",
-    fontFamily: "'Press Start 2P', cursive",
-    cursor: "pointer",
-  },
-  aiPlanDetails: {
-    marginTop: "16px",
-    background: "rgba(0,0,0,0.3)",
-    borderRadius: "8px",
-    padding: "12px",
-    border: "1px solid rgba(255,48,80,0.1)",
-  },
-  aiPlanRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    padding: "8px 0",
-    borderBottom: "1px solid rgba(255,255,255,0.05)",
-    color: "rgba(255,255,255,0.7)",
-    fontSize: "12px",
-  },
-  lockedOverlay: {
-    textAlign: "center",
-    padding: "20px 10px",
-    background: "rgba(0,0,0,0.3)",
-    borderRadius: "12px",
-    border: "1px dashed rgba(255,48,80,0.3)",
-  },
-  lockIcon: {
-    fontSize: "36px",
-    marginBottom: "12px",
-  },
-  lockText: {
-    color: "rgba(255,255,255,0.5)",
-    fontSize: "13px",
-    lineHeight: "1.6",
-    marginBottom: "16px",
-    maxWidth: "300px",
-    margin: "0 auto 16px",
-  },
-  unlockBtn: {
-    background: "linear-gradient(135deg, #ff3050, #cc0000)",
-    color: "#fff",
-    border: "none",
-    padding: "12px 24px",
-    borderRadius: "8px",
-    fontSize: "11px",
-    fontFamily: "'Press Start 2P', cursive",
-    cursor: "pointer",
-    boxShadow: "0 2px 15px rgba(255,0,0,0.4)",
-    letterSpacing: "1px",
-  },
-  emptyState: {
-    textAlign: "center",
-    padding: "30px 20px",
-    background: "rgba(255,48,80,0.03)",
-    border: "1px dashed rgba(255,48,80,0.2)",
-    borderRadius: "16px",
-  },
-};

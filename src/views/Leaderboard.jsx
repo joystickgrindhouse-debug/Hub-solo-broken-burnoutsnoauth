@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { LeaderboardService } from "../services/leaderboardService.js";
 import { BuddyService } from "../services/buddyService.js";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 export default function Leaderboard({ user }) {
+  const t = useTheme();
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMode, setSelectedMode] = useState("all");
@@ -79,8 +81,8 @@ export default function Leaderboard({ user }) {
             onClick={() => setFilterType("global")}
             style={{
               padding: "8px 16px",
-              background: filterType === "global" ? "#ff3050" : "transparent",
-              border: "1px solid #ff3050",
+              background: filterType === "global" ? t.accent : "transparent",
+              border: `1px solid ${t.accent}`,
               color: "#fff",
               borderRadius: "4px",
               cursor: "pointer",
@@ -92,8 +94,8 @@ export default function Leaderboard({ user }) {
             onClick={() => setFilterType("buddies")}
             style={{
               padding: "8px 16px",
-              background: filterType === "buddies" ? "#ff3050" : "transparent",
-              border: "1px solid #ff3050",
+              background: filterType === "buddies" ? t.accent : "transparent",
+              border: `1px solid ${t.accent}`,
               color: "#fff",
               borderRadius: "4px",
               cursor: "pointer",
@@ -110,7 +112,7 @@ export default function Leaderboard({ user }) {
               onClick={() => setSelectedMode(mode.id)}
               style={{
                 padding: "0.5rem 1rem",
-                background: selectedMode === mode.id ? "#ff4081" : "rgba(255, 255, 255, 0.1)",
+                background: selectedMode === mode.id ? t.accent : "rgba(255, 255, 255, 0.1)",
                 border: "none",
                 borderRadius: "8px",
                 color: "#fff",
@@ -140,10 +142,10 @@ export default function Leaderboard({ user }) {
                   gap: "1rem",
                   padding: "1rem",
                   background: player.userId === user?.uid 
-                    ? "rgba(255, 64, 129, 0.2)" 
+                    ? t.hoverBg
                     : "rgba(255, 255, 255, 0.05)",
                   borderRadius: "8px",
-                  border: player.userId === user?.uid ? "2px solid #ff4081" : "1px solid rgba(255, 255, 255, 0.1)"
+                  border: player.userId === user?.uid ? `2px solid ${t.accent}` : "1px solid rgba(255, 255, 255, 0.1)"
                 }}
               >
                 <div style={{ 
@@ -157,7 +159,7 @@ export default function Leaderboard({ user }) {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: "600", fontSize: "1.1rem" }}>
                     {player.userName}
-                    {player.userId === user?.uid && <span style={{ color: "#ff4081" }}> (You)</span>}
+                    {player.userId === user?.uid && <span style={{ color: t.accent }}> (You)</span>}
                   </div>
                   <div style={{ fontSize: "0.9rem", color: "rgba(255, 255, 255, 0.7)" }}>
                     {Object.entries(player.gameScores).map(([mode, score]) => (
@@ -167,7 +169,7 @@ export default function Leaderboard({ user }) {
                     ))}
                   </div>
                 </div>
-                <div style={{ fontSize: "1.5rem", fontWeight: "700", color: "#ff4081" }}>
+                <div style={{ fontSize: "1.5rem", fontWeight: "700", color: t.accent }}>
                   {player.totalScore} tickets
                 </div>
               </div>

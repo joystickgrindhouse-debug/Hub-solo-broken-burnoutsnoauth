@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useTheme } from "../context/ThemeContext.jsx";
 import { auth } from "../firebase.js";
 import {
   createLobby,
@@ -11,7 +12,7 @@ import {
 } from "../live/lobby.js";
 
 export default function LiveMode({ user, userProfile }) {
-  // Prefer the user passed in from App (your ProtectedRoute guarantees it)
+  const t = useTheme();
   const me = user || auth.currentUser;
 
   const displayName = useMemo(() => {
@@ -119,8 +120,8 @@ export default function LiveMode({ user, userProfile }) {
       {error && (
         <div
           style={{
-            background: "rgba(255,48,80,0.12)",
-            border: "1px solid rgba(255,48,80,0.5)",
+            background: t.shadowXs,
+            border: `1px solid ${t.shadowMd}`,
             padding: 12,
             borderRadius: 10,
             marginBottom: 16
@@ -251,7 +252,7 @@ const btnPrimary = {
   padding: "12px 14px",
   borderRadius: 12,
   border: "none",
-  background: "linear-gradient(45deg, #ff3050 0%, #ff6b6b 100%)",
+  background: "linear-gradient(45deg, var(--accent-color, #ff3050) 0%, #ff6b6b 100%)",
   color: "#fff",
   fontWeight: 800,
   cursor: "pointer"
@@ -270,8 +271,8 @@ const btnSecondary = {
 const btnDanger = {
   padding: "12px 14px",
   borderRadius: 12,
-  border: "1px solid rgba(255,48,80,0.6)",
-  background: "rgba(255,48,80,0.12)",
+  border: "1px solid var(--accent-shadow-md, rgba(255,48,80,0.6))",
+  background: "var(--accent-shadow-xs, rgba(255,48,80,0.12))",
   color: "#fff",
   fontWeight: 800,
   cursor: "pointer"

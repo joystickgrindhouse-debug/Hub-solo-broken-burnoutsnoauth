@@ -1,6 +1,9 @@
 import React from 'react';
+import ThemeContext from '../context/ThemeContext.jsx';
 
 class ErrorBoundary extends React.Component {
+  static contextType = ThemeContext;
+
   constructor(props) {
     super(props);
     this.state = { hasError: false };
@@ -11,10 +14,8 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // In production, we could send this to a service like Sentry or a custom backend endpoint
     console.error("Production Error Caught:", error, errorInfo);
     
-    // Log to our own backend
     fetch('/api/logs/client-error', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -28,6 +29,7 @@ class ErrorBoundary extends React.Component {
   }
 
   render() {
+    const t = this.context;
     if (this.state.hasError) {
       return (
         <div style={{
@@ -37,7 +39,7 @@ class ErrorBoundary extends React.Component {
           alignItems: 'center',
           justifyContent: 'center',
           background: '#1a1a1a',
-          color: '#ff3050',
+          color: t.accent,
           fontFamily: "'Press Start 2P', cursive",
           textAlign: 'center',
           padding: '2rem'
@@ -51,7 +53,7 @@ class ErrorBoundary extends React.Component {
             style={{
               marginTop: '2rem',
               padding: '1rem 2rem',
-              background: '#ff3050',
+              background: t.accent,
               border: 'none',
               color: '#fff',
               cursor: 'pointer',

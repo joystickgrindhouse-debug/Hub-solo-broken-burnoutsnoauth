@@ -267,7 +267,7 @@ export default function App() {
           <div style={{
             height: "60px",
             background: "rgba(0,0,0,0.8)",
-            borderBottom: "1px solid #ff3050",
+            borderBottom: "1px solid var(--accent-color, #ff3050)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -280,25 +280,25 @@ export default function App() {
                 <img 
                   src={userProfile.avatarURL} 
                   alt="avatar" 
-                  style={{ width: "35px", height: "35px", borderRadius: "50%", border: "1px solid #ff3050" }} 
+                  style={{ width: "35px", height: "35px", borderRadius: "50%", border: "1px solid var(--accent-color, #ff3050)" }} 
                 />
               )}
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <span style={{ color: "#fff", fontSize: "12px", fontWeight: "bold" }}>{userProfile?.nickname}</span>
-                <span style={{ color: "#ff3050", fontSize: "10px" }}>🎟️ {userProfile?.tickets || 0}</span>
+                <span style={{ color: "var(--accent-color, #ff3050)", fontSize: "10px" }}>🎟️ {userProfile?.tickets || 0}</span>
               </div>
             </div>
             <button 
               onClick={closeGame}
               style={{
-                background: "#ff3050",
+                background: "var(--accent-color, #ff3050)",
                 color: "#fff",
                 border: "none",
                 borderRadius: "5px",
                 padding: "5px 12px",
                 fontSize: "12px",
                 fontWeight: "bold",
-                boxShadow: "0 0 10px rgba(255, 48, 80, 0.5)"
+                boxShadow: "0 0 10px var(--accent-shadow-md, rgba(255, 48, 80, 0.5))"
               }}
             >
               EXIT
@@ -524,7 +524,7 @@ const botStyles = {
     position: "fixed",
     bottom: "85px",
     right: "20px",
-    background: "#FF0000",
+    background: "var(--accent-color, #FF0000)",
     color: "#FFF",
     border: "none",
     borderRadius: "50%",
@@ -535,7 +535,7 @@ const botStyles = {
     justifyContent: "center",
     fontWeight: "bold",
     cursor: "pointer",
-    boxShadow: "0 0 15px #FF0000",
+    boxShadow: "0 0 15px var(--accent-color, #FF0000)",
     zIndex: 10001,
     fontSize: "20px",
     transition: "all 0.3s ease",
