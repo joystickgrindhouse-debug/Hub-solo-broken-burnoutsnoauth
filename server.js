@@ -261,7 +261,9 @@ app.post('/api/generate-plan', verifyFirebaseToken, async (req, res) => {
     const goalsText = Array.isArray(fitnessGoals) && fitnessGoals.length > 0
       ? fitnessGoals.join(", ")
       : "General Fitness";
-    const seekingText = appSeeking || "not specified";
+    const seekingText = Array.isArray(appSeeking) && appSeeking.length > 0
+      ? appSeeking.join(", ")
+      : (appSeeking || "not specified");
 
     const prompt = `You are the Rivalis AI Fitness Coach. Generate a personalized fitness plan preview based on this user's profile:
 

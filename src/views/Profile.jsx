@@ -54,7 +54,9 @@ export default function Profile({ user, userProfile }) {
   const [streaks, setStreaks] = useState({ current: 0, longest: 0 });
   const [achievements, setAchievements] = useState([]);
   const [fitnessGoals, setFitnessGoals] = useState(userProfile?.fitnessGoals || []);
-  const [appSeeking, setAppSeeking] = useState(userProfile?.appSeeking || "");
+  const [appSeeking, setAppSeeking] = useState(
+    Array.isArray(userProfile?.appSeeking) ? userProfile.appSeeking : (userProfile?.appSeeking ? [userProfile.appSeeking] : [])
+  );
   const [age, setAge] = useState(userProfile?.age || "");
   const [heightFeet, setHeightFeet] = useState(userProfile?.heightFeet || "");
   const [heightInches, setHeightInches] = useState(userProfile?.heightInches || "");
@@ -162,7 +164,7 @@ export default function Profile({ user, userProfile }) {
       });
       setAchievements(userProfile.achievements || []);
       setFitnessGoals(userProfile.fitnessGoals || []);
-      setAppSeeking(userProfile.appSeeking || "");
+      setAppSeeking(Array.isArray(userProfile.appSeeking) ? userProfile.appSeeking : (userProfile.appSeeking ? [userProfile.appSeeking] : []));
       setAge(userProfile.age || "");
       setHeightFeet(userProfile.heightFeet || "");
       setHeightInches(userProfile.heightInches || "");
@@ -205,7 +207,7 @@ export default function Profile({ user, userProfile }) {
     });
     if (result.success) {
       setIsEditing(false);
-      if (fitnessGoals.length > 0 || appSeeking) {
+      if (fitnessGoals.length > 0 || appSeeking.length > 0) {
         generateAiPlan();
       }
     }
@@ -250,6 +252,12 @@ export default function Profile({ user, userProfile }) {
   const toggleFitnessGoal = (goal) => {
     setFitnessGoals(prev => 
       prev.includes(goal) ? prev.filter(g => g !== goal) : [...prev, goal]
+    );
+  };
+
+  const toggleAppSeeking = (option) => {
+    setAppSeeking(prev =>
+      prev.includes(option) ? prev.filter(o => o !== option) : [...prev, option]
     );
   };
 
@@ -582,25 +590,26 @@ export default function Profile({ user, userProfile }) {
 
                 <div style={{ marginBottom: "1.5rem" }}>
                   <label style={{ color: t.accent, display: "block", marginBottom: "0.5rem", fontSize: "0.8rem", fontFamily: "'Press Start 2P', cursive" }}>SEEKING IN RIVALIS</label>
-                  <select 
-                    value={appSeeking}
-                    onChange={(e) => setAppSeeking(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      background: "#000000",
-                      border: `2px solid ${t.accent}`,
-                      borderRadius: "8px",
-                      color: "#fff",
-                      fontSize: "14px",
-                      boxShadow: `0 0 15px ${t.shadowSm}`
-                    }}
-                  >
-                    <option value="">Select an option...</option>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                     {appSeekingOptions.map(option => (
-                      <option key={option} value={option}>{option}</option>
+                      <button
+                        key={option}
+                        onClick={() => toggleAppSeeking(option)}
+                        style={{
+                          padding: "0.5rem 1rem",
+                          background: appSeeking.includes(option) ? t.accent : "#000",
+                          border: `1px solid ${t.accent}`,
+                          borderRadius: "20px",
+                          color: "#fff",
+                          fontSize: "0.8rem",
+                          cursor: "pointer",
+                          transition: "all 0.2s"
+                        }}
+                      >
+                        {option}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
                 <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
                   <button
@@ -631,7 +640,7 @@ export default function Profile({ user, userProfile }) {
                       setWorkoutFrequency(userProfile?.workoutFrequency || "");
                       setProfileInjuries(userProfile?.injuries || "");
                       setFitnessGoals(userProfile?.fitnessGoals || []);
-                      setAppSeeking(userProfile?.appSeeking || "");
+                      setAppSeeking(Array.isArray(userProfile?.appSeeking) ? userProfile.appSeeking : (userProfile?.appSeeking ? [userProfile.appSeeking] : []));
                       setIsEditing(false);
                     }}
                     style={{
@@ -675,14 +684,18 @@ export default function Profile({ user, userProfile }) {
                     </div>
                   </div>
                 )}
-                {appSeeking && (
+                {appSeeking.length > 0 && (
                   <div style={{ marginBottom: "1.5rem" }}>
                     <div style={{ color: t.accent, fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive", marginBottom: "0.5rem" }}>SEEKING</div>
-                    <div style={{ fontSize: "0.9rem" }}>{appSeeking}</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                      {appSeeking.map(item => (
+                        <span key={item} style={{ background: t.hoverBg, padding: "2px 8px", borderRadius: "4px", fontSize: "0.8rem", border: `1px solid ${t.accent}` }}>{item}</span>
+                      ))}
+                    </div>
                   </div>
                 )}
 
-                {(fitnessGoals.length > 0 || appSeeking) && (
+                {(fitnessGoals.length > 0 || appSeeking.length > 0) && (
                   <div style={{
                     background: "linear-gradient(135deg, rgba(0,0,0,0.8), rgba(0,0,0,0.6))",
                     border: `1px solid ${t.accent}`,
