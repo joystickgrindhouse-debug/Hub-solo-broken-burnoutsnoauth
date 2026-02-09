@@ -160,6 +160,7 @@ export default function App() {
               setShowOnboarding(false);
               setOnboardingComplete(true);
               setIsNewSignup(false);
+              setShowBot(true);
             } else {
               setShowOnboarding(true);
               setIsNewSignup(true);
