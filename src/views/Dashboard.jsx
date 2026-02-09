@@ -54,26 +54,20 @@ export default function Dashboard() {
     navigate(mode.link);
   };
 
-  const tileSize = 75;
+  const gap = 10;
 
   const gridStyle = {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "10px",
-    justifyContent: "center",
-    maxWidth: `${tileSize * 4 + 30}px`,
-    margin: "0 auto",
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: `${gap}px`,
+    width: "100%",
+    padding: "0 4px",
   };
 
   const tileStyle = {
-    width: `${tileSize}px`,
-    height: `${tileSize}px`,
-    minWidth: `${tileSize}px`,
-    minHeight: `${tileSize}px`,
-    maxWidth: `${tileSize}px`,
-    maxHeight: `${tileSize}px`,
     position: "relative",
-    borderRadius: "10px",
+    aspectRatio: "1 / 1",
+    borderRadius: "12px",
     overflow: "hidden",
     border: "1px solid rgba(255,0,60,0.25)",
     background: "rgba(10,10,10,0.8)",
@@ -83,12 +77,13 @@ export default function Dashboard() {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
+    width: "100%",
   };
 
   const imgWrapStyle = {
-    width: "36px",
-    height: "36px",
-    borderRadius: "6px",
+    width: "50%",
+    aspectRatio: "1 / 1",
+    borderRadius: "8px",
     overflow: "hidden",
     border: "1px solid rgba(255,255,255,0.1)",
     background: "rgba(0,0,0,0.4)",
@@ -103,12 +98,12 @@ export default function Dashboard() {
   };
 
   const labelStyle = {
-    fontSize: "9px",
+    fontSize: "10px",
     fontWeight: 700,
     color: "rgba(255,255,255,0.9)",
     textTransform: "uppercase",
     letterSpacing: "0.5px",
-    marginTop: "4px",
+    marginTop: "5px",
     lineHeight: 1,
   };
 
