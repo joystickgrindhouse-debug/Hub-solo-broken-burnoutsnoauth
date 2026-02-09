@@ -74,9 +74,25 @@ function registerChatRoutes(app) {
     try {
       const conversationId = req.params.id;
       const { content, isPro, userContext } = req.body;
+
+      if (!isPro) {
+        const today = new Date().toISOString().split('T')[0];
+        const cacheKey = `free_msgs_${conversationId}_${today}`;
+        if (!global._freeMsgCounts) global._freeMsgCounts = {};
+        global._freeMsgCounts[cacheKey] = (global._freeMsgCounts[cacheKey] || 0) + 1;
+        if (global._freeMsgCounts[cacheKey] > 15) {
+          res.setHeader("Content-Type", "text/event-stream");
+          res.setHeader("Cache-Control", "no-cache");
+          res.write(`data: ${JSON.stringify({ content: "You've reached your daily message limit. Upgrade to Rivalis Pro for unlimited coaching. 🔒" })}\n\n`);
+          res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+          return res.end();
+        }
+      }
+
       await chatStorage.createMessage(conversationId, "user", content);
       const messages = await chatStorage.getMessagesByConversation(conversationId);
-      const chatMessages = messages.map((m) => ({
+      const recentMessages = isPro ? messages : messages.slice(-6);
+      const chatMessages = recentMessages.map((m) => ({
         role: m.role,
         content: m.content,
       }));
@@ -150,7 +166,7 @@ FREE TIER USER:
 - Do NOT gate basic fitness Q&A behind the subscription.`;
 
       const stream = await getOpenAIClient().chat.completions.create({
-        model: "gpt-5",
+        model: isPro ? "gpt-5" : "gpt-5-nano",
         messages: [
           {
             role: "system",
@@ -159,7 +175,7 @@ FREE TIER USER:
           ...chatMessages
         ],
         stream: true,
-        max_completion_tokens: isPro ? 4096 : 2048,
+        max_completion_tokens: isPro ? 4096 : 1024,
       });
 
       let fullResponse = "";

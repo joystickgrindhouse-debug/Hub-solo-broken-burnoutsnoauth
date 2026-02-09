@@ -301,7 +301,7 @@ Use the cyberpunk Rivalis tone — sharp, motivating, and authoritative. Format 
 
     const openai = getOpenAIClientExported();
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: isPro ? "gpt-5" : "gpt-5-nano",
       messages: [{ role: "user", content: prompt }],
       max_completion_tokens: isPro ? 2048 : 512,
     });
