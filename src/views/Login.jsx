@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { auth } from "../firebase.js";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth";
 import { UserService } from "../services/userService.js";
 import { useNavigate } from "react-router-dom";
 
@@ -53,7 +53,14 @@ export default function Login() {
   const [isSignup, setIsSignup] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [rememberMe, setRememberMe] = useState(() => {
+    return localStorage.getItem("rivalis_remember") !== "false";
+  });
   const [clickCount, setClickCount] = useState(0);
+
+  useEffect(() => {
+    localStorage.setItem("rivalis_remember", rememberMe ? "true" : "false");
+  }, [rememberMe]);
 
   const handleTitleClick = () => {
     const newCount = clickCount + 1;
@@ -70,13 +77,14 @@ export default function Login() {
     setError("");
     setMessage("");
     try {
+      await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
       if (isSignup) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         
         const tempNickname = `User${userCredential.user.uid.slice(0, 6)}`;
         await UserService.createUserProfile(userCredential.user.uid, {
           nickname: tempNickname,
-          avatarURL: "" // User will set this in customizer
+          avatarURL: ""
         });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
@@ -108,6 +116,43 @@ export default function Login() {
         <form onSubmit={handleSubmit}>
           <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
           <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+          <label style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            margin: "0.75rem 0",
+            cursor: "pointer",
+            fontSize: "0.65rem",
+            fontFamily: "'Press Start 2P', cursive",
+            color: "var(--text-color)",
+            userSelect: "none"
+          }}>
+            <div
+              onClick={() => setRememberMe(!rememberMe)}
+              style={{
+                width: "36px",
+                height: "20px",
+                borderRadius: "10px",
+                background: rememberMe ? "#ff3050" : "rgba(255,255,255,0.2)",
+                position: "relative",
+                transition: "background 0.3s",
+                flexShrink: 0,
+                border: "1px solid rgba(255,255,255,0.3)",
+                boxShadow: rememberMe ? "0 0 8px rgba(255,48,80,0.5)" : "none"
+              }}>
+              <div style={{
+                width: "16px",
+                height: "16px",
+                borderRadius: "50%",
+                background: "#fff",
+                position: "absolute",
+                top: "1px",
+                left: rememberMe ? "17px" : "1px",
+                transition: "left 0.3s"
+              }} />
+            </div>
+            Remember Me
+          </label>
           <button type="submit">{isSignup ? "Sign Up" : "Login"}</button>
         </form>
         {!isSignup && (
