@@ -1,6 +1,6 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
-import { auth, db } from "./firebase.js";
+import { auth, db, authReady } from "./firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import { UserService } from "./services/userService.js";
@@ -113,21 +113,30 @@ export default function App() {
 
   useEffect(() => {
     const MINIMUM_LOADING_TIME = 3000;
+    const MAX_AUTH_WAIT = 8000;
+    let authResolved = false;
 
     setLoading(true);
     setCheckingSetup(true);
     setProfileLoaded(false);
     setInitialHype(true);
 
-    const timeout = setTimeout(() => {
-      console.log("Loading timeout - forcing end of loading state");
-      setLoading(false);
-      setCheckingSetup(false);
-      setProfileLoaded(true);
-    }, MINIMUM_LOADING_TIME);
+    const maxTimeout = setTimeout(() => {
+      if (!authResolved) {
+        console.log("Auth max timeout reached - forcing end of loading state");
+        authResolved = true;
+        setLoading(false);
+        setCheckingSetup(false);
+        setProfileLoaded(true);
+      }
+    }, MAX_AUTH_WAIT);
 
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    let unsubscribe = () => {};
+
+    authReady.then(() => {
+      unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       console.log("Auth state changed:", currentUser ? "User logged in" : "No user");
+      authResolved = true;
       setUser(currentUser);
 
       if (currentUser) {
@@ -163,7 +172,7 @@ export default function App() {
         const remainingTime = Math.max(0, MINIMUM_LOADING_TIME - elapsedTime);
 
         setTimeout(() => {
-          clearTimeout(timeout);
+          clearTimeout(maxTimeout);
           setLoading(false);
           setCheckingSetup(false);
         }, remainingTime);
@@ -173,15 +182,16 @@ export default function App() {
         setShowOnboarding(false);
         setOnboardingComplete(false);
         setIsNewSignup(false);
-        clearTimeout(timeout);
+        clearTimeout(maxTimeout);
         setLoading(false);
         setCheckingSetup(false);
       }
     });
+    });
 
     return () => {
       unsubscribe();
-      clearTimeout(timeout);
+      clearTimeout(maxTimeout);
     };
   }, [loadingStartTime]);
 
