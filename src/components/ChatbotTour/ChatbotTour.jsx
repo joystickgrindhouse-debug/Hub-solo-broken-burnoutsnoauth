@@ -4,6 +4,11 @@ import {
   collection, 
   addDoc, 
   Timestamp,
+  query,
+  orderBy,
+  limit,
+  getDocs,
+  where,
 } from 'firebase/firestore';
 import ChatBubble from './ChatBubble.jsx';
 import TourStep, { TOUR_STEPS } from './TourStep.jsx';
@@ -34,6 +39,9 @@ const MOTIVATIONAL_QUOTES = [
   "Pain is just data leaving the system. Process it."
 ];
 
+const MOOD_OPTIONS = ['Great', 'Good', 'Okay', 'Low', 'Struggling'];
+const PHYSICAL_OPTIONS = ['Strong', 'Energized', 'Normal', 'Tired', 'Sore', 'Injured'];
+
 const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
   const t = useTheme();
   const [messages, setMessages] = useState([]);
@@ -42,6 +50,9 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [checkInPhase, setCheckInPhase] = useState(null);
+  const [checkInData, setCheckInData] = useState({});
+  const [trendData, setTrendData] = useState(null);
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -69,16 +80,77 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
     }
   }, []);
 
+  const logCheckIn = useCallback(async (mood, physical, note) => {
+    if (!user) return;
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'checkInLogs'), {
+        mood,
+        physical,
+        note: note || '',
+        timestamp: Timestamp.now(),
+        date: new Date().toISOString().split('T')[0]
+      });
+    } catch (err) {
+      console.error("Failed to log check-in:", err);
+    }
+  }, [user]);
+
+  const fetchTrends = useCallback(async () => {
+    if (!user) return null;
+    try {
+      const logsRef = collection(db, 'users', user.uid, 'checkInLogs');
+      const q = query(logsRef, orderBy('timestamp', 'desc'), limit(14));
+      const snapshot = await getDocs(q);
+      const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).reverse();
+      setTrendData(logs);
+      return logs;
+    } catch (err) {
+      console.error("Failed to fetch trends:", err);
+      return null;
+    }
+  }, [user]);
+
+  const checkFirestoreForTodayCheckin = useCallback(async () => {
+    if (!user) return false;
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const logsRef = collection(db, 'users', user.uid, 'checkInLogs');
+      const q = query(logsRef, where('date', '==', today), limit(1));
+      const snapshot = await getDocs(q);
+      return !snapshot.empty;
+    } catch (err) {
+      console.error("Failed to check Firestore for today's check-in:", err);
+      return false;
+    }
+  }, [user]);
+
   useEffect(() => {
     const localTourDone = window.localStorage.getItem('rivalis_tour_completed');
     const firestoreTourDone = userProfile?.tourCompleted;
+    const nickname = userProfile?.nickname || 'Rival';
 
     if (!localTourDone && !firestoreTourDone) {
       setShowTour(true);
       addBotMessage("INITIALIZING NEURAL LINK... Welcome to the sector, Rival. I am your AI Fitness Coach. Let me show you around the hub.");
     } else {
-      const quote = MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
-      addBotMessage(`${quote} Ready when you are, ${userProfile?.nickname || 'Rival'}.`);
+      const today = new Date().toISOString().split('T')[0];
+      const localChecked = window.localStorage.getItem(`rivalis_checkin_${today}`) === 'true';
+
+      if (localChecked) {
+        const quote = MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
+        addBotMessage(`${quote} Ready when you are, ${nickname}.`);
+      } else {
+        checkFirestoreForTodayCheckin().then(alreadyDone => {
+          if (alreadyDone) {
+            window.localStorage.setItem(`rivalis_checkin_${today}`, 'true');
+            const quote = MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
+            addBotMessage(`${quote} Ready when you are, ${nickname}.`);
+          } else {
+            addBotMessage(`Hey ${nickname}, welcome back. How are you feeling today?\n\nOptions: ${MOOD_OPTIONS.join(' / ')}`, 300);
+            setCheckInPhase('mood');
+          }
+        });
+      }
     }
   }, []);
 
@@ -110,6 +182,33 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
     setMessages(prev => [...prev, userMsg]);
     const currentInput = inputText;
     setInputText('');
+
+    if (checkInPhase) {
+      const nickname = userProfile?.nickname || 'Rival';
+      if (checkInPhase === 'mood') {
+        const matched = MOOD_OPTIONS.find(o => o.toLowerCase() === currentInput.trim().toLowerCase());
+        const mood = matched || currentInput.trim();
+        setCheckInData(prev => ({ ...prev, mood }));
+        addBotMessage(`Got it. And physically — how does your body feel?\n\nOptions: ${PHYSICAL_OPTIONS.join(' / ')}`, 400);
+        setCheckInPhase('physical');
+      } else if (checkInPhase === 'physical') {
+        const matched = PHYSICAL_OPTIONS.find(o => o.toLowerCase() === currentInput.trim().toLowerCase());
+        const physical = matched || currentInput.trim();
+        const finalData = { ...checkInData, physical };
+        setCheckInData(finalData);
+
+        const today = new Date().toISOString().split('T')[0];
+        window.localStorage.setItem(`rivalis_checkin_${today}`, 'true');
+        await logCheckIn(finalData.mood, physical, '');
+
+        const moodEmoji = { 'Great': '🔥', 'Good': '💪', 'Okay': '👊', 'Low': '🫡', 'Struggling': '❤️' };
+        const physEmoji = { 'Strong': '💪', 'Energized': '⚡', 'Normal': '👍', 'Tired': '😴', 'Sore': '🩹', 'Injured': '🏥' };
+
+        addBotMessage(`Check-in logged ${moodEmoji[finalData.mood] || '✅'} ${physEmoji[physical] || ''}. Mood: ${finalData.mood} | Body: ${physical}.\n\nType /trends to see your wellness history. Ready when you are, ${nickname}.`, 500);
+        setCheckInPhase(null);
+      }
+      return;
+    }
 
     if (isInIntake) {
       const currentQ = TOUR_QUESTIONS[intakeIndex];
@@ -174,6 +273,26 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       setTourStep(0);
       setShowTour(true);
       addBotMessage("Reinitializing tour protocol...", 400);
+      return;
+    }
+
+    if (currentInput.toLowerCase().includes('/trends')) {
+      addBotMessage("Fetching your wellness trends...", 200);
+      const logs = await fetchTrends();
+      if (logs && logs.length > 0) {
+        const summary = logs.slice(-7).map(l => `${l.date}: ${l.mood} / ${l.physical}`).join('\n');
+        addBotMessage(`📊 Recent check-ins:\n\n${summary}\n\nTrend graphs loaded below. Keep logging daily to build your data.`, 600);
+      } else {
+        setTrendData(null);
+        addBotMessage("No check-in data yet. Complete your daily check-in to start tracking trends.", 500);
+      }
+      return;
+    }
+
+    if (currentInput.toLowerCase().includes('/checkin')) {
+      const nickname = userProfile?.nickname || 'Rival';
+      addBotMessage(`Starting check-in. How are you feeling today, ${nickname}?\n\nOptions: ${MOOD_OPTIONS.join(' / ')}`, 300);
+      setCheckInPhase('mood');
       return;
     }
 
@@ -619,8 +738,11 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
               <ChatBubble key={msg.id} message={msg.text} isBot={msg.isBot} />
             ))}
             
-            {messages.some(m => m.text.includes('visualized')) && (
-              <LogsGraph type="weight" />
+            {trendData && trendData.length > 0 && (
+              <>
+                <LogsGraph data={trendData} type="mood" />
+                <LogsGraph data={trendData} type="physical" />
+              </>
             )}
             {messages.some(m => m.text.includes('Nutritional')) && (
               <NutritionalCoach />
