@@ -79,6 +79,7 @@ I prefer simple, clear explanations and want the agent to adopt an iterative dev
 - **DiceBear API (v7.x):** For avatar generation and customization.
 
 ## Recent Changes
+- **Feb 2026:** Added Fitness Dashboard (`/fitness` route, `src/views/FitnessDashboard.jsx`) with BMI gauge, biometric stats, objectives display, and Pro-locked AI Training Plan section. Enhanced chatbot tour intake to collect height (ft/in), weight (lbs), fitness level, workout frequency, injuries, and auto-calculate BMI. Updated Profile Identity Details to display and edit all biometric fields with live BMI recalculation on save.
 - **Feb 2026:** Merged Solo mode into the Hub, eliminating iframe/Vercel dependency. Created shared exercise engine (`src/logic/exerciseEngine.js`) used by both Solo and Burnouts. Optimized PoseVisualizer camera initialization with parallel script loading and concurrent camera permissions.
 - **Feb 2026:** Merged Burnouts app directly into the Hub, eliminating iframe/external app dependency and resolving cross-origin authentication issues. Components live in `src/components/Burnouts/`.
 - **Feb 2026:** Implemented Stripe subscription system (Rivalis Pro) with monthly/annual plans, ad-free experience, and AI Personal Trainer enhancements gated behind subscription.

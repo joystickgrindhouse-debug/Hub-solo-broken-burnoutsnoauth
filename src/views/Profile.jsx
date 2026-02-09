@@ -53,6 +53,14 @@ export default function Profile({ user, userProfile }) {
   const [achievements, setAchievements] = useState([]);
   const [fitnessGoals, setFitnessGoals] = useState(userProfile?.fitnessGoals || []);
   const [appSeeking, setAppSeeking] = useState(userProfile?.appSeeking || "");
+  const [age, setAge] = useState(userProfile?.age || "");
+  const [heightFeet, setHeightFeet] = useState(userProfile?.heightFeet || "");
+  const [heightInches, setHeightInches] = useState(userProfile?.heightInches || "");
+  const [profileWeight, setProfileWeight] = useState(userProfile?.weight || "");
+  const [gender, setGender] = useState(userProfile?.gender || "");
+  const [fitnessLevel, setFitnessLevel] = useState(userProfile?.fitnessLevel || "");
+  const [workoutFrequency, setWorkoutFrequency] = useState(userProfile?.workoutFrequency || "");
+  const [profileInjuries, setProfileInjuries] = useState(userProfile?.injuries || "");
   const [friends, setFriends] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [searchEmail, setSearchEmail] = useState("");
@@ -140,6 +148,14 @@ export default function Profile({ user, userProfile }) {
       setAchievements(userProfile.achievements || []);
       setFitnessGoals(userProfile.fitnessGoals || []);
       setAppSeeking(userProfile.appSeeking || "");
+      setAge(userProfile.age || "");
+      setHeightFeet(userProfile.heightFeet || "");
+      setHeightInches(userProfile.heightInches || "");
+      setProfileWeight(userProfile.weight || "");
+      setGender(userProfile.gender || "");
+      setFitnessLevel(userProfile.fitnessLevel || "");
+      setWorkoutFrequency(userProfile.workoutFrequency || "");
+      setProfileInjuries(userProfile.injuries || "");
     }
   }, [userProfile]);
 
@@ -157,7 +173,23 @@ export default function Profile({ user, userProfile }) {
   const saveBio = async () => {
     if (!user) return;
     
-    const result = await UserService.updateUserProfile(user.uid, { bio, nickname, fitnessGoals, appSeeking });
+    const feet = parseFloat(heightFeet) || 0;
+    const inches = parseFloat(heightInches) || 0;
+    const totalInches = (feet * 12) + inches;
+    const weightNum = parseFloat(profileWeight) || 0;
+    const calculatedBmi = totalInches > 0 && weightNum > 0 ? parseFloat(((weightNum / (totalInches * totalInches)) * 703).toFixed(1)) : null;
+    const heightStr = feet > 0 ? `${Math.floor(feet)}'${Math.floor(inches)}"` : "";
+
+    const result = await UserService.updateUserProfile(user.uid, { 
+      bio, nickname, fitnessGoals, appSeeking,
+      age, gender, fitnessLevel, workoutFrequency,
+      heightFeet: String(Math.floor(feet)),
+      heightInches: String(Math.floor(inches)),
+      height: heightStr,
+      weight: profileWeight,
+      bmi: calculatedBmi,
+      injuries: profileInjuries
+    });
     if (result.success) {
       setIsEditing(false);
     }
@@ -401,6 +433,81 @@ export default function Profile({ user, userProfile }) {
                   />
                 </div>
 
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1rem" }}>
+                  <div>
+                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>AGE</label>
+                    <input type="number" value={age} onChange={(e) => setAge(e.target.value)} placeholder="25" style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }} />
+                  </div>
+                  <div>
+                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>GENDER</label>
+                    <select value={gender} onChange={(e) => setGender(e.target.value)} style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }}>
+                      <option value="">Select...</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Non-Binary">Non-Binary</option>
+                      <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>HEIGHT (FT)</label>
+                    <input type="number" value={heightFeet} onChange={(e) => setHeightFeet(e.target.value)} placeholder="5" style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }} />
+                  </div>
+                  <div>
+                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>HEIGHT (IN)</label>
+                    <input type="number" value={heightInches} onChange={(e) => setHeightInches(e.target.value)} placeholder="10" style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }} />
+                  </div>
+                  <div>
+                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>WEIGHT (LBS)</label>
+                    <input type="number" value={profileWeight} onChange={(e) => setProfileWeight(e.target.value)} placeholder="175" style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }} />
+                  </div>
+                  <div>
+                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>FITNESS LEVEL</label>
+                    <select value={fitnessLevel} onChange={(e) => setFitnessLevel(e.target.value)} style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }}>
+                      <option value="">Select...</option>
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Advanced">Advanced</option>
+                      <option value="Elite">Elite</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>DAYS/WEEK</label>
+                    <select value={workoutFrequency} onChange={(e) => setWorkoutFrequency(e.target.value)} style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }}>
+                      <option value="">Select...</option>
+                      <option value="0-1">0-1</option>
+                      <option value="2-3">2-3</option>
+                      <option value="4-5">4-5</option>
+                      <option value="6-7">6-7</option>
+                    </select>
+                  </div>
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive" }}>INJURIES / LIMITATIONS</label>
+                    <input type="text" value={profileInjuries} onChange={(e) => setProfileInjuries(e.target.value)} placeholder="None" style={{ width: "100%", padding: "0.6rem", background: "#000", border: "2px solid #ff3050", borderRadius: "8px", color: "#fff", fontSize: "14px", boxShadow: "0 0 10px rgba(255,48,80,0.2)" }} />
+                  </div>
+                  {(() => {
+                    const ft = parseFloat(heightFeet) || 0;
+                    const inc = parseFloat(heightInches) || 0;
+                    const ti = (ft * 12) + inc;
+                    const wt = parseFloat(profileWeight) || 0;
+                    if (ti > 0 && wt > 0) {
+                      const liveBmi = ((wt / (ti * ti)) * 703).toFixed(1);
+                      const bmiVal = parseFloat(liveBmi);
+                      let cat = "Normal"; let col = "#22c55e";
+                      if (bmiVal < 18.5) { cat = "Underweight"; col = "#3b82f6"; }
+                      else if (bmiVal >= 25 && bmiVal < 30) { cat = "Overweight"; col = "#f59e0b"; }
+                      else if (bmiVal >= 30) { cat = "Obese"; col = "#ef4444"; }
+                      return (
+                        <div style={{ gridColumn: "1 / -1", background: "rgba(255,48,80,0.06)", border: "1px solid rgba(255,48,80,0.2)", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
+                          <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.7rem", letterSpacing: "1px" }}>LIVE BMI: </span>
+                          <span style={{ color: col, fontSize: "1.1rem", fontWeight: "bold", fontFamily: "'Press Start 2P', cursive" }}>{liveBmi}</span>
+                          <span style={{ color: col, fontSize: "0.7rem", marginLeft: "8px" }}>({cat})</span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+
                 <div style={{ marginBottom: "1.5rem" }}>
                   <label style={{ color: "#ff3050", display: "block", marginBottom: "0.5rem", fontSize: "0.8rem", fontFamily: "'Press Start 2P', cursive" }}>FITNESS GOALS</label>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
@@ -492,6 +599,51 @@ export default function Profile({ user, userProfile }) {
                 }}>
                   {bio || "No bio yet. Click Edit to add one!"}
                 </p>
+
+                {(userProfile?.age || userProfile?.height || userProfile?.weight || userProfile?.bmi) && (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: "0.5rem", marginBottom: "1rem" }}>
+                    {userProfile?.age && (
+                      <div style={{ background: "rgba(255,48,80,0.08)", padding: "8px", borderRadius: "8px", textAlign: "center", border: "1px solid rgba(255,48,80,0.15)" }}>
+                        <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.6rem", letterSpacing: "1px", marginBottom: "4px" }}>AGE</div>
+                        <div style={{ color: "#fff", fontSize: "1rem", fontWeight: "bold" }}>{userProfile.age}</div>
+                      </div>
+                    )}
+                    {userProfile?.height && (
+                      <div style={{ background: "rgba(255,48,80,0.08)", padding: "8px", borderRadius: "8px", textAlign: "center", border: "1px solid rgba(255,48,80,0.15)" }}>
+                        <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.6rem", letterSpacing: "1px", marginBottom: "4px" }}>HEIGHT</div>
+                        <div style={{ color: "#fff", fontSize: "1rem", fontWeight: "bold" }}>{userProfile.height}</div>
+                      </div>
+                    )}
+                    {userProfile?.weight && (
+                      <div style={{ background: "rgba(255,48,80,0.08)", padding: "8px", borderRadius: "8px", textAlign: "center", border: "1px solid rgba(255,48,80,0.15)" }}>
+                        <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.6rem", letterSpacing: "1px", marginBottom: "4px" }}>WEIGHT</div>
+                        <div style={{ color: "#fff", fontSize: "1rem", fontWeight: "bold" }}>{userProfile.weight} lbs</div>
+                      </div>
+                    )}
+                    {userProfile?.bmi && (
+                      <div style={{ background: "rgba(255,48,80,0.08)", padding: "8px", borderRadius: "8px", textAlign: "center", border: "1px solid rgba(255,48,80,0.15)" }}>
+                        <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.6rem", letterSpacing: "1px", marginBottom: "4px" }}>BMI</div>
+                        <div style={{ color: "#ff3050", fontSize: "1rem", fontWeight: "bold" }}>{userProfile.bmi}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {(userProfile?.fitnessLevel || userProfile?.workoutFrequency || userProfile?.gender) && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginBottom: "1rem" }}>
+                    {userProfile?.gender && <span style={{ background: "rgba(255,48,80,0.1)", padding: "3px 8px", borderRadius: "4px", fontSize: "0.75rem", border: "1px solid rgba(255,48,80,0.2)", color: "rgba(255,255,255,0.7)" }}>{userProfile.gender}</span>}
+                    {userProfile?.fitnessLevel && <span style={{ background: "rgba(255,48,80,0.1)", padding: "3px 8px", borderRadius: "4px", fontSize: "0.75rem", border: "1px solid rgba(255,48,80,0.2)", color: "rgba(255,255,255,0.7)" }}>{userProfile.fitnessLevel}</span>}
+                    {userProfile?.workoutFrequency && <span style={{ background: "rgba(255,48,80,0.1)", padding: "3px 8px", borderRadius: "4px", fontSize: "0.75rem", border: "1px solid rgba(255,48,80,0.2)", color: "rgba(255,255,255,0.7)" }}>{userProfile.workoutFrequency} days/week</span>}
+                  </div>
+                )}
+
+                {userProfile?.injuries && userProfile.injuries !== "none" && userProfile.injuries !== "None" && (
+                  <div style={{ marginBottom: "1rem" }}>
+                    <div style={{ color: "#ff3050", fontSize: "0.6rem", fontFamily: "'Press Start 2P', cursive", marginBottom: "0.3rem" }}>INJURIES</div>
+                    <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.85rem" }}>{userProfile.injuries}</div>
+                  </div>
+                )}
+
                 {fitnessGoals.length > 0 && (
                   <div style={{ marginBottom: "1rem" }}>
                     <div style={{ color: "#ff3050", fontSize: "0.7rem", fontFamily: "'Press Start 2P', cursive", marginBottom: "0.5rem" }}>GOALS</div>

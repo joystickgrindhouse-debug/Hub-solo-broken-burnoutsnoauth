@@ -203,6 +203,7 @@ export default function Navbar({ user, userProfile, theme, cycleTheme }) {
                   </div>
                 )}
               </div>
+              <Link to="/fitness" onClick={closeDropdown}>Fitness Dashboard</Link>
               <Link to="/chat" onClick={closeDropdown}>Chat</Link>
               <Link to="/dm" onClick={closeDropdown}>DM</Link>
               <Link to="/leaderboard" onClick={closeDropdown}>Leaderboard</Link>

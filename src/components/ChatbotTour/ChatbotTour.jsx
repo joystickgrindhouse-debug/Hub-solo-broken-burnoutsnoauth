@@ -15,11 +15,14 @@ const INTAKE_START_STEP = 3;
 const TOUR_QUESTIONS = [
   { field: 'gender', question: "What is your gender? This helps calibrate your training baseline.", options: ['Male', 'Female', 'Non-Binary', 'Prefer not to say'] },
   { field: 'age', question: "What is your age?", type: 'number' },
-  { field: 'height', question: "What is your height? (e.g. 5'10\" or 178cm)", type: 'text' },
-  { field: 'weight', question: "What is your current weight? (e.g. 175lbs or 80kg)", type: 'text' },
-  { field: 'goals', question: "What is your primary fitness goal?", options: ['Mass Gain', 'Fat Loss', 'Endurance', 'General Health'] },
-  { field: 'interests', question: "What are your other interests?", options: ['Gaming', 'Tech/AI', 'Outdoor Activities', 'Strategy Games'] },
-  { field: 'reason', question: "What brought you to Rivalis?", options: ['The Competition', 'Self Improvement', 'Data-Driven Fitness', 'Tactical Training'] }
+  { field: 'heightFeet', question: "What is your height? Enter feet first. (e.g. 5)", type: 'number', unit: 'ft' },
+  { field: 'heightInches', question: "Now enter the inches. (e.g. 10)", type: 'number', unit: 'in' },
+  { field: 'weight', question: "What is your current weight in lbs? (e.g. 175)", type: 'number', unit: 'lbs' },
+  { field: 'fitnessLevel', question: "What is your current fitness level?", options: ['Beginner', 'Intermediate', 'Advanced', 'Elite'] },
+  { field: 'goals', question: "What is your primary fitness goal?", options: ['Mass Gain', 'Fat Loss', 'Endurance', 'General Health', 'Strength'] },
+  { field: 'workoutFrequency', question: "How many days per week do you currently work out?", options: ['0-1', '2-3', '4-5', '6-7'] },
+  { field: 'reason', question: "What brought you to Rivalis?", options: ['The Competition', 'Self Improvement', 'Data-Driven Fitness', 'Tactical Training', 'Community'] },
+  { field: 'injuries', question: "Do you have any injuries or limitations we should know about? (Type 'none' if not)", type: 'text' }
 ];
 
 const MOTIVATIONAL_QUOTES = [
@@ -84,11 +87,14 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
   const [profileData, setProfileData] = useState({
     gender: '',
     age: '',
-    height: '',
+    heightFeet: '',
+    heightInches: '',
     weight: '',
+    fitnessLevel: '',
     goals: '',
-    interests: '',
-    reason: ''
+    workoutFrequency: '',
+    reason: '',
+    injuries: ''
   });
 
   const isInIntake = showTour && tourStep >= INTAKE_START_STEP && tourStep < INTAKE_START_STEP + TOUR_QUESTIONS.length;
@@ -114,12 +120,45 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
         addBotMessage(questionText, 500);
         setTourStep(prev => prev + 1);
       } else {
-        addBotMessage("Profile data recorded. Syncing your biometrics... You're all set. Define your personal mission in your BIO to complete initialization.", 600);
+        const feet = parseFloat(newProfile.heightFeet) || 0;
+        const inches = parseFloat(newProfile.heightInches) || 0;
+        const totalInches = (feet * 12) + inches;
+        const weightLbs = parseFloat(newProfile.weight) || 0;
+        const bmi = totalInches > 0 && weightLbs > 0 ? ((weightLbs / (totalInches * totalInches)) * 703).toFixed(1) : null;
+        const height = `${Math.floor(feet)}'${Math.floor(inches)}"`;
+
+        const profileToSave = {
+          gender: newProfile.gender,
+          age: newProfile.age,
+          height,
+          heightFeet: String(Math.floor(feet)),
+          heightInches: String(Math.floor(inches)),
+          weight: newProfile.weight,
+          bmi: bmi ? parseFloat(bmi) : null,
+          fitnessLevel: newProfile.fitnessLevel,
+          goals: newProfile.goals,
+          workoutFrequency: newProfile.workoutFrequency,
+          reason: newProfile.reason,
+          injuries: newProfile.injuries
+        };
+
+        let bmiMessage = "";
+        if (bmi) {
+          const bmiVal = parseFloat(bmi);
+          let category = "Normal";
+          if (bmiVal < 18.5) category = "Underweight";
+          else if (bmiVal < 25) category = "Normal";
+          else if (bmiVal < 30) category = "Overweight";
+          else category = "Obese";
+          bmiMessage = `\n\nBMI calculated: ${bmi} (${category}). `;
+        }
+
+        addBotMessage(`Profile data recorded. Syncing your biometrics...${bmiMessage}You're all set. Check your Fitness Dashboard for your full overview. Define your personal mission in your BIO to complete initialization.`, 600);
         
         if (user) {
           try {
             const { UserService } = await import('../../services/userService.js');
-            await UserService.updateUserProfile(user.uid, { ...newProfile });
+            await UserService.updateUserProfile(user.uid, profileToSave);
           } catch (err) {
             console.error("Failed to sync biometrics:", err);
           }
