@@ -64,19 +64,20 @@ export default function Dashboard() {
           <p className="text-white/70 text-xs mt-1">Pick a mode.</p>
         </div>
 
-        <div className="grid grid-cols-4 gap-2">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 70px)", gap: "8px", justifyContent: "center" }}>
           {modes.map((mode) => (
             <button
               key={mode.id}
               type="button"
               onClick={() => handleClick(mode)}
-              className="relative rounded-lg overflow-hidden border border-red-500/25 bg-zinc-950/70 backdrop-blur-md active:scale-[0.97] transition aspect-square"
+              style={{ width: "70px", height: "70px" }}
+              className="relative rounded-lg overflow-hidden border border-red-500/25 bg-zinc-950/70 backdrop-blur-md active:scale-[0.97] transition"
             >
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 p-1">
-                <div className="w-7 h-7 rounded-md overflow-hidden border border-white/10 bg-black/40">
+                <div className="w-8 h-8 rounded-md overflow-hidden border border-white/10 bg-black/40 flex-shrink-0">
                   <SafeImg src={mode.image} alt={mode.name} className="h-full w-full object-cover" />
                 </div>
-                <div className="text-[8px] font-bold text-white/90 leading-tight uppercase tracking-tight">
+                <div className="text-[9px] font-bold text-white/90 leading-none uppercase tracking-tight">
                   {mode.name}
                 </div>
               </div>
