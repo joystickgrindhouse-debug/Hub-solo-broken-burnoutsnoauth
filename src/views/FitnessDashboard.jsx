@@ -364,6 +364,7 @@ export default function FitnessDashboard({ user, userProfile }) {
             </text>
           </svg>
           <div style={{ ...s.bmiCategory, color: bmiCat.color }}>{bmiCat.label}</div>
+          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.5rem", marginTop: "4px", fontStyle: "italic", textAlign: "center", maxWidth: "200px" }}>BMI is a general estimate and does not account for muscle mass or body composition</div>
         </div>
       </div>
 

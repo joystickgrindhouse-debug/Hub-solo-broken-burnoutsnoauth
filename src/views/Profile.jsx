@@ -496,6 +496,7 @@ export default function Profile({ user, userProfile }) {
                           <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.7rem", letterSpacing: "1px" }}>LIVE BMI: </span>
                           <span style={{ color: col, fontSize: "1.1rem", fontWeight: "bold", fontFamily: "'Press Start 2P', cursive" }}>{liveBmi}</span>
                           <span style={{ color: col, fontSize: "0.7rem", marginLeft: "8px" }}>({cat})</span>
+                          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.55rem", marginTop: "4px", fontStyle: "italic" }}>BMI does not account for muscle mass or body composition</div>
                         </div>
                       );
                     }
@@ -569,6 +570,16 @@ export default function Profile({ user, userProfile }) {
                     onClick={() => {
                       setBio(userProfile?.bio || "");
                       setNickname(userProfile?.nickname || "");
+                      setAge(userProfile?.age || "");
+                      setGender(userProfile?.gender || "");
+                      setHeightFeet(userProfile?.heightFeet || "");
+                      setHeightInches(userProfile?.heightInches || "");
+                      setProfileWeight(userProfile?.weight || "");
+                      setFitnessLevel(userProfile?.fitnessLevel || "");
+                      setWorkoutFrequency(userProfile?.workoutFrequency || "");
+                      setProfileInjuries(userProfile?.injuries || "");
+                      setFitnessGoals(userProfile?.fitnessGoals || []);
+                      setAppSeeking(userProfile?.appSeeking || "");
                       setIsEditing(false);
                     }}
                     style={{
