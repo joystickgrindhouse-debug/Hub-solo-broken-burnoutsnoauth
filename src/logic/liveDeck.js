@@ -100,26 +100,35 @@ export function generateLiveDeck(muscleGroup, trickMode = "classic") {
   const jokers = fisherYatesShuffle([...JOKER_CARDS]).slice(0, mode.jokerCount);
   const tricks = fisherYatesShuffle([...TRICK_CARDS]).slice(0, mode.trickCount);
 
-  const specialCards = [...jokers, ...tricks].map((card, i) => ({
-    ...card,
-    deckIndex: i,
-  }));
+  const allExercises = exercises;
+  const specialCards = [...jokers, ...tricks].map((card, i) => {
+    const exercise = allExercises[i % allExercises.length];
+    const reps = card.bonusReps || (4 + Math.floor(Math.random() * 8));
+    return {
+      ...card,
+      exercise,
+      displayName: EXERCISE_DISPLAY[exercise] || exercise,
+      reps,
+      category: muscleGroup,
+      deckIndex: i,
+    };
+  });
 
   const allCards = [...deck, ...specialCards];
   return fisherYatesShuffle(allCards);
 }
 
 export function getCardPoints(card, activeEffects = []) {
-  if (card.type === "trick" || card.type === "joker") return 0;
+  let basePoints = (card.reps || 0) * 2;
+  const bonusPoints = card.bonusPoints || 0;
 
-  let basePoints = card.reps * 2;
   const hasDouble = activeEffects.includes("double_points");
   const hasFrozen = activeEffects.includes("frozen");
 
   if (hasFrozen) return 0;
   if (hasDouble) basePoints *= 2;
 
-  return basePoints;
+  return basePoints + bonusPoints;
 }
 
 export function getCardReps(card, activeEffects = []) {

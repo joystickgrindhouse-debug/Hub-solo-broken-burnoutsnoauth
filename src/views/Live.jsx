@@ -139,32 +139,34 @@ export default function Live({ user, userProfile }) {
 
     const me = roomData.players?.find((p) => p.userId === user.uid);
 
+    const reps = getCardReps(card, me?.activeEffects || []);
+    const points = getCardPoints(card, me?.activeEffects || []);
+
     if (card.type === "joker") {
       await LiveService.applyEffect(currentRoomId, user.uid, card.effect);
       setShowEffectBanner(card);
       setTimeout(() => setShowEffectBanner(null), 3000);
-      await LiveService.completeCard(currentRoomId, user.uid, myCardIndex, 0, 0);
     } else if (card.type === "trick") {
-      let bonusPoints = card.bonusPoints || 15;
-      let bonusReps = card.bonusReps || 0;
-
       if (card.effect === "double_or_nothing") {
         const won = Math.random() > 0.5;
-        bonusPoints = won ? (card.bonusPoints || 40) : 0;
-        const resultCard = { ...card, description: won ? "You WON! +" + bonusPoints + " points!" : "BUSTED! Zero points!" };
+        const finalPoints = won ? points : (reps * 2);
+        const resultCard = { ...card, description: won ? `DOUBLED! +${finalPoints} pts for ${card.displayName}!` : `BUSTED! Base pts only for ${card.displayName}!` };
         setShowEffectBanner(resultCard);
+        setTimeout(() => setShowEffectBanner(null), 3000);
+        setIsFlipping(true);
+        setTimeout(() => setIsFlipping(false), 600);
+        await LiveService.completeCard(currentRoomId, user.uid, myCardIndex, reps, finalPoints);
+        setCardCompleting(false);
+        return;
       } else {
         setShowEffectBanner(card);
+        setTimeout(() => setShowEffectBanner(null), 3000);
       }
-      setTimeout(() => setShowEffectBanner(null), 3000);
-      await LiveService.completeCard(currentRoomId, user.uid, myCardIndex, bonusReps, bonusPoints);
-    } else {
-      const reps = getCardReps(card, me?.activeEffects || []);
-      const points = getCardPoints(card, me?.activeEffects || []);
-      setIsFlipping(true);
-      setTimeout(() => setIsFlipping(false), 600);
-      await LiveService.completeCard(currentRoomId, user.uid, myCardIndex, reps, points);
     }
+
+    setIsFlipping(true);
+    setTimeout(() => setIsFlipping(false), 600);
+    await LiveService.completeCard(currentRoomId, user.uid, myCardIndex, reps, points);
 
     setCardCompleting(false);
   };
@@ -308,13 +310,21 @@ export default function Live({ user, userProfile }) {
                           <span style={{ fontSize: "20px" }}>{currentCard.icon}</span>
                         </div>
                         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-                          <div style={{ fontSize: "48px", marginBottom: "12px" }}>{currentCard.icon}</div>
-                          <h3 style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "12px", color: currentCard.color, margin: "0 0 12px 0", lineHeight: "1.5" }}>
+                          <div style={{ fontSize: "28px", marginBottom: "6px" }}>{currentCard.icon}</div>
+                          <h3 style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "10px", color: currentCard.color, margin: "0 0 6px 0", lineHeight: "1.4" }}>
                             {currentCard.name}
                           </h3>
-                          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)", lineHeight: "1.6", maxWidth: "240px" }}>
+                          <p style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", lineHeight: "1.4", maxWidth: "240px", margin: "0 0 10px 0" }}>
                             {currentCard.description}
                           </p>
+                          <div style={{ width: "80%", height: "1px", background: `${currentCard.color}40`, margin: "0 auto 10px" }} />
+                          <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "11px", color: "#fff", marginBottom: "4px" }}>
+                            {currentCard.displayName}
+                          </div>
+                          <div style={{ fontSize: "32px", fontWeight: "900", color: currentCard.color, fontFamily: "'Press Start 2P', cursive" }}>
+                            {getCardReps(currentCard, me?.activeEffects || [])}
+                          </div>
+                          <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.5)", fontFamily: "'Press Start 2P', cursive", marginTop: "2px" }}>REPS</div>
                         </div>
                         <div style={{ textAlign: "center" }}>
                           <div style={{ width: "40px", height: "2px", background: currentCard.color, margin: "0 auto", borderRadius: "2px" }} />
@@ -340,7 +350,7 @@ export default function Live({ user, userProfile }) {
                     transition: "all 0.2s"
                   }}
                 >
-                  {cardCompleting ? "..." : currentCard.type === "exercise" ? "COMPLETE REPS ✓" : currentCard.type === "joker" ? "ACTIVATE JOKER!" : "PLAY TRICK!"}
+                  {cardCompleting ? "..." : currentCard.type === "exercise" ? "COMPLETE REPS ✓" : currentCard.type === "joker" ? `DO ${getCardReps(currentCard, me?.activeEffects || [])} REPS + ACTIVATE!` : `DO ${getCardReps(currentCard, me?.activeEffects || [])} REPS + PLAY!`}
                 </button>
               </div>
             ) : null}
