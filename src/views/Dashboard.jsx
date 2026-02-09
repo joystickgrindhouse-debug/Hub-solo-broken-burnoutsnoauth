@@ -55,7 +55,7 @@ export default function Dashboard() {
 
   return (
     <div className="px-3 py-6 pb-[calc(18px+env(safe-area-inset-bottom))] min-h-screen flex flex-col">
-      <div className="max-w-xl mx-auto w-full flex-1 flex flex-col">
+      <div className="max-w-xs mx-auto w-full flex-1 flex flex-col">
         <div className="mb-4">
           <div className="flex items-center gap-2">
             <div className="h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_18px_rgba(255,0,60,0.9)]" />
@@ -64,34 +64,22 @@ export default function Dashboard() {
           <p className="text-white/70 text-xs mt-1">Pick a mode.</p>
         </div>
 
-        {/* ✅ Dense grid: always multiple buttons visible */}
-        <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5">
+        <div className="grid grid-cols-4 gap-2">
           {modes.map((mode) => (
             <button
               key={mode.id}
               type="button"
               onClick={() => handleClick(mode)}
-              className={[
-                "relative rounded-xl overflow-hidden",
-                "border border-red-500/25 bg-zinc-950/70 backdrop-blur-md",
-                "active:scale-[0.99] transition",
-                // ✅ SHRUNK SIZE
-                "h-[75px] sm:h-[85px]",
-                "w-full",
-              ].join(" ")}
-              style={{ maxWidth: "120px" }} // ✅ tighter clamp
+              className="relative rounded-lg overflow-hidden border border-red-500/25 bg-zinc-950/70 backdrop-blur-md active:scale-[0.97] transition aspect-square"
             >
-              {/* icon */}
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 p-1">
-                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg overflow-hidden border border-white/10 bg-black/40">
+                <div className="w-7 h-7 rounded-md overflow-hidden border border-white/10 bg-black/40">
                   <SafeImg src={mode.image} alt={mode.name} className="h-full w-full object-cover" />
                 </div>
-                <div className="text-[9px] sm:text-[10px] font-bold text-white/90 leading-tight uppercase tracking-tighter">
+                <div className="text-[8px] font-bold text-white/90 leading-tight uppercase tracking-tight">
                   {mode.name}
                 </div>
               </div>
-
-              {/* subtle bottom fade */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
             </button>
           ))}
