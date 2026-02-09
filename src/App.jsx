@@ -29,6 +29,7 @@ const RaffleRoom = lazy(() => import("./views/RaffleRoom.jsx"));
 const WaitingForUpload = lazy(() => import("./views/WaitingForUpload.jsx"));
 const AdminDashboard = lazy(() => import("./views/AdminDashboard.jsx"));
 const OtherApps = lazy(() => import("./views/OtherApps.jsx"));
+const MerchShop = lazy(() => import("./views/MerchShop.jsx"));
 const BoxingArena = lazy(() => import("./boxing/pages/Arena.tsx"));
 
 export default function App() {
@@ -412,6 +413,14 @@ export default function App() {
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <RaffleRoom user={user} userProfile={userProfile} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/shop"
+            element={
+              <ProtectedRoute user={user} userProfile={userProfile}>
+                <MerchShop />
               </ProtectedRoute>
             }
           />

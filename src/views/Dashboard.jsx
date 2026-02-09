@@ -32,7 +32,7 @@ export default function Dashboard() {
       { id: "live", name: "Live", image: "/assets/images/live.png.png", link: "/live", external: false },
       { id: "run", name: "Run", image: "/assets/images/run.png.png", link: "/run", external: false },
       { id: "raffle", name: "Raffle", image: "/assets/images/raffle.png.png", link: "/raffle", external: false },
-      { id: "shop", name: "Merch", image: "/assets/images/shop.png.png", link: MERCH_URL, external: true },
+      { id: "shop", name: "Merch", image: "/assets/images/shop.png.png", link: "/shop", external: false },
       { id: "soon", name: "Soon", image: "/assets/images/comingsoon.png.png", link: "#", external: false, comingSoon: true },
     ],
     []
