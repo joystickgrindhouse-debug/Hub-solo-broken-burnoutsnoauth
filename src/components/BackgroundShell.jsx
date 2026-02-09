@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 const BG_URL = "/assets/images/background.png";
 
 export default function BackgroundShell({ children }) {
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/" || location.pathname === "/login";
   const bgRef = useRef(null);
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(() => {
@@ -60,21 +63,23 @@ export default function BackgroundShell({ children }) {
 
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", color: "#fff", overflow: "hidden", backgroundColor: "#000" }}>
-      <div
-        ref={bgRef}
-        style={{
-          ...abs,
-          zIndex: 0,
-          backgroundImage: `url(${BG_URL})`,
-          backgroundRepeat: "no-repeat",
-          backgroundSize,
-          backgroundPosition,
-          backgroundColor: "#000",
-          transformOrigin: isMobile ? "center top" : "center center",
-          filter: "brightness(0.85) contrast(1.1) saturate(1.25)",
-          transition: "transform 0.2s",
-        }}
-      />
+      {!isLoginPage && (
+        <div
+          ref={bgRef}
+          style={{
+            ...abs,
+            zIndex: 0,
+            backgroundImage: `url(${BG_URL})`,
+            backgroundRepeat: "no-repeat",
+            backgroundSize,
+            backgroundPosition,
+            backgroundColor: "#000",
+            transformOrigin: isMobile ? "center top" : "center center",
+            filter: "brightness(0.85) contrast(1.1) saturate(1.25)",
+            transition: "transform 0.2s",
+          }}
+        />
+      )}
 
       <div style={{ ...abs, zIndex: 1, background: "rgba(0,0,0,0.15)" }} />
 
