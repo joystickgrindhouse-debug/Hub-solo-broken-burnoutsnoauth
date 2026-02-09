@@ -80,7 +80,7 @@ function registerChatRoutes(app) {
         const cacheKey = `free_msgs_${conversationId}_${today}`;
         if (!global._freeMsgCounts) global._freeMsgCounts = {};
         global._freeMsgCounts[cacheKey] = (global._freeMsgCounts[cacheKey] || 0) + 1;
-        if (global._freeMsgCounts[cacheKey] > 15) {
+        if (global._freeMsgCounts[cacheKey] > 10) {
           res.setHeader("Content-Type", "text/event-stream");
           res.setHeader("Cache-Control", "no-cache");
           res.write(`data: ${JSON.stringify({ content: "You've reached your daily message limit. Upgrade to Rivalis Pro for unlimited coaching. 🔒" })}\n\n`);
