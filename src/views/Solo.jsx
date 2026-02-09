@@ -9,7 +9,7 @@ export default function Solo({ user, userProfile }) {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
   const navigate = useNavigate();
-  const externalAppUrl = "https://solochallenge.netlify.app/";
+  const externalAppUrl = "https://riv-solo.vercel.app/";
 
   useEffect(() => {
     const getAuthToken = async () => {
@@ -26,7 +26,7 @@ export default function Solo({ user, userProfile }) {
 
     const handleMessage = async (event) => {
       // Allow messages from the new solo app
-      if (event.origin !== "https://solochallenge.netlify.app" && event.origin !== window.location.origin) return;
+      if (event.origin !== "https://riv-solo.vercel.app" && event.origin !== window.location.origin) return;
       
       if (event.data.type === "SESSION_STATS") {
         await handleSessionEnd(event.data.stats);
