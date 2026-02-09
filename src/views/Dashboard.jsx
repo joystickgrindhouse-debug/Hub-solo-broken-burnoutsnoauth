@@ -118,19 +118,25 @@ export default function Dashboard() {
       </div>
 
       <div style={gridStyle}>
-        {modes.map((mode) => (
-          <button
-            key={mode.id}
-            type="button"
-            onClick={() => handleClick(mode)}
-            style={tileStyle}
-          >
-            <div style={imgWrapStyle}>
-              <SafeImg src={mode.image} alt={mode.name} style={imgStyle} className="" />
-            </div>
-            <div style={labelStyle}>{mode.name}</div>
-          </button>
-        ))}
+        {modes.map((mode, idx) => {
+          const isLast = idx === modes.length - 1 && modes.length % 3 === 1;
+          return (
+            <button
+              key={mode.id}
+              type="button"
+              onClick={() => handleClick(mode)}
+              style={{
+                ...tileStyle,
+                ...(isLast ? { gridColumn: "2 / 3" } : {}),
+              }}
+            >
+              <div style={imgWrapStyle}>
+                <SafeImg src={mode.image} alt={mode.name} style={imgStyle} className="" />
+              </div>
+              <div style={labelStyle}>{mode.name}</div>
+            </button>
+          );
+        })}
       </div>
 
       {showComingSoon && (
