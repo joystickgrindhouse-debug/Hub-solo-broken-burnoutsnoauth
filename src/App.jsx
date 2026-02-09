@@ -148,6 +148,14 @@ export default function App() {
           if (result.success && result.profile) {
             setUserProfile(result.profile);
 
+            UserService.updateLoginStreak(currentUser.uid).then((streakResult) => {
+              if (streakResult.success) {
+                refreshUserProfile(currentUser.uid);
+              }
+            }).catch(err => 
+              console.error("Login streak update failed:", err)
+            );
+
             if (result.profile.hasCompletedSetup) {
               setShowOnboarding(false);
               setOnboardingComplete(true);

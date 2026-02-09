@@ -167,6 +167,45 @@ export const UserService = {
     });
   },
 
+  async updateLoginStreak(userId) {
+    try {
+      const userDocRef = doc(db, "users", userId);
+      const userDoc = await getDoc(userDocRef);
+      if (!userDoc.exists()) return { success: false };
+
+      const data = userDoc.data();
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+      if (data.lastLoginDate === todayStr) {
+        return { success: true, streak: data.loginStreak || 1 };
+      }
+
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+      let newStreak = 1;
+      if (data.lastLoginDate === yesterdayStr) {
+        newStreak = (data.loginStreak || 0) + 1;
+      }
+
+      const longestStreak = Math.max(newStreak, data.longestLoginStreak || 0);
+
+      await updateDoc(userDocRef, {
+        loginStreak: newStreak,
+        longestLoginStreak: longestStreak,
+        lastLoginDate: todayStr,
+        updatedAt: Timestamp.now()
+      });
+
+      return { success: true, streak: newStreak };
+    } catch (error) {
+      console.error("Error updating login streak:", error);
+      return { success: false, error: error.message };
+    }
+  },
+
   async completeUserSetup(userId, nickname, avatarURL) {
     try {
       const userDocRef = doc(db, "users", userId);

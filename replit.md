@@ -79,8 +79,10 @@ I prefer simple, clear explanations and want the agent to adopt an iterative dev
 - **DiceBear API (v7.x):** For avatar generation and customization.
 
 ## Recent Changes
+- **Feb 2026:** Added login streak tracking system. `updateLoginStreak()` in userService tracks consecutive daily logins via `loginStreak`, `longestLoginStreak`, `lastLoginDate` fields in Firestore. Called on auth state change in App.jsx. Profile displays login streak and best streak. "Streak Keeper" achievement uses login streak.
+- **Feb 2026:** Profile biometric privacy: height, weight, BMI, gender, fitness level, workout frequency, and injuries are hidden from profile view mode. Only age is displayed publicly. All biometric data remains editable and saved to Firestore.
 - **Feb 2026:** Fixed login persistence to always use `browserLocalPersistence` — users stay logged in until they explicitly sign out. Removed Remember Me toggle from Login page.
-- **Feb 2026:** Redesigned Merch Shop: replaced broken iframe embed with product card grid (6 items with generated images). Each card opens Printful shop in new tab. Theme-aware styling. Images in `public/merch/`.
+- **Feb 2026:** Redesigned Merch Shop: replaced broken iframe with product card grid using real Printful product photos (tee, hoodie, bottle). Each card opens Printful shop in new tab. Theme-aware styling. Images in `public/merch/`.
 - **Feb 2026:** Removed white-theme image filter that turned dashboard tile PNGs into white boxes. Images now display normally in both themes.
 - **Feb 2026:** Implemented fully functional theme toggle system. Created `src/context/ThemeContext.jsx` with ThemeProvider and useTheme hook. Two themes: red-black (original) and white-black (all accents white). Updated `assets/styles/main.css` to use CSS custom properties throughout. Updated all 25+ components to use theme-aware colors via useTheme hook or CSS variables. Theme persists via localStorage.
 - **Feb 2026:** Added Fitness Dashboard (`/fitness` route, `src/views/FitnessDashboard.jsx`) with BMI gauge, biometric stats, objectives display, and Pro-locked AI Training Plan section. Enhanced chatbot tour intake to collect height (ft/in), weight (lbs), fitness level, workout frequency, injuries, and auto-calculate BMI. Updated Profile Identity Details to display and edit all biometric fields with live BMI recalculation on save.

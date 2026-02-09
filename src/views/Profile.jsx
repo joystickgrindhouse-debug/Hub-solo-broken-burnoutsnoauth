@@ -296,7 +296,7 @@ export default function Profile({ user, userProfile }) {
     { id: 8, name: "Breaking Stride", description: "Run 1 mile total", unlocked: totalMiles >= 1, icon: "⚡" },
     { id: 9, name: "Road Warrior", description: "Run 50 total miles", unlocked: totalMiles >= 50, icon: "🛣️" },
     { id: 4, name: "Ticket Collector", description: "Earn 10 raffle tickets", unlocked: ticketBalance >= 10, icon: "🎟️" },
-    { id: 5, name: "Streak Keeper", description: "Maintain a 7-day streak", unlocked: streaks.current >= 7, icon: "🔥" },
+    { id: 5, name: "Streak Keeper", description: "Maintain a 7-day login streak", unlocked: (userProfile?.loginStreak || 0) >= 7, icon: "🔥" },
     { id: 6, name: "Elite Athlete", description: "Complete 1000 total reps", unlocked: totalReps >= 1000, icon: "⭐" }
   ];
 
@@ -606,47 +606,10 @@ export default function Profile({ user, userProfile }) {
                   {bio || "No bio yet. Click Edit to add one!"}
                 </p>
 
-                {(userProfile?.age || userProfile?.height || userProfile?.weight || userProfile?.bmi) && (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: "0.5rem", marginBottom: "1rem" }}>
-                    {userProfile?.age && (
-                      <div style={{ background: t.shadowXxs, padding: "8px", borderRadius: "8px", textAlign: "center", border: `1px solid ${t.shadowXs}` }}>
-                        <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.6rem", letterSpacing: "1px", marginBottom: "4px" }}>AGE</div>
-                        <div style={{ color: "#fff", fontSize: "1rem", fontWeight: "bold" }}>{userProfile.age}</div>
-                      </div>
-                    )}
-                    {userProfile?.height && (
-                      <div style={{ background: t.shadowXxs, padding: "8px", borderRadius: "8px", textAlign: "center", border: `1px solid ${t.shadowXs}` }}>
-                        <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.6rem", letterSpacing: "1px", marginBottom: "4px" }}>HEIGHT</div>
-                        <div style={{ color: "#fff", fontSize: "1rem", fontWeight: "bold" }}>{userProfile.height}</div>
-                      </div>
-                    )}
-                    {userProfile?.weight && (
-                      <div style={{ background: t.shadowXxs, padding: "8px", borderRadius: "8px", textAlign: "center", border: `1px solid ${t.shadowXs}` }}>
-                        <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.6rem", letterSpacing: "1px", marginBottom: "4px" }}>WEIGHT</div>
-                        <div style={{ color: "#fff", fontSize: "1rem", fontWeight: "bold" }}>{userProfile.weight} lbs</div>
-                      </div>
-                    )}
-                    {userProfile?.bmi && (
-                      <div style={{ background: t.shadowXxs, padding: "8px", borderRadius: "8px", textAlign: "center", border: `1px solid ${t.shadowXs}` }}>
-                        <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.6rem", letterSpacing: "1px", marginBottom: "4px" }}>BMI</div>
-                        <div style={{ color: t.accent, fontSize: "1rem", fontWeight: "bold" }}>{userProfile.bmi}</div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {(userProfile?.fitnessLevel || userProfile?.workoutFrequency || userProfile?.gender) && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginBottom: "1rem" }}>
-                    {userProfile?.gender && <span style={{ background: t.shadowXs, padding: "3px 8px", borderRadius: "4px", fontSize: "0.75rem", border: `1px solid ${t.shadowXs}`, color: "rgba(255,255,255,0.7)" }}>{userProfile.gender}</span>}
-                    {userProfile?.fitnessLevel && <span style={{ background: t.shadowXs, padding: "3px 8px", borderRadius: "4px", fontSize: "0.75rem", border: `1px solid ${t.shadowXs}`, color: "rgba(255,255,255,0.7)" }}>{userProfile.fitnessLevel}</span>}
-                    {userProfile?.workoutFrequency && <span style={{ background: t.shadowXs, padding: "3px 8px", borderRadius: "4px", fontSize: "0.75rem", border: `1px solid ${t.shadowXs}`, color: "rgba(255,255,255,0.7)" }}>{userProfile.workoutFrequency} days/week</span>}
-                  </div>
-                )}
-
-                {userProfile?.injuries && userProfile.injuries !== "none" && userProfile.injuries !== "None" && (
-                  <div style={{ marginBottom: "1rem" }}>
-                    <div style={{ color: t.accent, fontSize: "0.6rem", fontFamily: "'Press Start 2P', cursive", marginBottom: "0.3rem" }}>INJURIES</div>
-                    <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.85rem" }}>{userProfile.injuries}</div>
+                {userProfile?.age && (
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", marginBottom: "1rem", background: t.shadowXxs, padding: "6px 12px", borderRadius: "8px", border: `1px solid ${t.shadowXs}` }}>
+                    <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.6rem", letterSpacing: "1px" }}>AGE</span>
+                    <span style={{ color: "#fff", fontSize: "1rem", fontWeight: "bold" }}>{userProfile.age}</span>
                   </div>
                 )}
 
@@ -702,9 +665,9 @@ export default function Profile({ user, userProfile }) {
           }}>
             <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🔥</div>
             <div style={{ color: t.accent, fontSize: "2rem", fontWeight: "bold", textShadow: `0 0 10px ${t.shadow}` }}>
-              {streaks.current}
+              {userProfile?.loginStreak || 0}
             </div>
-            <div style={{ color: "#fff", fontSize: "0.9rem" }}>Current Streak</div>
+            <div style={{ color: "#fff", fontSize: "0.9rem" }}>Login Streak</div>
           </div>
 
           <div style={{
@@ -717,9 +680,9 @@ export default function Profile({ user, userProfile }) {
           }}>
             <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>⭐</div>
             <div style={{ color: t.accent, fontSize: "2rem", fontWeight: "bold", textShadow: `0 0 10px ${t.shadow}` }}>
-              {streaks.longest}
+              {userProfile?.longestLoginStreak || 0}
             </div>
-            <div style={{ color: "#fff", fontSize: "0.9rem" }}>Longest Streak</div>
+            <div style={{ color: "#fff", fontSize: "0.9rem" }}>Best Login Streak</div>
           </div>
 
           <div style={{

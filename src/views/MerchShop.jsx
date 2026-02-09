@@ -5,12 +5,9 @@ import { useTheme } from "../context/ThemeContext.jsx";
 const SHOP_URL = "https://rivalis.printful.me";
 
 const PRODUCTS = [
-  { name: "Rivalis Tee", price: "$29.99", image: "/merch/tshirt.png", tag: "BESTSELLER" },
-  { name: "Rivalis Hoodie", price: "$54.99", image: "/merch/hoodie.png", tag: "POPULAR" },
-  { name: "Rivalis Tank", price: "$24.99", image: "/merch/tank.png", tag: null },
-  { name: "Rivalis Joggers", price: "$44.99", image: "/merch/joggers.png", tag: "NEW" },
-  { name: "Rivalis Cap", price: "$22.99", image: "/merch/cap.png", tag: null },
-  { name: "Rivalis Bottle", price: "$19.99", image: "/merch/bottle.png", tag: null },
+  { name: "Rivalis Tee", price: "$29.99", image: "/merch/tshirt.jpg", tag: "BESTSELLER" },
+  { name: "Rivalis Hoodie", price: "$54.99", image: "/merch/hoodie.jpg", tag: "POPULAR" },
+  { name: "Rivalis Bottle", price: "$19.99", image: "/merch/bottle.jpg", tag: null },
 ];
 
 export default function MerchShop() {
