@@ -31,6 +31,7 @@ const AdminDashboard = lazy(() => import("./views/AdminDashboard.jsx"));
 const OtherApps = lazy(() => import("./views/OtherApps.jsx"));
 const MerchShop = lazy(() => import("./views/MerchShop.jsx"));
 const BoxingArena = lazy(() => import("./boxing/pages/Arena.tsx"));
+const Subscription = lazy(() => import("./views/Subscription.jsx"));
 
 export default function App() {
   const navigate = useNavigate();
@@ -238,7 +239,7 @@ export default function App() {
 
   return (
     <BackgroundShell>
-      <AdBanner />
+      {(!userProfile || userProfile.subscriptionStatus !== 'active') && <AdBanner />}
 
       {/* PERSISTENT OVERLAY FOR GAMES */}
       {activeGame && (
@@ -479,6 +480,14 @@ export default function App() {
             element={
               <ProtectedRoute user={user} userProfile={userProfile}>
                 <BoxingArena />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/subscription"
+            element={
+              <ProtectedRoute user={user} userProfile={userProfile}>
+                <Subscription user={user} userProfile={userProfile} />
               </ProtectedRoute>
             }
           />
