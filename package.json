@@ -29,7 +29,7 @@
     "json2csv": "^6.0.0-alpha.2",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.562.0",
-    "openai": "^6.18.0",
+    "openai": "^6.19.0",
     "p-limit": "^7.3.0",
     "p-retry": "^7.1.1",
     "pg": "^8.18.0",
