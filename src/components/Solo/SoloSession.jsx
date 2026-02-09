@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { shuffleDeck, updateUserStats, finalizeSession } from '../../logic/burnoutsHelpers';
+import { shuffleSoloDeck, updateUserStats, finalizeSession } from '../../logic/burnoutsHelpers';
 import { processExercise, createStateRefs, resetStateRefs } from '../../logic/exerciseEngine';
 import PoseVisualizer from '../Burnouts/PoseVisualizer';
 
@@ -8,8 +8,8 @@ function speak(text) {
     window.speechSynthesis.speak(utterance);
 }
 
-export default function SoloSession({ userId, muscleGroup, onSessionEnd }) {
-    const [deck] = useState(() => shuffleDeck(muscleGroup));
+export default function SoloSession({ userId, onSessionEnd }) {
+    const [deck] = useState(() => shuffleSoloDeck());
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [totalReps, setTotalReps] = useState(0);
     const [currentReps, setCurrentReps] = useState(0);
@@ -95,15 +95,15 @@ export default function SoloSession({ userId, muscleGroup, onSessionEnd }) {
                     return nextIndex;
                 } else {
                     setSessionActive(false);
-                    finalizeSession(userId, totalReps, ticketsEarned, muscleGroup);
+                    finalizeSession(userId, totalReps, ticketsEarned, "Solo");
                     if (onSessionEnd) {
-                        onSessionEnd({ reps: totalReps, duration: timeElapsed, category: muscleGroup });
+                        onSessionEnd({ reps: totalReps, duration: timeElapsed, category: "Solo" });
                     }
                     return prevIndex;
                 }
             });
         }, 1500);
-    }, [deck, isMuted, userId, totalReps, ticketsEarned, muscleGroup, onSessionEnd, timeElapsed]);
+    }, [deck, isMuted, userId, totalReps, ticketsEarned, onSessionEnd, timeElapsed]);
 
     const handleRep = useCallback((inc) => {
         const next = currentReps + inc;
@@ -120,13 +120,13 @@ export default function SoloSession({ userId, muscleGroup, onSessionEnd }) {
         const newTickets = Math.floor(newTotalReps / 30);
         if (newTickets > ticketsEarned) {
             setTicketsEarned(newTickets);
-            updateUserStats(userId, newTotalReps, newTickets, muscleGroup);
+            updateUserStats(userId, newTotalReps, newTickets, "Solo");
         }
 
         if (Math.floor(next) > Math.floor(currentReps) && !isMuted) {
             speak(Math.floor(next).toString());
         }
-    }, [currentReps, currentCard, totalReps, ticketsEarned, isMuted, userId, muscleGroup, completeCard]);
+    }, [currentReps, currentCard, totalReps, ticketsEarned, isMuted, userId, completeCard]);
 
     const processPose = useCallback((landmarks) => {
         if (!currentCard || !sessionActive || cooldown > 0 || !landmarks) return;
@@ -143,11 +143,11 @@ export default function SoloSession({ userId, muscleGroup, onSessionEnd }) {
 
     const handleStopSession = useCallback(() => {
         setSessionActive(false);
-        finalizeSession(userId, totalReps, ticketsEarned, muscleGroup);
+        finalizeSession(userId, totalReps, ticketsEarned, "Solo");
         if (onSessionEnd) {
-            onSessionEnd({ reps: totalReps, duration: timeElapsed, category: muscleGroup });
+            onSessionEnd({ reps: totalReps, duration: timeElapsed, category: "Solo" });
         }
-    }, [userId, totalReps, ticketsEarned, muscleGroup, onSessionEnd, timeElapsed]);
+    }, [userId, totalReps, ticketsEarned, onSessionEnd, timeElapsed]);
 
     return (
         <div className="solo-session-container">

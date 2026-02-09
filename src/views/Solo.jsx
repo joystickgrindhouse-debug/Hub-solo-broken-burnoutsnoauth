@@ -1,11 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { LeaderboardService } from "../services/leaderboardService.js";
-import SoloSelection from "../components/Solo/SoloSelection.jsx";
 import SoloSession from "../components/Solo/SoloSession.jsx";
 import "../styles/Solo.css";
 
 export default function Solo({ user, userProfile }) {
-  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [sessionActive, setSessionActive] = useState(true);
+  const navigate = useNavigate();
 
   const handleSessionEnd = async (stats) => {
     if (!user || !stats) return;
@@ -18,7 +19,7 @@ export default function Solo({ user, userProfile }) {
         type: "SESSION_STATS",
         stats: stats
       }, window.location.origin);
-      setSelectedGroup(null);
+      setSessionActive(false);
       return;
     }
 
@@ -38,18 +39,30 @@ export default function Solo({ user, userProfile }) {
       console.error("Failed to save solo session:", error);
     }
 
-    setSelectedGroup(null);
+    setSessionActive(false);
   };
 
-  if (selectedGroup) {
+  if (!sessionActive) {
     return (
-      <SoloSession
-        userId={user?.uid}
-        muscleGroup={selectedGroup}
-        onSessionEnd={handleSessionEnd}
-      />
+      <div className="solo-complete-screen">
+        <h1 className="solo-title">SESSION COMPLETE</h1>
+        <p className="solo-subtitle">Great work, Rival!</p>
+        <div className="solo-complete-actions">
+          <button className="solo-play-again-btn" onClick={() => setSessionActive(true)}>
+            PLAY AGAIN
+          </button>
+          <button className="solo-back-btn" onClick={() => navigate('/dashboard')}>
+            BACK TO HUB
+          </button>
+        </div>
+      </div>
     );
   }
 
-  return <SoloSelection onSelect={setSelectedGroup} />;
+  return (
+    <SoloSession
+      userId={user?.uid}
+      onSessionEnd={handleSessionEnd}
+    />
+  );
 }
