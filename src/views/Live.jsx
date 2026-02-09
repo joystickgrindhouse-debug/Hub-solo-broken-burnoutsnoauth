@@ -35,6 +35,7 @@ export default function Live({ user, userProfile }) {
   const [poseFeedback, setPoseFeedback] = useState("");
   const [poseState, setPoseState] = useState("IDLE");
   const [cameraActive, setCameraActive] = useState(false);
+  const [discordLinkInput, setDiscordLinkInput] = useState("");
   const timerRef = useRef(null);
   const stateRefsRef = useRef(createStateRefs());
   const autoCompleteTriggered = useRef(false);
@@ -80,6 +81,12 @@ export default function Live({ user, userProfile }) {
     });
     return () => unsub();
   }, [currentRoomId]);
+
+  useEffect(() => {
+    if (roomData?.discordVcLink !== undefined && discordLinkInput !== roomData.discordVcLink && !document.activeElement?.placeholder?.includes("Discord")) {
+      setDiscordLinkInput(roomData.discordVcLink || "");
+    }
+  }, [roomData?.discordVcLink]);
 
   useEffect(() => {
     setCurrentReps(0);
@@ -305,9 +312,20 @@ export default function Live({ user, userProfile }) {
             <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px" }}>{formatTime(matchTime)}</span>
             <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "10px" }}>Card {sharedCardIndex + 1}/{roomData.deck?.length}</span>
           </div>
-          <button onClick={handleQuit} style={{ background: "transparent", border: `1px solid ${t.accent}`, color: t.accent, padding: "6px 16px", borderRadius: "6px", fontFamily: "'Press Start 2P', cursive", fontSize: "8px", cursor: "pointer" }}>
-            EXIT
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {roomData.discordVcLink && (
+              <a href={roomData.discordVcLink} target="_blank" rel="noopener noreferrer" style={{
+                background: "#5865F2", color: "#fff", padding: "6px 12px", borderRadius: "6px",
+                fontFamily: "'Press Start 2P', cursive", fontSize: "7px", cursor: "pointer",
+                textDecoration: "none", display: "flex", alignItems: "center", gap: "4px"
+              }}>
+                🎙️ VC
+              </a>
+            )}
+            <button onClick={handleQuit} style={{ background: "transparent", border: `1px solid ${t.accent}`, color: t.accent, padding: "6px 16px", borderRadius: "6px", fontFamily: "'Press Start 2P', cursive", fontSize: "8px", cursor: "pointer" }}>
+              EXIT
+            </button>
+          </div>
         </div>
 
         <div style={{ width: "100%", height: "3px", background: "rgba(255,255,255,0.05)" }}>
@@ -328,6 +346,9 @@ export default function Live({ user, userProfile }) {
             ) : (
               <>
                 <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#FFD700", animation: "pulse 1s infinite" }} />
+                {turnPlayer?.avatar && (
+                  <img src={turnPlayer.avatar} alt="" style={{ width: "20px", height: "20px", borderRadius: "50%", border: "1px solid #FFD700" }} />
+                )}
                 <span style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "10px", color: "rgba(255,255,255,0.6)" }}>
                   {turnPlayer?.userName || "Rival"}'s turn
                 </span>
@@ -452,6 +473,13 @@ export default function Live({ user, userProfile }) {
                 background: "rgba(255,255,255,0.03)", borderRadius: "16px",
                 border: "1px solid rgba(255,255,255,0.06)", textAlign: "center"
               }}>
+                {turnPlayer?.avatar && (
+                  <img src={turnPlayer.avatar} alt="" style={{
+                    width: "56px", height: "56px", borderRadius: "50%",
+                    border: `2px solid ${t.accent}`, margin: "0 auto 12px",
+                    display: "block", boxShadow: `0 0 15px ${t.accent}30`
+                  }} />
+                )}
                 <div style={{ fontSize: "36px", marginBottom: "12px" }}>
                   {currentCard.type === "exercise" ? currentCard.suit : currentCard.icon}
                 </div>
@@ -644,6 +672,50 @@ export default function Live({ user, userProfile }) {
               </div>
             </div>
 
+            <div style={{ padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                <span style={{ fontSize: "16px" }}>🎙️</span>
+                <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontFamily: "'Press Start 2P', cursive" }}>DISCORD VOICE CHAT</span>
+              </div>
+              {isHost ? (
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <input
+                    type="text"
+                    placeholder="Paste Discord invite link..."
+                    value={discordLinkInput}
+                    onChange={(e) => setDiscordLinkInput(e.target.value)}
+                    onBlur={() => LiveService.setDiscordLink(currentRoomId, discordLinkInput)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.target.blur(); } }}
+                    style={{
+                      flex: 1, padding: "10px 14px", background: "rgba(0,0,0,0.4)",
+                      border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px",
+                      color: "#fff", fontSize: "10px", outline: "none"
+                    }}
+                  />
+                </div>
+              ) : roomData.discordVcLink ? (
+                <a
+                  href={roomData.discordVcLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                    padding: "12px 20px", background: "linear-gradient(135deg, #5865F2, #4752C4)",
+                    color: "#fff", border: "none", borderRadius: "10px",
+                    fontFamily: "'Press Start 2P', cursive", fontSize: "9px",
+                    textDecoration: "none", cursor: "pointer",
+                    boxShadow: "0 4px 15px rgba(88,101,242,0.3)"
+                  }}
+                >
+                  🎙️ JOIN DISCORD VC
+                </a>
+              ) : (
+                <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)", fontStyle: "italic" }}>
+                  Waiting for host to share Discord link...
+                </div>
+              )}
+            </div>
+
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
               <button onClick={handleToggleReady} style={{
                 flex: 1, padding: "16px 24px",
@@ -801,11 +873,34 @@ export default function Live({ user, userProfile }) {
                   background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)"
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                    <span style={{ fontSize: "24px" }}>{SHOWDOWNS.find((s) => s.category === room.showdown?.category)?.icon || "⚔️"}</span>
+                    <div style={{ position: "relative" }}>
+                      {room.hostAvatar ? (
+                        <img src={room.hostAvatar} alt="" style={{ width: "44px", height: "44px", borderRadius: "10px", border: `2px solid ${t.accent}40` }} />
+                      ) : (
+                        <div style={{ width: "44px", height: "44px", borderRadius: "10px", background: "#222", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>
+                          {SHOWDOWNS.find((s) => s.category === room.showdown?.category)?.icon || "⚔️"}
+                        </div>
+                      )}
+                      <div style={{
+                        position: "absolute", bottom: "-2px", right: "-2px",
+                        width: "16px", height: "16px", borderRadius: "4px",
+                        background: "#FFD700", display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "8px", border: "1px solid #000"
+                      }}>👑</div>
+                    </div>
                     <div>
                       <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "10px", color: "#fff", marginBottom: "4px" }}>{room.roomName}</div>
                       <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)" }}>
                         {room.hostName} · {mInfo.icon} {mInfo.name} · {room.players?.length || 0}/{room.maxPlayers || 6} players
+                      </div>
+                      <div style={{ display: "flex", gap: "2px", marginTop: "4px" }}>
+                        {room.players?.slice(0, 6).map((p) => (
+                          p.avatar ? (
+                            <img key={p.userId} src={p.avatar} alt="" style={{ width: "18px", height: "18px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)" }} />
+                          ) : (
+                            <div key={p.userId} style={{ width: "18px", height: "18px", borderRadius: "4px", background: "#333" }} />
+                          )
+                        ))}
                       </div>
                     </div>
                   </div>

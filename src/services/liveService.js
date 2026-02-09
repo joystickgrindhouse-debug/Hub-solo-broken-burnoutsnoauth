@@ -128,13 +128,25 @@ export const LiveService = {
       if (players.length === 0) {
         await deleteDoc(roomRef);
       } else {
+        const newHost = roomData.hostId === userId;
         await updateDoc(roomRef, {
           players,
-          hostId: roomData.hostId === userId ? players[0].userId : roomData.hostId,
-          hostName: roomData.hostId === userId ? players[0].userName : roomData.hostName,
+          hostId: newHost ? players[0].userId : roomData.hostId,
+          hostName: newHost ? players[0].userName : roomData.hostName,
+          hostAvatar: newHost ? (players[0].avatar || "") : (roomData.hostAvatar || ""),
           lastActivity: Timestamp.now(),
         });
       }
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  async setDiscordLink(roomId, link) {
+    try {
+      const roomRef = doc(db, "liveRooms", roomId);
+      await updateDoc(roomRef, { discordVcLink: link || "", lastActivity: Timestamp.now() });
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
