@@ -1,48 +1,40 @@
-import { useState } from 'react';
-import { EXERCISE_LIST, CATEGORIES } from '../../logic/exerciseEngine';
+import { useNavigate } from "react-router-dom";
 
-export default function SoloSelection({ onSelectExercise }) {
-    const [selectedCategory, setSelectedCategory] = useState(null);
+const MUSCLE_GROUPS = [
+  { name: "Arms", icon: "💪" },
+  { name: "Legs", icon: "🦵" },
+  { name: "Core", icon: "🔥" },
+  { name: "Full Body", icon: "⚡" },
+];
 
-    const filteredExercises = selectedCategory
-        ? EXERCISE_LIST.filter(e => e.category === selectedCategory)
-        : EXERCISE_LIST;
+export default function SoloSelection({ onSelect }) {
+  const navigate = useNavigate();
 
-    return (
-        <div className="solo-selection-container">
-            <h1 className="solo-title">SOLO MODE</h1>
-            <p className="solo-subtitle">Choose your exercise</p>
-
-            <div className="solo-categories">
-                <button
-                    className={`solo-category-btn ${!selectedCategory ? 'active' : ''}`}
-                    onClick={() => setSelectedCategory(null)}
-                >
-                    ALL
-                </button>
-                {CATEGORIES.map(cat => (
-                    <button
-                        key={cat}
-                        className={`solo-category-btn ${selectedCategory === cat ? 'active' : ''}`}
-                        onClick={() => setSelectedCategory(cat)}
-                    >
-                        {cat.toUpperCase()}
-                    </button>
-                ))}
-            </div>
-
-            <div className="solo-exercise-grid">
-                {filteredExercises.map(exercise => (
-                    <button
-                        key={exercise.id}
-                        className="solo-exercise-card"
-                        onClick={() => onSelectExercise(exercise)}
-                    >
-                        <span className="solo-exercise-category-tag">{exercise.category}</span>
-                        <span className="solo-exercise-name">{exercise.name}</span>
-                    </button>
-                ))}
-            </div>
-        </div>
-    );
+  return (
+    <div className="solo-selection-container">
+      <div className="solo-hero-text">
+        <h1 className="solo-title">SOLO</h1>
+        <h2 className="solo-subtitle">Draw Your Deck. Crush Every Card.</h2>
+      </div>
+      <h3 className="solo-prompt">SELECT MUSCLE GROUP</h3>
+      <div className="solo-buttons-grid">
+        {MUSCLE_GROUPS.map((group) => (
+          <div
+            key={group.name}
+            className="solo-button-card"
+            onClick={() => onSelect(group.name)}
+          >
+            <span className="solo-button-icon">{group.icon}</span>
+            <span>{group.name}</span>
+          </div>
+        ))}
+      </div>
+      <button
+        className="solo-back-btn"
+        onClick={() => navigate('/dashboard')}
+      >
+        BACK TO HUB
+      </button>
+    </div>
+  );
 }

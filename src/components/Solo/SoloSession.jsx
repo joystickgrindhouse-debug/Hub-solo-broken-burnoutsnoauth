@@ -1,28 +1,28 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { shuffleDeck, updateUserStats, finalizeSession } from '../../logic/burnoutsHelpers';
+import { processExercise, createStateRefs, resetStateRefs } from '../../logic/exerciseEngine';
 import PoseVisualizer from '../Burnouts/PoseVisualizer';
-import { processExercise, createStateRefs } from '../../logic/exerciseEngine';
 
 function speak(text) {
     const utterance = new SpeechSynthesisUtterance(text);
     window.speechSynthesis.speak(utterance);
 }
 
-export default function SoloSession({ userId, exercise, onSessionEnd }) {
-    const [reps, setReps] = useState(0);
-    const [feedback, setFeedback] = useState('Get Ready');
+export default function SoloSession({ userId, muscleGroup, onSessionEnd }) {
+    const [deck] = useState(() => shuffleDeck(muscleGroup));
+    const [currentCardIndex, setCurrentCardIndex] = useState(0);
+    const [totalReps, setTotalReps] = useState(0);
+    const [currentReps, setCurrentReps] = useState(0);
+    const [ticketsEarned, setTicketsEarned] = useState(0);
+    const [sessionActive, setSessionActive] = useState(true);
+    const [feedback, setFeedback] = useState("Get Ready");
     const [movementState, setMovementState] = useState('IDLE');
     const [timeElapsed, setTimeElapsed] = useState(0);
     const [isMuted, setIsMuted] = useState(false);
-    const [sessionActive, setSessionActive] = useState(true);
+    const [cooldown, setCooldown] = useState(0);
 
     const stateRefs = useRef(createStateRefs());
-    const repsRef = useRef(0);
-
-    useEffect(() => {
-        if (!isMuted) {
-            speak(`Starting ${exercise.name}. Let's go!`);
-        }
-    }, []);
+    const currentCard = deck[currentCardIndex];
 
     useEffect(() => {
         let interval;
@@ -34,46 +34,120 @@ export default function SoloSession({ userId, exercise, onSessionEnd }) {
         return () => clearInterval(interval);
     }, [sessionActive]);
 
+    const lastAnnouncedCardIndex = useRef(-1);
+
+    useEffect(() => {
+        if (deck.length > 0 && sessionActive && cooldown === 0) {
+            if (lastAnnouncedCardIndex.current !== currentCardIndex) {
+                speak(`${deck[currentCardIndex].exercise}, ${deck[currentCardIndex].reps} reps.`);
+                lastAnnouncedCardIndex.current = currentCardIndex;
+            }
+        }
+    }, [currentCardIndex, cooldown, sessionActive, deck]);
+
+    useEffect(() => {
+        let timer;
+        if (cooldown > 0) {
+            timer = setInterval(() => {
+                setCooldown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(timer);
+                        return 0;
+                    }
+                    const next = prev - 1;
+                    if (next <= 5 && !isMuted) {
+                        speak(next.toString());
+                    }
+                    return next;
+                });
+            }, 1000);
+        }
+        return () => clearInterval(timer);
+    }, [cooldown]);
+
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
         const secs = (seconds % 60).toString().padStart(2, '0');
         return `${mins}:${secs}`;
     };
 
+    const getSuitSymbol = (suit) => {
+        const symbols = { 'Spades': '♠', 'Hearts': '♥', 'Clubs': '♣', 'Diamonds': '♦' };
+        return symbols[suit] || '';
+    };
+
+    const getSuitColor = (suit) => {
+        return suit === 'Hearts' || suit === 'Diamonds' ? '#ff4444' : '#ffffff';
+    };
+
+    const completeCard = useCallback(() => {
+        setFeedback("CARD COMPLETE! 💪");
+        if (!isMuted) speak("Card complete. 15 second rest.");
+        setTimeout(() => {
+            setCurrentCardIndex(prevIndex => {
+                const nextIndex = prevIndex + 1;
+                if (nextIndex < deck.length) {
+                    setCooldown(15);
+                    setCurrentReps(0);
+                    resetStateRefs(stateRefs.current);
+                    setFeedback(`Rest: 15s`);
+                    setMovementState('IDLE');
+                    return nextIndex;
+                } else {
+                    setSessionActive(false);
+                    finalizeSession(userId, totalReps, ticketsEarned, muscleGroup);
+                    if (onSessionEnd) {
+                        onSessionEnd({ reps: totalReps, duration: timeElapsed, category: muscleGroup });
+                    }
+                    return prevIndex;
+                }
+            });
+        }, 1500);
+    }, [deck, isMuted, userId, totalReps, ticketsEarned, muscleGroup, onSessionEnd, timeElapsed]);
+
+    const handleRep = useCallback((inc) => {
+        const next = currentReps + inc;
+        const target = currentCard.reps;
+        if (next >= target) {
+            setCurrentReps(target);
+            completeCard();
+        } else {
+            setCurrentReps(next);
+        }
+        const newTotalReps = totalReps + inc;
+        setTotalReps(newTotalReps);
+
+        const newTickets = Math.floor(newTotalReps / 30);
+        if (newTickets > ticketsEarned) {
+            setTicketsEarned(newTickets);
+            updateUserStats(userId, newTotalReps, newTickets, muscleGroup);
+        }
+
+        if (Math.floor(next) > Math.floor(currentReps) && !isMuted) {
+            speak(Math.floor(next).toString());
+        }
+    }, [currentReps, currentCard, totalReps, ticketsEarned, isMuted, userId, muscleGroup, completeCard]);
+
     const processPose = useCallback((landmarks) => {
-        if (!sessionActive || !landmarks) return;
+        if (!currentCard || !sessionActive || cooldown > 0 || !landmarks) return;
 
-        stateRefs.current.currentReps = repsRef.current;
+        stateRefs.current.currentReps = currentReps;
 
-        const result = processExercise(exercise.id, landmarks, stateRefs.current);
+        const result = processExercise(currentCard.exerciseId || currentCard.exercise.toLowerCase(), landmarks, stateRefs.current);
         if (!result) return;
 
-        if (result.repIncrement > 0) {
-            const newReps = repsRef.current + result.repIncrement;
-            repsRef.current = newReps;
-            setReps(newReps);
-
-            if (Math.floor(newReps) > Math.floor(newReps - result.repIncrement) && !isMuted) {
-                speak(Math.floor(newReps).toString());
-            }
-        }
-        if (result.feedback) setFeedback(result.feedback);
-        if (result.state) setMovementState(result.state);
-    }, [sessionActive, exercise.id, isMuted]);
+        if (result.repIncrement > 0) handleRep(result.repIncrement);
+        if (result.feedback && result.feedback !== feedback) setFeedback(result.feedback);
+        if (result.state && result.state !== movementState) setMovementState(result.state);
+    }, [currentCard, sessionActive, feedback, movementState, currentReps, handleRep, cooldown]);
 
     const handleStopSession = useCallback(() => {
         setSessionActive(false);
+        finalizeSession(userId, totalReps, ticketsEarned, muscleGroup);
         if (onSessionEnd) {
-            onSessionEnd({
-                reps: Math.floor(repsRef.current),
-                duration: timeElapsed,
-                exercise: exercise.name,
-                exerciseId: exercise.id,
-                category: exercise.category,
-                type: 'solo'
-            });
+            onSessionEnd({ reps: totalReps, duration: timeElapsed, category: muscleGroup });
         }
-    }, [onSessionEnd, timeElapsed, exercise]);
+    }, [userId, totalReps, ticketsEarned, muscleGroup, onSessionEnd, timeElapsed]);
 
     return (
         <div className="solo-session-container">
@@ -95,35 +169,76 @@ export default function SoloSession({ userId, exercise, onSessionEnd }) {
                             )}
                         </button>
                         <div className="solo-stat-item">
-                            <span className="solo-stat-label">REPS</span>
-                            <span className="solo-stat-value">{Math.floor(reps)}</span>
+                            <span className="solo-stat-label">TOTAL REPS</span>
+                            <span className="solo-stat-value">{Math.floor(totalReps)}</span>
+                        </div>
+                        <div className="solo-stat-item">
+                            <span className="solo-stat-label">TICKETS</span>
+                            <span className="solo-stat-value">{ticketsEarned}</span>
                         </div>
                         <div className="solo-stat-item">
                             <span className="solo-stat-label">TIME</span>
                             <span className="solo-stat-value">{formatTime(timeElapsed)}</span>
                         </div>
                         <div className="solo-stat-item">
-                            <span className="solo-stat-label">TICKETS</span>
-                            <span className="solo-stat-value">{Math.floor(reps / 30)}</span>
+                            <span className="solo-stat-label">CARDS</span>
+                            <span className="solo-stat-value">{currentCardIndex + 1}/{deck.length}</span>
                         </div>
                     </div>
                     <div className="solo-status-badge">LIVE</div>
                 </div>
 
-                <div className="solo-video-area">
-                    <PoseVisualizer
-                        onPoseResults={processPose}
-                        currentExercise={exercise.id}
-                    />
+                <div className="solo-card-display">
+                    <div className="solo-video-area">
+                        <PoseVisualizer
+                            onPoseResults={processPose}
+                            currentExercise={currentCard?.exerciseId}
+                        />
+                    </div>
+                    {currentCard && (
+                        <div className="solo-playing-card" style={{ borderColor: getSuitColor(currentCard.suit) }}>
+                            <div className="solo-card-corner solo-card-corner-top" style={{ color: getSuitColor(currentCard.suit) }}>
+                                <span className="solo-card-face">{currentCard.face}</span>
+                                <span className="solo-card-suit-small">{getSuitSymbol(currentCard.suit)}</span>
+                            </div>
+                            <div className="solo-card-center">
+                                <div className="solo-card-suit-large" style={{ color: getSuitColor(currentCard.suit) }}>
+                                    {getSuitSymbol(currentCard.suit)}
+                                </div>
+                                <h2 className="solo-card-exercise-name">{currentCard.exercise.toUpperCase()}</h2>
+                            </div>
+                            <div className="solo-card-corner solo-card-corner-bottom" style={{ color: getSuitColor(currentCard.suit) }}>
+                                <span className="solo-card-face">{currentCard.face}</span>
+                                <span className="solo-card-suit-small">{getSuitSymbol(currentCard.suit)}</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="solo-bottom-panel">
-                    <div className="solo-exercise-info">
-                        <h2 className="solo-current-exercise">{exercise.name.toUpperCase()}</h2>
-                        <div className="solo-feedback-state">{movementState}</div>
-                        <div className="solo-feedback-msg">{feedback}</div>
+                    <div className="solo-counter-box">
+                        <span className="solo-big-reps">{Math.floor(currentReps)}</span>
+                        <span className="solo-reps-label">REPS</span>
                     </div>
-                    <div className="solo-big-reps">{Math.floor(reps)}</div>
+                    <div className="solo-feedback-box">
+                        <div className="solo-feedback-state">{cooldown > 0 ? 'REST' : movementState}</div>
+                        <div className="solo-feedback-msg">{cooldown > 0 ? `Get Ready: ${cooldown}s` : feedback}</div>
+                    </div>
+                    {currentCard && (
+                        <div className="solo-progress-section">
+                            <div className="solo-reps-countdown">
+                                <span className="solo-reps-left">{Math.max(0, currentCard.reps - Math.floor(currentReps))}</span>
+                                <span className="solo-reps-left-label">REPS LEFT</span>
+                            </div>
+                            <div className="solo-progress-container">
+                                <div
+                                    className="solo-progress-bar"
+                                    style={{ width: `${(currentReps / currentCard.reps) * 100}%` }}
+                                ></div>
+                            </div>
+                            <span className="solo-target-text">TARGET: {currentCard.reps}</span>
+                        </div>
+                    )}
                     <button className="solo-stop-btn" onClick={handleStopSession}>
                         STOP SESSION
                     </button>

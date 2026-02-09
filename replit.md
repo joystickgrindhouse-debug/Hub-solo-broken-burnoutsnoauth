@@ -25,7 +25,7 @@ I prefer simple, clear explanations and want the agent to adopt an iterative dev
     - 16 exercises across 4 categories (Arms, Legs, Core, Cardio).
     - **Shared Exercise Engine:** `src/logic/exerciseEngine.js` — centralized rep detection logic used by both Solo and Burnouts modes.
     - **Burnouts Mode (Merged):** Fully integrated into the Hub. Components in `src/components/Burnouts/` (BurnoutsSession, BurnoutsSelection, PoseVisualizer). Styles in `src/styles/Burnouts.css`.
-    - **Solo Mode (Merged):** Fully integrated into the Hub. Components in `src/components/Solo/` (SoloSelection, SoloSession). Exercise picker with category filtering. Styles in `src/styles/Solo.css`.
+    - **Solo Mode (Merged):** Fully integrated into the Hub. Components in `src/components/Solo/` (SoloSelection, SoloSession). Uses card deck system — users pick a muscle group, then work through a shuffled deck of playing cards with exercises and rep targets. Reuses `shuffleDeck` from `burnoutsHelpers.js`. Styles in `src/styles/Solo.css`.
     - **PoseVisualizer:** Shared camera component with optimized initialization — parallel script loading, concurrent camera permission request, and cached script loading across sessions.
     - **Playing Card UI:** Workout cards designed to look like authentic playing cards with corner values, center suit icons, and clear exercise names.
     - Raffle ticket reward system (1 ticket per 30 reps).

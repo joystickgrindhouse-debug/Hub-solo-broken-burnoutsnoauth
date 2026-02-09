@@ -5,7 +5,7 @@ import SoloSession from "../components/Solo/SoloSession.jsx";
 import "../styles/Solo.css";
 
 export default function Solo({ user, userProfile }) {
-  const [selectedExercise, setSelectedExercise] = useState(null);
+  const [selectedGroup, setSelectedGroup] = useState(null);
 
   const handleSessionEnd = async (stats) => {
     if (!user || !stats) return;
@@ -18,7 +18,7 @@ export default function Solo({ user, userProfile }) {
         type: "SESSION_STATS",
         stats: stats
       }, window.location.origin);
-      setSelectedExercise(null);
+      setSelectedGroup(null);
       return;
     }
 
@@ -29,8 +29,8 @@ export default function Solo({ user, userProfile }) {
         gameMode: "solo",
         score: stats.reps || 0,
         metadata: {
-          exercise: stats.exercise,
-          type: stats.type
+          category: stats.category,
+          type: 'solo'
         }
       });
       alert(`Session Complete! ${stats.reps} reps submitted.`);
@@ -38,18 +38,18 @@ export default function Solo({ user, userProfile }) {
       console.error("Failed to save solo session:", error);
     }
 
-    setSelectedExercise(null);
+    setSelectedGroup(null);
   };
 
-  if (selectedExercise) {
+  if (selectedGroup) {
     return (
       <SoloSession
         userId={user?.uid}
-        exercise={selectedExercise}
+        muscleGroup={selectedGroup}
         onSessionEnd={handleSessionEnd}
       />
     );
   }
 
-  return <SoloSelection onSelectExercise={setSelectedExercise} />;
+  return <SoloSelection onSelect={setSelectedGroup} />;
 }
