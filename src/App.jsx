@@ -24,7 +24,7 @@ const DMChat = lazy(() => import("./views/DMChat.jsx"));
 const Leaderboard = lazy(() => import("./views/Leaderboard.jsx"));
 const Solo = lazy(() => import("./views/Solo.jsx"));
 const Burnouts = lazy(() => import("./views/Burnouts.jsx"));
-const Live = lazy(() => import("./views/LiveMode.jsx"));
+const Live = lazy(() => import("./views/Live.jsx"));
 const Run = lazy(() => import("./views/Run.jsx"));
 const RaffleRoom = lazy(() => import("./views/RaffleRoom.jsx"));
 const WaitingForUpload = lazy(() => import("./views/WaitingForUpload.jsx"));

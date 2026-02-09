@@ -7,61 +7,107 @@ import {
   deleteDoc, 
   doc, 
   updateDoc,
+  getDoc,
   where,
   Timestamp,
-  getDocs
+  getDocs,
+  arrayUnion
 } from "firebase/firestore";
 
 export const LiveService = {
-  // Room Management
-  async createRoom(hostId, hostName, roomName) {
+  async createRoom(hostId, hostName, hostAvatar, showdown, trickMode) {
     try {
       const roomData = {
         hostId,
         hostName,
-        roomName,
-        status: "waiting", // waiting, playing
-        players: [{ userId: hostId, userName: hostName, ready: true }],
+        hostAvatar: hostAvatar || "",
+        roomName: `${showdown.name} ${trickMode === "chaos" ? "Chaos " : ""}Arena`,
+        showdown: {
+          id: showdown.id,
+          name: showdown.name,
+          category: showdown.category,
+        },
+        trickMode: trickMode || "classic",
+        status: "waiting",
+        players: [{
+          userId: hostId,
+          userName: hostName,
+          avatar: hostAvatar || "",
+          ready: true,
+          score: 0,
+          currentCardIndex: 0,
+          completedCards: 0,
+          totalReps: 0,
+          activeEffects: [],
+          ticketsEarned: 0,
+        }],
+        maxPlayers: 4,
+        deck: [],
+        currentPhase: "lobby",
+        round: 0,
+        totalRounds: 0,
+        playOrder: [],
+        currentTurnIndex: 0,
+        activeEffects: [],
+        gameLog: [],
         createdAt: Timestamp.now(),
-        lastActivity: Timestamp.now()
+        lastActivity: Timestamp.now(),
+        finishedAt: null,
       };
       const docRef = await addDoc(collection(db, "liveRooms"), roomData);
       return { success: true, roomId: docRef.id };
     } catch (error) {
-      console.error("Error creating room:", error);
       return { success: false, error: error.message };
     }
   },
 
   subscribeToRooms(callback) {
     const roomsRef = collection(db, "liveRooms");
-    const q = query(roomsRef, where("status", "==", "waiting"));
-    
+    const q = query(roomsRef, where("status", "in", ["waiting", "playing"]));
     return onSnapshot(q, (snapshot) => {
       const rooms = [];
-      snapshot.forEach((doc) => {
-        rooms.push({ id: doc.id, ...doc.data() });
-      });
+      snapshot.forEach((d) => rooms.push({ id: d.id, ...d.data() }));
       callback(rooms);
     });
   },
 
-  async joinRoom(roomId, userId, userName) {
+  subscribeToRoom(roomId, callback) {
+    return onSnapshot(doc(db, "liveRooms", roomId), (snap) => {
+      if (snap.exists()) {
+        callback({ id: snap.id, ...snap.data() });
+      } else {
+        callback(null);
+      }
+    });
+  },
+
+  async joinRoom(roomId, userId, userName, avatar) {
     try {
       const roomRef = doc(db, "liveRooms", roomId);
-      const roomSnap = await getDocs(query(collection(db, "liveRooms"), where("__name__", "==", roomId)));
-      if (roomSnap.empty) return { success: false, error: "Room not found" };
-      
-      const roomData = roomSnap.docs[0].data();
+      const roomSnap = await getDoc(roomRef);
+      if (!roomSnap.exists()) return { success: false, error: "Room not found" };
+
+      const roomData = roomSnap.data();
       const players = roomData.players || [];
-      
-      if (players.find(p => p.userId === userId)) return { success: true };
-      if (players.length >= 4) return { success: false, error: "Room is full" };
-      if (roomData.status !== "waiting") return { success: false, error: "Match already in progress" };
-      
+
+      if (players.find((p) => p.userId === userId)) return { success: true };
+      if (players.length >= (roomData.maxPlayers || 4)) return { success: false, error: "Room is full" };
+      if (roomData.status !== "waiting") return { success: false, error: "Match already started" };
+
       await updateDoc(roomRef, {
-        players: [...players, { userId, userName, ready: false }],
-        lastActivity: Timestamp.now()
+        players: [...players, {
+          userId,
+          userName,
+          avatar: avatar || "",
+          ready: false,
+          score: 0,
+          currentCardIndex: 0,
+          completedCards: 0,
+          totalReps: 0,
+          activeEffects: [],
+          ticketsEarned: 0,
+        }],
+        lastActivity: Timestamp.now(),
       });
       return { success: true };
     } catch (error) {
@@ -72,12 +118,12 @@ export const LiveService = {
   async leaveRoom(roomId, userId) {
     try {
       const roomRef = doc(db, "liveRooms", roomId);
-      const roomSnap = await getDocs(query(collection(db, "liveRooms"), where("__name__", "==", roomId)));
-      if (roomSnap.empty) return { success: true };
-      
-      const roomData = roomSnap.docs[0].data();
-      const players = (roomData.players || []).filter(p => p.userId !== userId);
-      
+      const roomSnap = await getDoc(roomRef);
+      if (!roomSnap.exists()) return { success: true };
+
+      const roomData = roomSnap.data();
+      const players = (roomData.players || []).filter((p) => p.userId !== userId);
+
       if (players.length === 0) {
         await deleteDoc(roomRef);
       } else {
@@ -85,7 +131,7 @@ export const LiveService = {
           players,
           hostId: roomData.hostId === userId ? players[0].userId : roomData.hostId,
           hostName: roomData.hostId === userId ? players[0].userName : roomData.hostName,
-          lastActivity: Timestamp.now()
+          lastActivity: Timestamp.now(),
         });
       }
       return { success: true };
@@ -97,9 +143,9 @@ export const LiveService = {
   async toggleReady(roomId, userId, ready) {
     try {
       const roomRef = doc(db, "liveRooms", roomId);
-      const roomSnap = await getDocs(query(collection(db, "liveRooms"), where("__name__", "==", roomId)));
-      const roomData = roomSnap.docs[0].data();
-      const players = roomData.players.map(p => 
+      const roomSnap = await getDoc(roomRef);
+      const roomData = roomSnap.data();
+      const players = roomData.players.map((p) =>
         p.userId === userId ? { ...p, ready } : p
       );
       await updateDoc(roomRef, { players, lastActivity: Timestamp.now() });
@@ -109,21 +155,39 @@ export const LiveService = {
     }
   },
 
-  async startMatch(roomId) {
+  async startMatch(roomId, deck) {
     try {
       const roomRef = doc(db, "liveRooms", roomId);
-      const jokers = [
-        { id: "j1", type: "positive", effect: "Double Points (Next 30s)", value: 2 },
-        { id: "j2", type: "positive", effect: "Skip Next Exercise", value: 0 },
-        { id: "j3", type: "negative", effect: "Half Points (Next 30s)", value: 0.5 },
-        { id: "j4", type: "negative", effect: "Extra 10 Reps", value: 10 }
-      ].sort(() => Math.random() - 0.5);
+      const roomSnap = await getDoc(roomRef);
+      const roomData = roomSnap.data();
 
-      await updateDoc(roomRef, { 
+      const playOrder = roomData.players.map((p) => p.userId).sort(() => Math.random() - 0.5);
+      const players = roomData.players.map((p) => ({
+        ...p,
+        score: 0,
+        currentCardIndex: 0,
+        completedCards: 0,
+        totalReps: 0,
+        activeEffects: [],
+        ticketsEarned: 0,
+      }));
+
+      await updateDoc(roomRef, {
         status: "playing",
+        currentPhase: "active",
+        deck: deck,
+        players,
+        playOrder,
+        currentTurnIndex: 0,
+        round: 1,
+        totalRounds: deck.length,
         startTime: Timestamp.now(),
-        jokers: jokers,
-        currentJokerIndex: -1
+        lastActivity: Timestamp.now(),
+        gameLog: [{
+          type: "system",
+          message: "Match started! Let's go!",
+          timestamp: Date.now(),
+        }],
       });
       return { success: true };
     } catch (error) {
@@ -131,22 +195,145 @@ export const LiveService = {
     }
   },
 
-  async triggerJoker(roomId) {
+  async completeCard(roomId, userId, cardIndex, repsCompleted, pointsEarned) {
     try {
       const roomRef = doc(db, "liveRooms", roomId);
-      const roomSnap = await getDocs(query(collection(db, "liveRooms"), where("__name__", "==", roomId)));
-      const roomData = roomSnap.docs[0].data();
-      const nextIndex = (roomData.currentJokerIndex || -1) + 1;
-      
-      if (nextIndex < roomData.jokers.length) {
-        await updateDoc(roomRef, {
-          currentJokerIndex: nextIndex,
-          jokerActiveUntil: Timestamp.fromMillis(Date.now() + 30000)
-        });
+      const roomSnap = await getDoc(roomRef);
+      const roomData = roomSnap.data();
+
+      const players = roomData.players.map((p) => {
+        if (p.userId !== userId) return p;
+        const newTotalReps = (p.totalReps || 0) + repsCompleted;
+        const newTickets = Math.floor(newTotalReps / 30);
+        return {
+          ...p,
+          score: (p.score || 0) + pointsEarned,
+          currentCardIndex: cardIndex + 1,
+          completedCards: (p.completedCards || 0) + 1,
+          totalReps: newTotalReps,
+          ticketsEarned: newTickets,
+          activeEffects: [],
+        };
+      });
+
+      const allDone = players.every((p) => p.currentCardIndex >= roomData.deck.length);
+      const nextRound = Math.max(...players.map((p) => p.currentCardIndex)) + 1;
+
+      const updates = {
+        players,
+        round: nextRound,
+        lastActivity: Timestamp.now(),
+      };
+
+      if (allDone) {
+        updates.status = "finished";
+        updates.currentPhase = "results";
+        updates.finishedAt = Timestamp.now();
       }
+
+      await updateDoc(roomRef, updates);
+      return { success: true, finished: allDone };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  async applyEffect(roomId, userId, effect, targetUserId) {
+    try {
+      const roomRef = doc(db, "liveRooms", roomId);
+      const roomSnap = await getDoc(roomRef);
+      const roomData = roomSnap.data();
+
+      let players = [...roomData.players];
+      const logEntry = { type: "effect", userId, timestamp: Date.now() };
+
+      switch (effect) {
+        case "double_points":
+          players = players.map((p) =>
+            p.userId === userId ? { ...p, activeEffects: [...(p.activeEffects || []), "double_points"] } : p
+          );
+          logEntry.message = `activated DOUBLE DOWN!`;
+          break;
+
+        case "steal_points": {
+          const leader = players.reduce((a, b) => ((a.score || 0) > (b.score || 0) ? a : b));
+          if (leader.userId !== userId) {
+            players = players.map((p) => {
+              if (p.userId === leader.userId) return { ...p, score: Math.max(0, (p.score || 0) - 10) };
+              if (p.userId === userId) return { ...p, score: (p.score || 0) + 10 };
+              return p;
+            });
+            logEntry.message = `stole 10 points from ${leader.userName}!`;
+          } else {
+            logEntry.message = `tried to steal but they're already leading!`;
+          }
+          break;
+        }
+
+        case "half_reps":
+          players = players.map((p) =>
+            p.userId === userId ? { ...p, activeEffects: [...(p.activeEffects || []), "half_reps"] } : p
+          );
+          logEntry.message = `activated REP SHIELD! Half reps next card.`;
+          break;
+
+        case "freeze_others":
+          players = players.map((p) =>
+            p.userId !== userId ? { ...p, activeEffects: [...(p.activeEffects || []), "frozen"] } : p
+          );
+          logEntry.message = `froze all opponents! 0 points on their next card!`;
+          break;
+
+        case "bonus_50":
+          players = players.map((p) =>
+            p.userId === userId ? { ...p, score: (p.score || 0) + 50 } : p
+          );
+          logEntry.message = `hit the JACKPOT! +50 points!`;
+          break;
+
+        case "reverse_order": {
+          const currentOrder = roomData.playOrder || [];
+          const reversedOrder = [...currentOrder].reverse();
+          await updateDoc(roomRef, { playOrder: reversedOrder });
+          logEntry.message = `reversed the play order!`;
+          break;
+        }
+
+        default:
+          logEntry.message = `played a special card!`;
+      }
+
+      await updateDoc(roomRef, {
+        players,
+        gameLog: arrayUnion(logEntry),
+        lastActivity: Timestamp.now(),
+      });
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
     }
-  }
+  },
+
+  async endMatch(roomId) {
+    try {
+      const roomRef = doc(db, "liveRooms", roomId);
+      await updateDoc(roomRef, {
+        status: "finished",
+        currentPhase: "results",
+        finishedAt: Timestamp.now(),
+      });
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  async deleteRoom(roomId) {
+    try {
+      await deleteDoc(doc(db, "liveRooms", roomId));
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
 };

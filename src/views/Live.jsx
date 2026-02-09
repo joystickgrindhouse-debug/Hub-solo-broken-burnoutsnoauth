@@ -1,590 +1,836 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { db } from "../firebase";
-import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, serverTimestamp, query, limit, orderBy, where } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { LiveService } from "../services/liveService";
 import { UserService } from "../services/userService";
+import { generateLiveDeck, getCardPoints, getCardReps, TRICK_MODES } from "../logic/liveDeck";
 import GlobalChat from "./GlobalChat";
 import { useTheme } from "../context/ThemeContext.jsx";
 
 const SHOWDOWNS = [
-  { id: "arms", name: "Arms", category: "Arms", exercises: ["Pushups", "Bicep Curls", "Dips"] },
-  { id: "legs", name: "Legs", category: "Legs", exercises: ["Squats", "Lunges", "Calf Raises"] },
-  { id: "core", name: "Core", category: "Core", exercises: ["Situps", "Plank", "Leg Raises"] },
-  { id: "total", name: "Total", category: "Full Body", exercises: ["Burpees", "Mountain Climbers", "Jumping Jacks"] }
+  { id: "arms", name: "Arms", category: "Arms", icon: "💪", exercises: ["Push-ups", "Plank Up-Downs", "Pike Push-ups", "Shoulder Taps"] },
+  { id: "legs", name: "Legs", category: "Legs", icon: "🦵", exercises: ["Squats", "Lunges", "Glute Bridges", "Calf Raises"] },
+  { id: "core", name: "Core", category: "Core", icon: "🔥", exercises: ["Crunches", "Plank", "Russian Twists", "Leg Raises"] },
+  { id: "full", name: "Full Body", category: "Full Body", icon: "⚡", exercises: ["Jumping Jacks", "High Knees", "Burpees", "Mountain Climbers"] },
 ];
 
 export default function Live({ user, userProfile }) {
   const t = useTheme();
+  const [phase, setPhase] = useState("select");
   const [selectedShowdown, setSelectedShowdown] = useState(null);
-  const [rivals, setRivals] = useState([]);
+  const [selectedTrickMode, setSelectedTrickMode] = useState("classic");
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [activeRooms, setActiveRooms] = useState([]);
-  const [score, setScore] = useState(0);
-  const [activePlayerId, setActivePlayerId] = useState(null);
-  const [isEliminated, setIsEliminated] = useState(false);
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [isFlipping, setIsFlipping] = useState(false);
-  const [lobbyStatus, setLobbyStatus] = useState("WAITING");
   const [currentRoomId, setCurrentRoomId] = useState(null);
   const [roomData, setRoomData] = useState(null);
+  const [myCardIndex, setMyCardIndex] = useState(0);
+  const [isFlipping, setIsFlipping] = useState(false);
+  const [cardCompleting, setCardCompleting] = useState(false);
+  const [showEffectBanner, setShowEffectBanner] = useState(null);
+  const [countdown, setCountdown] = useState(null);
+  const [matchTime, setMatchTime] = useState(0);
+  const timerRef = useRef(null);
 
   useEffect(() => {
     if (!user) return;
-    
-    const heartbeat = setInterval(() => {
-      UserService.updateHeartbeat(user.uid);
-    }, 60000);
+    const heartbeat = setInterval(() => UserService.updateHeartbeat(user.uid), 60000);
     UserService.updateHeartbeat(user.uid);
 
-    const unsubscribeOnline = UserService.subscribeToOnlineUsers((users) => {
-      setOnlineUsers(users.filter(u => u.userId !== user.uid));
+    const unsubOnline = UserService.subscribeToOnlineUsers((users) => {
+      setOnlineUsers(users.filter((u) => u.userId !== user.uid));
     });
 
-    const unsubscribeRooms = LiveService.subscribeToRooms((rooms) => {
+    const unsubRooms = LiveService.subscribeToRooms((rooms) => {
       setActiveRooms(rooms);
     });
 
     return () => {
       clearInterval(heartbeat);
-      unsubscribeOnline();
-      unsubscribeRooms();
+      unsubOnline();
+      unsubRooms();
     };
   }, [user]);
 
   useEffect(() => {
     if (!currentRoomId) return;
-
-    const unsubscribeRoom = onSnapshot(doc(db, "liveRooms", currentRoomId), (doc) => {
-      if (doc.exists()) {
-        const data = doc.data();
-        setRoomData(data);
-        setRivals(data.players || []);
-        
-        if (data.status === "playing") {
-          setLobbyStatus("ACTIVE");
-          const readyPlayers = data.players.filter(p => p.ready);
-          if (readyPlayers.length > 0) {
-            setActivePlayerId(readyPlayers[0].userId);
-          }
-        } else {
-          setLobbyStatus("WAITING");
-        }
-      } else {
+    const unsub = LiveService.subscribeToRoom(currentRoomId, (data) => {
+      if (!data) {
         handleQuit();
+        return;
       }
+      setRoomData(data);
+      if (data.currentPhase === "active" && phase !== "match" && phase !== "results") {
+        setPhase("match");
+        startMatchTimer();
+      }
+      if (data.currentPhase === "results" && phase !== "results") {
+        setPhase("results");
+        stopMatchTimer();
+      }
+      const me = data.players?.find((p) => p.userId === user.uid);
+      if (me) setMyCardIndex(me.currentCardIndex || 0);
     });
-
-    return () => unsubscribeRoom();
+    return () => unsub();
   }, [currentRoomId]);
 
-  const handleCreateRoom = async (showdown) => {
-    const res = await LiveService.createRoom(user.uid, userProfile?.nickname || "Rival", `${showdown.name} Arena`);
+  const startMatchTimer = () => {
+    setMatchTime(0);
+    timerRef.current = setInterval(() => setMatchTime((t) => t + 1), 1000);
+  };
+  const stopMatchTimer = () => clearInterval(timerRef.current);
+
+  const formatTime = (s) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
+
+  const handleCreateRoom = async () => {
+    if (!selectedShowdown) return;
+    const res = await LiveService.createRoom(
+      user.uid,
+      userProfile?.nickname || "Rival",
+      userProfile?.avatarURL || "",
+      selectedShowdown,
+      selectedTrickMode
+    );
     if (res.success) {
       setCurrentRoomId(res.roomId);
-      setSelectedShowdown(showdown);
+      setPhase("lobby");
     }
   };
 
   const handleJoinRoom = async (room) => {
-    if (room.players?.length >= 4) {
-      alert("This arena is full! Choose another showdown.");
-      return;
-    }
-    const res = await LiveService.joinRoom(room.id, user.uid, userProfile?.nickname || "Rival");
+    if (room.players?.length >= (room.maxPlayers || 4)) return;
+    const res = await LiveService.joinRoom(room.id, user.uid, userProfile?.nickname || "Rival", userProfile?.avatarURL || "");
     if (res.success) {
       setCurrentRoomId(room.id);
-      const showdown = SHOWDOWNS.find(s => room.roomName.includes(s.name)) || SHOWDOWNS[0];
+      const showdown = SHOWDOWNS.find((s) => s.category === room.showdown?.category) || SHOWDOWNS[0];
       setSelectedShowdown(showdown);
-    } else {
-      alert("Failed to join: " + res.error);
+      setSelectedTrickMode(room.trickMode || "classic");
+      setPhase("lobby");
     }
   };
 
-  const handleToggleReady = async () => {
-    if (lobbyStatus === "ACTIVE") return;
-    const isReady = !roomData?.players?.find(p => p.userId === user.uid)?.ready;
-    await LiveService.toggleReady(currentRoomId, user.uid, isReady);
+  const handleToggleReady = () => {
+    if (!roomData) return;
+    const me = roomData.players?.find((p) => p.userId === user.uid);
+    LiveService.toggleReady(currentRoomId, user.uid, !me?.ready);
   };
 
   const handleStartMatch = async () => {
-    if (roomData?.hostId === user.uid) {
-      await LiveService.startMatch(currentRoomId);
-    }
+    if (!roomData || roomData.hostId !== user.uid) return;
+    const deck = generateLiveDeck(selectedShowdown.category, selectedTrickMode);
+    setCountdown(3);
+    const countInterval = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(countInterval);
+          LiveService.startMatch(currentRoomId, deck);
+          return null;
+        }
+        return c - 1;
+      });
+    }, 1000);
   };
 
-  const handleCardComplete = async () => {
-    if (activePlayerId !== user.uid || isEliminated || lobbyStatus !== "ACTIVE") return;
-    
-    if (Math.random() > 0.7 && roomData.currentJokerIndex < 3) {
-      await LiveService.triggerJoker(currentRoomId);
-    }
+  const handleCompleteCard = async () => {
+    if (cardCompleting || !roomData?.deck) return;
+    setCardCompleting(true);
 
-    const nextIndex = (currentCardIndex + 1) % selectedShowdown.exercises.length;
-    let points = 10;
+    const card = roomData.deck[myCardIndex];
+    if (!card) { setCardCompleting(false); return; }
 
-    if (roomData.currentJokerIndex >= 0) {
-      const activeJoker = roomData.jokers[roomData.currentJokerIndex];
-      const jokerActive = roomData.jokerActiveUntil?.toMillis() > Date.now();
-      
-      if (jokerActive) {
-        if (activeJoker.effect.includes("Double")) points *= 2;
-        if (activeJoker.effect.includes("Half")) points *= 0.5;
+    const me = roomData.players?.find((p) => p.userId === user.uid);
+
+    if (card.type === "joker") {
+      await LiveService.applyEffect(currentRoomId, user.uid, card.effect);
+      setShowEffectBanner(card);
+      setTimeout(() => setShowEffectBanner(null), 3000);
+      await LiveService.completeCard(currentRoomId, user.uid, myCardIndex, 0, 0);
+    } else if (card.type === "trick") {
+      let bonusPoints = card.bonusPoints || 15;
+      let bonusReps = card.bonusReps || 0;
+
+      if (card.effect === "double_or_nothing") {
+        const won = Math.random() > 0.5;
+        bonusPoints = won ? (card.bonusPoints || 40) : 0;
+        const resultCard = { ...card, description: won ? "You WON! +" + bonusPoints + " points!" : "BUSTED! Zero points!" };
+        setShowEffectBanner(resultCard);
+      } else {
+        setShowEffectBanner(card);
       }
+      setTimeout(() => setShowEffectBanner(null), 3000);
+      await LiveService.completeCard(currentRoomId, user.uid, myCardIndex, bonusReps, bonusPoints);
+    } else {
+      const reps = getCardReps(card, me?.activeEffects || []);
+      const points = getCardPoints(card, me?.activeEffects || []);
+      setIsFlipping(true);
+      setTimeout(() => setIsFlipping(false), 600);
+      await LiveService.completeCard(currentRoomId, user.uid, myCardIndex, reps, points);
     }
-    
-    setScore(s => s + points);
-    setCurrentCardIndex(nextIndex);
-    setIsFlipping(true);
-    setTimeout(() => setIsFlipping(false), 600);
+
+    setCardCompleting(false);
   };
 
   const handleQuit = async () => {
-    if (currentRoomId) {
-      await LiveService.leaveRoom(currentRoomId, user.uid);
-    }
+    stopMatchTimer();
+    if (currentRoomId) await LiveService.leaveRoom(currentRoomId, user.uid);
     setCurrentRoomId(null);
     setRoomData(null);
     setSelectedShowdown(null);
-    setScore(0);
-    setIsEliminated(false);
-    setActivePlayerId(null);
-    setLobbyStatus("WAITING");
+    setPhase("select");
+    setMyCardIndex(0);
+    setMatchTime(0);
   };
 
-  if (!selectedShowdown) {
-    return (
-      <div className="live-hub-container" style={{ 
-        display: "flex", 
-        height: "calc(100vh - 64px)", 
-        background: "linear-gradient(135deg, #050505 0%, #0a0a0a 100%)", 
-        overflow: "hidden",
-        color: "#fff"
-      }}>
-        <div style={{ 
-          width: "380px", 
-          background: "rgba(10, 10, 10, 0.8)", 
-          backdropFilter: "blur(10px)",
-          borderRight: `1px solid ${t.shadowXs}`, 
-          display: "flex", 
-          flexDirection: "column", 
-          padding: "24px",
-          boxShadow: "10px 0 30px rgba(0,0,0,0.5)"
-        }}>
-          <div style={{ marginBottom: "40px" }}>
-            <h1 style={{ 
-              fontFamily: "'Press Start 2P', cursive", 
-              color: t.accent, 
-              fontSize: "18px",
-              letterSpacing: "2px",
-              marginBottom: "10px",
-              textShadow: `0 0 15px ${t.shadowSm}`
-            }}>LIVE HUB</h1>
-            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "10px", fontFamily: "'Press Start 2P', cursive" }}>ELITE ARENA</p>
-          </div>
-          
-          <div style={{ marginBottom: "32px", padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <h3 style={{ color: "#fff", fontSize: "10px", fontFamily: "'Press Start 2P', cursive", margin: 0 }}>RIVALS ONLINE</h3>
-              <span style={{ color: "#0f0", fontSize: "10px", fontWeight: "bold" }}>● {onlineUsers.length}</span>
-            </div>
-            <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "8px", scrollbarWidth: "none" }}>
-              {onlineUsers.map(u => (
-                <div key={u.userId} style={{ textAlign: "center", position: "relative" }}>
-                  <img src={u.avatarURL} alt="" style={{ width: "48px", height: "48px", borderRadius: "12px", border: `2px solid ${t.shadowSm}`, padding: "2px", background: "#000" }} />
-                  <div style={{ position: "absolute", bottom: "4px", right: "4px", width: "10px", height: "10px", background: "#0f0", borderRadius: "50%", border: "2px solid #000" }} />
-                </div>
-              ))}
-              {onlineUsers.length === 0 && <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "9px", fontFamily: "'Press Start 2P', cursive", padding: "10px 0" }}>NO RIVALS ACTIVE</div>}
-            </div>
-          </div>
+  const handlePlayAgain = () => {
+    if (currentRoomId) LiveService.deleteRoom(currentRoomId);
+    setCurrentRoomId(null);
+    setRoomData(null);
+    setPhase("select");
+    setMyCardIndex(0);
+    setMatchTime(0);
+  };
 
-          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <h3 style={{ color: "rgba(255,255,255,0.7)", fontSize: "10px", fontFamily: "'Press Start 2P', cursive", marginBottom: "20px" }}>ARENA LOBBIES</h3>
-            <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "16px", paddingRight: "4px" }}>
-              {activeRooms.length === 0 && (
-                <div style={{ padding: "30px", textAlign: "center", border: "2px dashed rgba(255,255,255,0.05)", borderRadius: "12px" }}>
-                   <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "9px", fontFamily: "'Press Start 2P', cursive", lineHeight: "1.6" }}>NO ACTIVE MATCHES.<br/>CREATE ONE BELOW.</p>
-                </div>
-              )}
-              {activeRooms.map(room => (
-                <div key={room.id} style={{ 
-                  padding: "20px", 
-                  background: "rgba(15,255,0,0.03)", 
-                  border: "1px solid rgba(15,255,0,0.2)", 
-                  borderRadius: "12px",
-                  transition: "transform 0.2s",
-                  cursor: "pointer"
-                }} onClick={() => handleJoinRoom(room)}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
-                    <div>
-                      <div style={{ color: "#fff", fontSize: "12px", fontFamily: "'Press Start 2P', cursive", marginBottom: "4px" }}>{room.roomName}</div>
-                      <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "9px" }}>HOST: {room.hostName}</div>
-                    </div>
-                    <div style={{ background: "rgba(15,255,0,0.1)", color: "#0f0", padding: "4px 8px", borderRadius: "4px", fontSize: "10px", fontWeight: "bold" }}>
-                      {room.players?.length || 0}/4
-                    </div>
-                  </div>
-                  <button style={{ width: "100%", padding: "12px", background: "#0f0", color: "#000", border: "none", borderRadius: "8px", fontFamily: "'Press Start 2P', cursive", fontSize: "10px", fontWeight: "bold", cursor: "pointer" }}>JOIN ARENA</button>
-                </div>
-              ))}
+  if (phase === "results" && roomData) return <ResultsScreen roomData={roomData} user={user} t={t} onPlayAgain={handlePlayAgain} onQuit={handleQuit} matchTime={matchTime} formatTime={formatTime} />;
+
+  if (phase === "match" && roomData) {
+    const currentCard = roomData.deck?.[myCardIndex];
+    const me = roomData.players?.find((p) => p.userId === user.uid);
+    const isFinished = myCardIndex >= (roomData.deck?.length || 0);
+    const progress = roomData.deck?.length ? Math.round((myCardIndex / roomData.deck.length) * 100) : 0;
+
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #050505 0%, #0a0a0a 100%)", color: "#fff", display: "flex", flexDirection: "column" }}>
+        {showEffectBanner && (
+          <div style={{
+            position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
+            background: showEffectBanner.color || t.accent, color: "#000",
+            padding: "16px", textAlign: "center", fontFamily: "'Press Start 2P', cursive",
+            fontSize: "12px", animation: "slideDown 0.3s ease-out",
+            boxShadow: `0 4px 30px ${showEffectBanner.color || t.accent}80`
+          }}>
+            {showEffectBanner.icon} {showEffectBanner.name} — {showEffectBanner.description}
+          </div>
+        )}
+
+        {countdown && (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.9)",
+            display: "flex", alignItems: "center", justifyContent: "center"
+          }}>
+            <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "80px", color: t.accent, textShadow: `0 0 40px ${t.accent}`, animation: "pulse 1s infinite" }}>
+              {countdown}
             </div>
           </div>
+        )}
+
+        <div style={{
+          padding: "12px 20px", background: "rgba(0,0,0,0.8)",
+          borderBottom: `1px solid ${t.accent}22`,
+          display: "flex", justifyContent: "space-between", alignItems: "center"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <span style={{ background: t.accent, color: "#fff", padding: "4px 12px", borderRadius: "4px", fontFamily: "'Press Start 2P', cursive", fontSize: "9px" }}>
+              {roomData.showdown?.name?.toUpperCase()}
+            </span>
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px" }}>{formatTime(matchTime)}</span>
+            <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "10px" }}>Card {myCardIndex + 1}/{roomData.deck?.length}</span>
+          </div>
+          <button onClick={handleQuit} style={{ background: "transparent", border: `1px solid ${t.accent}`, color: t.accent, padding: "6px 16px", borderRadius: "6px", fontFamily: "'Press Start 2P', cursive", fontSize: "8px", cursor: "pointer" }}>
+            EXIT
+          </button>
         </div>
 
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "40px", position: "relative" }}>
-          <div style={{ maxWidth: "900px", margin: "0 auto", width: "100%" }}>
-            <div style={{ marginBottom: "40px" }}>
-              <h2 style={{ fontFamily: "'Press Start 2P', cursive", color: "#fff", fontSize: "24px", marginBottom: "16px" }}>START A SHOWDOWN</h2>
-              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px" }}>Challenge the community in real-time. Winner takes the tickets.</p>
-            </div>
+        <div style={{ width: "100%", height: "3px", background: "rgba(255,255,255,0.05)" }}>
+          <div style={{ width: `${progress}%`, height: "100%", background: `linear-gradient(90deg, ${t.accent}, #FFD700)`, transition: "width 0.5s" }} />
+        </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "24px" }}>
-              {SHOWDOWNS.map((s) => (
-                <div key={s.id} style={{ 
-                  padding: "32px", 
-                  background: t.shadowXxs, 
-                  border: `1px solid ${t.shadowXs}`, 
-                  borderRadius: "20px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                  position: "relative",
-                  overflow: "hidden"
-                }} className="showdown-card">
-                  <div style={{ position: "absolute", top: "-20px", right: "-20px", fontSize: "80px", color: t.shadowXxs, fontWeight: "bold" }}>{s.name[0]}</div>
-                  <div style={{ zIndex: 1 }}>
-                    <div style={{ color: t.accent, fontSize: "10px", fontFamily: "'Press Start 2P', cursive", marginBottom: "12px" }}>{s.category}</div>
-                    <h3 style={{ color: "#fff", fontSize: "18px", fontFamily: "'Press Start 2P', cursive", marginBottom: "20px" }}>{s.name}</h3>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "32px" }}>
-                      {s.exercises.slice(0, 3).map(ex => (
-                        <span key={ex} style={{ background: "rgba(255,255,255,0.05)", padding: "4px 10px", borderRadius: "20px", fontSize: "11px", color: "rgba(255,255,255,0.6)" }}>{ex}</span>
-                      ))}
+        <div style={{ flex: 1, display: "flex", padding: "16px", gap: "16px", overflow: "hidden" }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+            {isFinished ? (
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: "48px", marginBottom: "16px" }}>🏁</div>
+                <h2 style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "20px", marginBottom: "8px", color: t.accent }}>DECK COMPLETE!</h2>
+                <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>Waiting for other Rivals to finish...</p>
+                <div style={{ marginTop: "16px", fontFamily: "'Press Start 2P', cursive", fontSize: "24px", color: "#FFD700" }}>{me?.score || 0} PTS</div>
+              </div>
+            ) : currentCard ? (
+              <div style={{ perspective: "1500px", width: "100%", maxWidth: "320px" }}>
+                <div style={{
+                  width: "100%", aspectRatio: "2.5/3.5",
+                  position: "relative", transformStyle: "preserve-3d",
+                  transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
+                  transform: isFlipping ? "rotateY(180deg)" : "rotateY(0deg)"
+                }}>
+                  <div style={{
+                    position: "absolute", width: "100%", height: "100%", backfaceVisibility: "hidden",
+                    borderRadius: "16px", padding: "20px",
+                    display: "flex", flexDirection: "column",
+                    boxShadow: `0 20px 50px rgba(0,0,0,0.8), 0 0 30px ${(currentCard.type === "joker" || currentCard.type === "trick") ? currentCard.color + "40" : t.accent + "15"}`,
+                    background: currentCard.type === "joker"
+                      ? `linear-gradient(135deg, #1a1a2e, #16213e)`
+                      : currentCard.type === "trick"
+                      ? `linear-gradient(135deg, #1a0a2e, #2d1b4e)`
+                      : "#fff",
+                    border: currentCard.type === "joker" || currentCard.type === "trick"
+                      ? `2px solid ${currentCard.color}60`
+                      : "none",
+                    color: (currentCard.type === "joker" || currentCard.type === "trick") ? "#fff" : "#000"
+                  }}>
+                    {currentCard.type === "exercise" ? (
+                      <>
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                          <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "18px", color: currentCard.suitColor || "#000" }}>
+                            {currentCard.face}
+                            <div style={{ fontSize: "14px" }}>{currentCard.suit}</div>
+                          </div>
+                          <div style={{ fontSize: "10px", color: "#888", fontFamily: "'Press Start 2P', cursive" }}>{currentCard.category}</div>
+                        </div>
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+                          <div style={{ fontSize: "36px", marginBottom: "8px" }}>{currentCard.suit}</div>
+                          <h3 style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "13px", margin: "0 0 12px 0", lineHeight: "1.5" }}>{currentCard.displayName}</h3>
+                          <div style={{ fontSize: "40px", fontWeight: "900", color: "#1a1a1a", fontFamily: "'Press Start 2P', cursive" }}>
+                            {getCardReps(currentCard, me?.activeEffects || [])}
+                          </div>
+                          <div style={{ fontSize: "9px", color: "#888", fontFamily: "'Press Start 2P', cursive", marginTop: "4px" }}>REPS</div>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", transform: "rotate(180deg)" }}>
+                          <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "18px", color: currentCard.suitColor || "#000" }}>
+                            {currentCard.face}
+                            <div style={{ fontSize: "14px" }}>{currentCard.suit}</div>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "8px", color: currentCard.color, textTransform: "uppercase" }}>
+                            {currentCard.type}
+                          </span>
+                          <span style={{ fontSize: "20px" }}>{currentCard.icon}</span>
+                        </div>
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+                          <div style={{ fontSize: "48px", marginBottom: "12px" }}>{currentCard.icon}</div>
+                          <h3 style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "12px", color: currentCard.color, margin: "0 0 12px 0", lineHeight: "1.5" }}>
+                            {currentCard.name}
+                          </h3>
+                          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)", lineHeight: "1.6", maxWidth: "240px" }}>
+                            {currentCard.description}
+                          </p>
+                        </div>
+                        <div style={{ textAlign: "center" }}>
+                          <div style={{ width: "40px", height: "2px", background: currentCard.color, margin: "0 auto", borderRadius: "2px" }} />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleCompleteCard}
+                  disabled={cardCompleting}
+                  style={{
+                    width: "100%", marginTop: "20px", padding: "16px",
+                    background: currentCard.type === "exercise"
+                      ? `linear-gradient(135deg, ${t.accent}, ${t.accent}cc)`
+                      : `linear-gradient(135deg, ${currentCard.color}, ${currentCard.color}cc)`,
+                    color: "#fff", border: "none", borderRadius: "12px",
+                    fontFamily: "'Press Start 2P', cursive", fontSize: "11px",
+                    cursor: cardCompleting ? "wait" : "pointer",
+                    opacity: cardCompleting ? 0.6 : 1,
+                    boxShadow: `0 8px 25px ${currentCard.type === "exercise" ? t.accent : currentCard.color}40`,
+                    transition: "all 0.2s"
+                  }}
+                >
+                  {cardCompleting ? "..." : currentCard.type === "exercise" ? "COMPLETE REPS ✓" : currentCard.type === "joker" ? "ACTIVATE JOKER!" : "PLAY TRICK!"}
+                </button>
+              </div>
+            ) : null}
+          </div>
+
+          <div style={{
+            width: "260px", background: "rgba(0,0,0,0.5)", borderRadius: "16px",
+            border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column",
+            overflow: "hidden"
+          }}>
+            <div style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <h3 style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "9px", color: t.accent, margin: 0 }}>SCOREBOARD</h3>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "8px" }}>
+              {[...(roomData.players || [])].sort((a, b) => (b.score || 0) - (a.score || 0)).map((p, i) => (
+                <div key={p.userId} style={{
+                  display: "flex", alignItems: "center", gap: "10px",
+                  padding: "10px 12px", borderRadius: "10px", marginBottom: "6px",
+                  background: p.userId === user.uid ? `${t.accent}15` : "rgba(255,255,255,0.02)",
+                  border: `1px solid ${p.userId === user.uid ? t.accent + "30" : "transparent"}`
+                }}>
+                  <div style={{
+                    width: "24px", height: "24px", borderRadius: "6px",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    background: i === 0 ? "#FFD700" : i === 1 ? "#C0C0C0" : i === 2 ? "#CD7F32" : "rgba(255,255,255,0.1)",
+                    color: i < 3 ? "#000" : "#fff",
+                    fontFamily: "'Press Start 2P', cursive", fontSize: "9px", fontWeight: "bold"
+                  }}>{i + 1}</div>
+                  {p.avatar ? (
+                    <img src={p.avatar} alt="" style={{ width: "28px", height: "28px", borderRadius: "6px" }} />
+                  ) : (
+                    <div style={{ width: "28px", height: "28px", borderRadius: "6px", background: "#333" }} />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: "10px", fontWeight: "bold", color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {p.userName}{p.userId === user.uid ? " (You)" : ""}
+                    </div>
+                    <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)" }}>
+                      {p.completedCards || 0}/{roomData.deck?.length} cards
                     </div>
                   </div>
-                  <button 
-                    onClick={() => handleCreateRoom(s)}
-                    style={{ 
-                      width: "100%", 
-                      padding: "16px", 
-                      background: "transparent", 
-                      color: t.accent, 
-                      border: `2px solid ${t.accent}`, 
-                      borderRadius: "12px",
-                      fontFamily: "'Press Start 2P', cursive", 
-                      fontSize: "12px", 
-                      cursor: "pointer",
-                      transition: "all 0.2s"
-                    }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = t.accent; e.currentTarget.style.color = "#fff"; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = t.accent; }}
-                  >
-                    CREATE MATCH
-                  </button>
+                  <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "11px", color: i === 0 ? "#FFD700" : "#fff" }}>
+                    {p.score || 0}
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-          
-          <div style={{ 
-            marginTop: "auto", 
-            height: "300px", 
-            background: "rgba(0,0,0,0.4)", 
-            borderRadius: "20px", 
-            border: `1px solid ${t.shadowXs}`,
-            overflow: "hidden",
-            display: "flex",
-            flexDirection: "column"
-          }}>
-             <div style={{ padding: "16px 24px", background: t.shadowXxs, borderBottom: `1px solid ${t.shadowXs}`, display: "flex", alignItems: "center", gap: "12px" }}>
-                <div style={{ width: "8px", height: "8px", background: t.accent, borderRadius: "50%", boxShadow: `0 0 10px ${t.accent}` }} />
-                <span style={{ fontFamily: "'Press Start 2P', cursive", color: "#fff", fontSize: "10px" }}>LOBBY COMMS</span>
-             </div>
-             <div style={{ flex: 1 }}>
-               <GlobalChat user={user} userProfile={userProfile} hideNavbar={true} roomId={currentRoomId || "live-lobby"} />
-             </div>
+
+            <div style={{ padding: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)" }}>YOUR REPS</span>
+                <span style={{ fontSize: "11px", fontWeight: "bold", color: t.accent }}>{me?.totalReps || 0}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)" }}>TICKETS</span>
+                <span style={{ fontSize: "11px", fontWeight: "bold", color: "#FFD700" }}>🎟️ {me?.ticketsEarned || 0}</span>
+              </div>
+            </div>
           </div>
         </div>
 
         <style>{`
-          .showdown-card:hover {
-            transform: translateY(-8px);
-            background: ${t.shadowXxs};
-            border-color: ${t.shadowSm};
-            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-          }
-          @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-          }
+          @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+          @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         `}</style>
       </div>
     );
   }
 
-  const isMyTurn = activePlayerId === user.uid;
-  const currentExercise = selectedShowdown.exercises[currentCardIndex % selectedShowdown.exercises.length];
-  const myPlayerData = roomData?.players?.find(p => p.userId === user.uid);
-  const activeJoker = roomData?.jokers && roomData.currentJokerIndex >= 0 ? roomData.jokers[roomData.currentJokerIndex] : null;
-  const jokerActive = activeJoker && roomData.jokerActiveUntil?.toMillis() > Date.now();
+  if (phase === "lobby" && roomData) {
+    const me = roomData.players?.find((p) => p.userId === user.uid);
+    const allReady = roomData.players?.every((p) => p.ready);
+    const isHost = roomData.hostId === user.uid;
+    const modeInfo = TRICK_MODES.find((m) => m.id === roomData.trickMode) || TRICK_MODES[0];
+
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #050505 0%, #0a0a0a 100%)", color: "#fff", display: "flex", flexDirection: "column" }}>
+        {countdown && (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.95)",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"
+          }}>
+            <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "14px", color: "rgba(255,255,255,0.5)", marginBottom: "24px" }}>MATCH STARTING IN</div>
+            <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "80px", color: t.accent, textShadow: `0 0 60px ${t.accent}`, animation: "pulse 1s infinite" }}>
+              {countdown}
+            </div>
+          </div>
+        )}
+
+        <div style={{ padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <div>
+            <h1 style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "16px", color: t.accent, margin: 0 }}>ARENA LOBBY</h1>
+            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "10px", margin: "4px 0 0", fontFamily: "'Press Start 2P', cursive" }}>{roomData.roomName}</p>
+          </div>
+          <button onClick={handleQuit} style={{ background: "transparent", border: `1px solid rgba(255,255,255,0.2)`, color: "rgba(255,255,255,0.6)", padding: "8px 20px", borderRadius: "8px", fontFamily: "'Press Start 2P', cursive", fontSize: "9px", cursor: "pointer" }}>
+            LEAVE
+          </button>
+        </div>
+
+        <div style={{ flex: 1, display: "flex", padding: "24px", gap: "24px", overflow: "auto" }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "20px" }}>
+            <div style={{ display: "flex", gap: "16px" }}>
+              <div style={{ flex: 1, padding: "20px", background: "rgba(255,255,255,0.03)", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontFamily: "'Press Start 2P', cursive", marginBottom: "8px" }}>SHOWDOWN</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span style={{ fontSize: "28px" }}>{SHOWDOWNS.find((s) => s.category === roomData.showdown?.category)?.icon || "⚔️"}</span>
+                  <div>
+                    <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "14px", color: "#fff" }}>{roomData.showdown?.name}</div>
+                    <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>{roomData.showdown?.category}</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ flex: 1, padding: "20px", background: "rgba(255,255,255,0.03)", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontFamily: "'Press Start 2P', cursive", marginBottom: "8px" }}>GAME MODE</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span style={{ fontSize: "28px" }}>{modeInfo.icon}</span>
+                  <div>
+                    <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "12px", color: "#fff" }}>{modeInfo.name}</div>
+                    <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>{modeInfo.description}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ padding: "20px", background: "rgba(255,255,255,0.03)", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontFamily: "'Press Start 2P', cursive", marginBottom: "16px" }}>
+                CONTENDERS ({roomData.players?.length || 0}/{roomData.maxPlayers || 4})
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "12px" }}>
+                {roomData.players?.map((p) => (
+                  <div key={p.userId} style={{
+                    display: "flex", alignItems: "center", gap: "12px",
+                    padding: "14px 16px", borderRadius: "12px",
+                    background: p.ready ? `${t.accent}10` : "rgba(255,255,255,0.02)",
+                    border: `1px solid ${p.ready ? t.accent + "40" : "rgba(255,255,255,0.06)"}`,
+                    transition: "all 0.3s"
+                  }}>
+                    {p.avatar ? (
+                      <img src={p.avatar} alt="" style={{ width: "40px", height: "40px", borderRadius: "10px", border: `2px solid ${p.ready ? t.accent : "#333"}` }} />
+                    ) : (
+                      <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#222", border: `2px solid ${p.ready ? t.accent : "#333"}` }} />
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "10px", color: "#fff" }}>
+                        {p.userName}{p.userId === user.uid ? " (You)" : ""}
+                      </div>
+                      <div style={{ fontSize: "10px", color: p.ready ? "#0f0" : "#ff0", marginTop: "4px" }}>
+                        {p.ready ? "✅ READY" : "⏳ NOT READY"}
+                      </div>
+                    </div>
+                    {p.userId === roomData.hostId && (
+                      <span style={{ fontSize: "8px", color: "#FFD700", fontFamily: "'Press Start 2P', cursive", background: "rgba(255,215,0,0.1)", padding: "4px 8px", borderRadius: "4px" }}>HOST</span>
+                    )}
+                  </div>
+                ))}
+                {Array.from({ length: (roomData.maxPlayers || 4) - (roomData.players?.length || 0) }).map((_, i) => (
+                  <div key={`empty-${i}`} style={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    padding: "14px 16px", borderRadius: "12px",
+                    border: "2px dashed rgba(255,255,255,0.06)",
+                    color: "rgba(255,255,255,0.15)", fontSize: "11px"
+                  }}>
+                    Waiting for rival...
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+              <button onClick={handleToggleReady} style={{
+                flex: 1, padding: "16px 24px",
+                background: me?.ready ? "linear-gradient(135deg, #0f0 0%, #0a0 100%)" : `linear-gradient(135deg, ${t.accent}, ${t.accent}cc)`,
+                color: me?.ready ? "#000" : "#fff",
+                border: "none", borderRadius: "12px",
+                fontFamily: "'Press Start 2P', cursive", fontSize: "11px", cursor: "pointer",
+                boxShadow: me?.ready ? "0 0 20px rgba(0,255,0,0.2)" : `0 0 20px ${t.accent}30`
+              }}>
+                {me?.ready ? "✓ READY!" : "READY UP"}
+              </button>
+              {isHost && (
+                <button onClick={handleStartMatch} disabled={!allReady || (roomData.players?.length || 0) < 2} style={{
+                  flex: 1, padding: "16px 24px",
+                  background: allReady && (roomData.players?.length || 0) >= 2 ? "#fff" : "rgba(255,255,255,0.05)",
+                  color: allReady && (roomData.players?.length || 0) >= 2 ? "#000" : "rgba(255,255,255,0.3)",
+                  border: "none", borderRadius: "12px",
+                  fontFamily: "'Press Start 2P', cursive", fontSize: "11px",
+                  cursor: allReady && (roomData.players?.length || 0) >= 2 ? "pointer" : "not-allowed"
+                }}>
+                  START MATCH
+                </button>
+              )}
+            </div>
+
+            <div style={{ padding: "16px", background: "rgba(255,255,255,0.02)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.04)" }}>
+              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontFamily: "'Press Start 2P', cursive", marginBottom: "8px" }}>ROOM CODE</div>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <code style={{ flex: 1, fontSize: "11px", color: t.accent, background: "rgba(0,0,0,0.4)", padding: "10px 14px", borderRadius: "8px", letterSpacing: "1px", wordBreak: "break-all" }}>
+                  {currentRoomId}
+                </code>
+                <button onClick={() => navigator.clipboard.writeText(currentRoomId)} style={{
+                  padding: "10px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: "8px", color: "#fff", fontSize: "10px", cursor: "pointer"
+                }}>
+                  COPY
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div style={{
+            width: "300px", background: "rgba(0,0,0,0.4)", borderRadius: "16px",
+            border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden", display: "flex", flexDirection: "column"
+          }}>
+            <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ width: "6px", height: "6px", background: t.accent, borderRadius: "50%", boxShadow: `0 0 8px ${t.accent}` }} />
+              <span style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "9px", color: "#fff" }}>LOBBY CHAT</span>
+            </div>
+            <div style={{ flex: 1 }}>
+              <GlobalChat user={user} userProfile={userProfile} hideNavbar={true} roomId={currentRoomId || "live-lobby"} />
+            </div>
+          </div>
+        </div>
+
+        <style>{`@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }`}</style>
+      </div>
+    );
+  }
 
   return (
-    <div className="live-arena" style={{ 
-      height: "calc(100vh - 64px)", 
-      background: "radial-gradient(circle at center, #1a1a1a 0%, #000 100%)", 
-      display: "flex", 
-      flexDirection: "column",
-      color: "#fff"
-    }}>
-      {jokerActive && (
-        <div style={{ 
-          background: activeJoker.type === "positive" ? "rgba(15, 255, 0, 0.9)" : t.shadow, 
-          color: "#000", 
-          padding: "12px", 
-          textAlign: "center", 
-          fontFamily: "'Press Start 2P', cursive", 
-          fontSize: "12px", 
-          animation: "blink 1s infinite",
-          boxShadow: `0 0 20px ${activeJoker.type === "positive" ? "#0f0" : t.accent}`,
-          zIndex: 100
-        }}>
-          ⚠️ {activeJoker.effect.toUpperCase()} ⚠️
-        </div>
-      )}
-      
-      <div style={{ 
-        padding: "20px 30px", 
-        background: "rgba(0,0,0,0.8)", 
-        backdropFilter: "blur(10px)",
-        borderBottom: `1px solid ${t.shadowSm}`, 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center" 
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <div style={{ background: t.accent, color: "#fff", padding: "8px 16px", borderRadius: "4px", fontFamily: "'Press Start 2P', cursive", fontSize: "12px" }}>
-            {selectedShowdown.name.toUpperCase()}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: lobbyStatus === "ACTIVE" ? "#0f0" : "#ff0", boxShadow: `0 0 10px ${lobbyStatus === "ACTIVE" ? "#0f0" : "#ff0"}` }} />
-            <span style={{ fontSize: "10px", fontFamily: "'Press Start 2P', cursive", color: lobbyStatus === "ACTIVE" ? "#0f0" : "#ff0" }}>{lobbyStatus}</span>
-          </div>
-        </div>
-        <button 
-          onClick={handleQuit} 
-          style={{ 
-            background: t.shadowXs, 
-            border: `1px solid ${t.accent}`, 
-            color: t.accent, 
-            padding: "10px 20px", 
-            borderRadius: "8px",
-            fontSize: "10px", 
-            fontFamily: "'Press Start 2P', cursive", 
-            cursor: "pointer",
-            transition: "all 0.2s"
-          }}
-          onMouseOver={(e) => e.currentTarget.style.background = t.accent}
-          onMouseOut={(e) => e.currentTarget.style.background = t.shadowXs}
-        >EXIT ARENA</button>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #050505 0%, #0a0a0a 100%)", color: "#fff" }}>
+      <div style={{ padding: "32px 24px 16px" }}>
+        <h1 style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "22px", color: t.accent, marginBottom: "6px", textShadow: `0 0 20px ${t.accent}40` }}>LIVE ARENA</h1>
+        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>Challenge rivals in real-time showdowns. Pick your battle, set the rules, dominate.</p>
       </div>
 
-      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        <div style={{ 
-          flex: 1, 
-          display: "flex", 
-          flexDirection: "column", 
-          alignItems: "center", 
-          justifyContent: "center", 
-          perspective: "2000px",
-          position: "relative",
-          padding: "40px"
-        }}>
-          {lobbyStatus === "WAITING" ? (
-            <div style={{ 
-              textAlign: "center", 
-              background: "rgba(255,255,255,0.03)", 
-              padding: "60px", 
-              borderRadius: "30px", 
-              border: "1px solid rgba(255,255,255,0.05)",
-              boxShadow: "0 20px 50px rgba(0,0,0,0.5)"
-            }}>
-              <h2 style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "24px", marginBottom: "16px", color: "#fff" }}>{roomData?.roomName}</h2>
-              <p style={{ color: "rgba(255,255,255,0.4)", marginBottom: "40px", fontSize: "12px" }}>WAITING FOR ALL CONTENDERS TO INITIALIZE</p>
-              
-              <div style={{ display: "flex", flexDirection: "column", gap: "20px", alignItems: "center" }}>
-                <button 
-                  onClick={handleToggleReady}
-                  style={{ 
-                    padding: "24px 48px", 
-                    background: myPlayerData?.ready ? "linear-gradient(135deg, #0f0 0%, #0a0 100%)" : t.accent, 
-                    color: myPlayerData?.ready ? "#000" : "#fff", 
-                    border: "none", 
-                    borderRadius: "16px",
-                    fontFamily: "'Press Start 2P', cursive", 
-                    fontSize: "14px", 
-                    cursor: "pointer",
-                    boxShadow: myPlayerData?.ready ? "0 0 30px rgba(0,255,0,0.3)" : `0 0 30px ${t.shadowSm}`,
-                    transition: "all 0.3s transform"
-                  }}
-                  onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.95)"}
-                  onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
-                >
-                  {myPlayerData?.ready ? "✓ READY TO FIGHT" : "PREPARE FOR BATTLE"}
-                </button>
-
-                {roomData?.hostId === user.uid && (
-                  <button 
-                    onClick={handleStartMatch}
-                    disabled={!roomData?.players?.every(p => p.ready) || roomData?.players?.length < 2}
-                    style={{ 
-                      padding: "16px 32px", 
-                      background: "#fff", 
-                      color: "#000", 
-                      border: "none", 
-                      borderRadius: "12px",
-                      fontFamily: "'Press Start 2P', cursive", 
-                      fontSize: "12px", 
-                      cursor: "pointer", 
-                      opacity: (!roomData?.players?.every(p => p.ready) || roomData?.players?.length < 2) ? 0.3 : 1,
-                      marginTop: "20px"
-                    }}
-                  >
-                    START MATCH
-                  </button>
-                )}
+      <div style={{ padding: "0 24px 24px" }}>
+        <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", fontFamily: "'Press Start 2P', cursive", marginBottom: "16px" }}>1. CHOOSE YOUR SHOWDOWN</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", marginBottom: "32px" }}>
+          {SHOWDOWNS.map((s) => (
+            <div
+              key={s.id}
+              onClick={() => setSelectedShowdown(s)}
+              style={{
+                padding: "24px", borderRadius: "16px",
+                background: selectedShowdown?.id === s.id ? `${t.accent}15` : "rgba(255,255,255,0.03)",
+                border: `2px solid ${selectedShowdown?.id === s.id ? t.accent : "rgba(255,255,255,0.06)"}`,
+                cursor: "pointer", transition: "all 0.3s",
+                boxShadow: selectedShowdown?.id === s.id ? `0 0 30px ${t.accent}15` : "none"
+              }}
+            >
+              <div style={{ fontSize: "32px", marginBottom: "12px" }}>{s.icon}</div>
+              <h3 style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "14px", color: selectedShowdown?.id === s.id ? t.accent : "#fff", marginBottom: "8px" }}>{s.name}</h3>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                {s.exercises.map((ex) => (
+                  <span key={ex} style={{ background: "rgba(255,255,255,0.05)", padding: "3px 8px", borderRadius: "12px", fontSize: "10px", color: "rgba(255,255,255,0.5)" }}>{ex}</span>
+                ))}
               </div>
             </div>
-          ) : isEliminated ? (
-            <div style={{ textAlign: "center" }}>
-              <h2 style={{ color: t.accent, fontFamily: "'Press Start 2P', cursive", fontSize: "40px", textShadow: `0 0 30px ${t.accent}` }}>WAVED OFF</h2>
-              <p style={{ color: "rgba(255,255,255,0.5)", marginTop: "20px" }}>BETTER LUCK NEXT TIME, RIVAL.</p>
-            </div>
-          ) : (
-            <div style={{ 
-              width: "320px", 
-              height: "460px", 
-              position: "relative", 
-              transformStyle: "preserve-3d", 
-              transition: "transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)", 
-              transform: isFlipping ? "rotateY(180deg)" : "rotateY(0deg)" 
-            }}>
-              <div style={{ 
-                position: "absolute", 
-                width: "100%", 
-                height: "100%", 
-                backfaceVisibility: "hidden", 
-                background: "#fff", 
-                borderRadius: "20px", 
-                padding: "30px", 
-                display: "flex", 
-                flexDirection: "column", 
-                alignItems: "center", 
-                justifyContent: "space-between", 
-                boxShadow: `0 30px 60px rgba(0,0,0,0.8), 0 0 40px ${t.shadowXs}`, 
-                color: "black", 
-                border: "12px solid #1a1a1a" 
-              }}>
-                <div style={{ width: "100%", display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: "24px", fontFamily: "'Press Start 2P', cursive" }}>
-                  <span>{currentCardIndex + 1}</span>
-                  <span style={{ color: t.accent }}>♦</span>
-                </div>
-                
-                <div style={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                  <h2 style={{ fontSize: "20px", margin: "0 0 10px 0", fontFamily: "'Press Start 2P', cursive", lineHeight: "1.4" }}>{currentExercise.toUpperCase()}</h2>
-                  <div style={{ fontSize: "64px", fontWeight: "bold", color: "#1a1a1a", margin: "20px 0" }}>{score}</div>
-                  <p style={{ fontSize: "10px", color: "#888", fontFamily: "'Press Start 2P', cursive", letterSpacing: "1px" }}>TOTAL REPS</p>
-                </div>
-
-                {isMyTurn ? (
-                  <button 
-                    onClick={handleCardComplete} 
-                    style={{ 
-                      width: "100%", 
-                      padding: "20px", 
-                      background: t.accent, 
-                      color: "white", 
-                      border: "none", 
-                      borderRadius: "12px",
-                      fontFamily: "'Press Start 2P', cursive", 
-                      fontSize: "12px", 
-                      cursor: "pointer",
-                      boxShadow: `0 10px 20px ${t.shadowSm}`
-                    }}
-                  >NEXT REP</button>
-                ) : (
-                  <div style={{ 
-                    padding: "15px", 
-                    background: "#f0f0f0", 
-                    borderRadius: "10px", 
-                    width: "100%", 
-                    textAlign: "center",
-                    fontSize: "10px", 
-                    color: t.accent, 
-                    fontWeight: "bold", 
-                    fontFamily: "'Press Start 2P', cursive" 
-                  }}>RIVAL'S TURN</div>
-                )}
-
-                <div style={{ width: "100%", display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: "24px", transform: "rotate(180deg)", fontFamily: "'Press Start 2P', cursive" }}>
-                  <span>{currentCardIndex + 1}</span>
-                  <span style={{ color: t.accent }}>♦</span>
-                </div>
-              </div>
-            </div>
-          )}
+          ))}
         </div>
 
-        <div style={{ 
-          width: "320px", 
-          padding: "30px", 
-          background: "rgba(0,0,0,0.5)", 
-          backdropFilter: "blur(5px)",
-          borderLeft: `1px solid ${t.shadowXs}`,
-          display: "flex",
-          flexDirection: "column"
-        }}>
-          <h3 style={{ 
-            color: t.accent, 
-            fontFamily: "'Press Start 2P', cursive", 
-            fontSize: "12px", 
-            marginBottom: "30px", 
-            textAlign: "center",
-            letterSpacing: "2px"
-          }}>CONTENDERS</h3>
-          
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
-            {rivals.map((rival) => (
-              <div key={rival.userId} style={{ 
-                display: "flex", 
-                alignItems: "center",
-                gap: "12px",
-                padding: "16px", 
-                borderRadius: "12px",
-                background: rival.userId === activePlayerId ? t.shadowXs : "rgba(255,255,255,0.03)", 
-                border: `1px solid ${rival.userId === activePlayerId ? t.accent : "rgba(255,255,255,0.05)"}`,
-                opacity: rival.isEliminated ? 0.3 : 1,
-                position: "relative",
-                transition: "all 0.3s"
-              }}>
-                <div style={{ position: "relative" }}>
-                   <div style={{ width: "40px", height: "40px", borderRadius: "8px", background: "#222", border: `2px solid ${rival.userId === activePlayerId ? t.accent : "#444"}` }} />
-                   {rival.ready && <div style={{ position: "absolute", top: "-5px", right: "-5px", background: "#0f0", color: "#000", fontSize: "8px", padding: "2px", borderRadius: "2px", fontWeight: "bold" }}>RDY</div>}
+        <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", fontFamily: "'Press Start 2P', cursive", marginBottom: "16px" }}>2. SELECT GAME MODE</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", marginBottom: "32px" }}>
+          {TRICK_MODES.map((m) => (
+            <div
+              key={m.id}
+              onClick={() => setSelectedTrickMode(m.id)}
+              style={{
+                padding: "16px 20px", borderRadius: "12px",
+                background: selectedTrickMode === m.id ? `${t.accent}15` : "rgba(255,255,255,0.02)",
+                border: `2px solid ${selectedTrickMode === m.id ? t.accent : "rgba(255,255,255,0.04)"}`,
+                cursor: "pointer", transition: "all 0.3s"
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                <span style={{ fontSize: "22px" }}>{m.icon}</span>
+                <span style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "10px", color: selectedTrickMode === m.id ? t.accent : "#fff" }}>{m.name}</span>
+              </div>
+              <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", margin: 0, lineHeight: "1.5" }}>{m.description}</p>
+              {m.jokerCount > 0 && (
+                <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                  <span style={{ fontSize: "9px", color: "#FFD700", background: "rgba(255,215,0,0.1)", padding: "2px 6px", borderRadius: "4px" }}>🃏 {m.jokerCount}</span>
+                  <span style={{ fontSize: "9px", color: "#9b59b6", background: "rgba(155,89,182,0.1)", padding: "2px 6px", borderRadius: "4px" }}>⚡ {m.trickCount}</span>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ color: "#fff", fontSize: "10px", fontFamily: "'Press Start 2P', cursive", marginBottom: "4px" }}>{rival.userName}</div>
-                  {rival.userId === activePlayerId && lobbyStatus === "ACTIVE" && (
-                    <div style={{ color: "#0f0", fontSize: "8px", fontFamily: "'Press Start 2P', cursive", animation: "blink 1s infinite" }}>IN ACTION</div>
-                  )}
+              )}
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={handleCreateRoom}
+          disabled={!selectedShowdown}
+          style={{
+            width: "100%", maxWidth: "400px", padding: "18px",
+            background: selectedShowdown ? `linear-gradient(135deg, ${t.accent}, ${t.accent}cc)` : "rgba(255,255,255,0.05)",
+            color: selectedShowdown ? "#fff" : "rgba(255,255,255,0.3)",
+            border: "none", borderRadius: "14px",
+            fontFamily: "'Press Start 2P', cursive", fontSize: "13px",
+            cursor: selectedShowdown ? "pointer" : "not-allowed",
+            boxShadow: selectedShowdown ? `0 8px 30px ${t.accent}40` : "none",
+            display: "block", margin: "0 auto 40px",
+            transition: "all 0.3s"
+          }}
+        >
+          CREATE MATCH
+        </button>
+
+        <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", fontFamily: "'Press Start 2P', cursive", marginBottom: "16px" }}>
+          OPEN ARENAS ({activeRooms.length})
+        </div>
+        {activeRooms.length === 0 ? (
+          <div style={{ padding: "40px", textAlign: "center", border: "2px dashed rgba(255,255,255,0.05)", borderRadius: "16px" }}>
+            <p style={{ color: "rgba(255,255,255,0.2)", fontSize: "10px", fontFamily: "'Press Start 2P', cursive" }}>NO OPEN MATCHES. BE THE FIRST.</p>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gap: "12px" }}>
+            {activeRooms.map((room) => {
+              const mInfo = TRICK_MODES.find((m) => m.id === room.trickMode) || TRICK_MODES[0];
+              return (
+                <div key={room.id} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "16px 20px", borderRadius: "14px",
+                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)"
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                    <span style={{ fontSize: "24px" }}>{SHOWDOWNS.find((s) => s.category === room.showdown?.category)?.icon || "⚔️"}</span>
+                    <div>
+                      <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "10px", color: "#fff", marginBottom: "4px" }}>{room.roomName}</div>
+                      <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)" }}>
+                        {room.hostName} · {mInfo.icon} {mInfo.name} · {room.players?.length || 0}/{room.maxPlayers || 4} players
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleJoinRoom(room)}
+                    disabled={room.players?.length >= (room.maxPlayers || 4)}
+                    style={{
+                      padding: "10px 20px",
+                      background: room.players?.length >= (room.maxPlayers || 4) ? "rgba(255,255,255,0.05)" : t.accent,
+                      color: room.players?.length >= (room.maxPlayers || 4) ? "rgba(255,255,255,0.3)" : "#fff",
+                      border: "none", borderRadius: "8px",
+                      fontFamily: "'Press Start 2P', cursive", fontSize: "9px",
+                      cursor: room.players?.length >= (room.maxPlayers || 4) ? "not-allowed" : "pointer"
+                    }}
+                  >
+                    {room.players?.length >= (room.maxPlayers || 4) ? "FULL" : "JOIN"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div style={{ marginTop: "32px" }}>
+          <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", fontFamily: "'Press Start 2P', cursive", marginBottom: "16px" }}>
+            RIVALS ONLINE ({onlineUsers.length})
+          </div>
+          <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "8px" }}>
+            {onlineUsers.length === 0 ? (
+              <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "10px", fontFamily: "'Press Start 2P', cursive" }}>No rivals active</span>
+            ) : onlineUsers.map((u) => (
+              <div key={u.userId} style={{ textAlign: "center", flexShrink: 0 }}>
+                {u.avatarURL ? (
+                  <img src={u.avatarURL} alt="" style={{ width: "44px", height: "44px", borderRadius: "10px", border: `2px solid ${t.accent}30` }} />
+                ) : (
+                  <div style={{ width: "44px", height: "44px", borderRadius: "10px", background: "#222" }} />
+                )}
+                <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.5)", marginTop: "4px", maxWidth: "50px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {u.nickname || u.userName || "Rival"}
                 </div>
               </div>
             ))}
           </div>
-          
-          <div style={{ marginTop: "auto", padding: "20px", background: t.shadowXxs, borderRadius: "12px", border: `1px solid ${t.shadowXs}` }}>
-             <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "9px", lineHeight: "1.6", textAlign: "center" }}>ELIMINATION ROUNDS.<br/>KEEP PUSHING.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResultsScreen({ roomData, user, t, onPlayAgain, onQuit, matchTime, formatTime }) {
+  const sortedPlayers = [...(roomData.players || [])].sort((a, b) => (b.score || 0) - (a.score || 0));
+  const winner = sortedPlayers[0];
+  const me = sortedPlayers.find((p) => p.userId === user.uid);
+  const myRank = sortedPlayers.findIndex((p) => p.userId === user.uid) + 1;
+  const isWinner = winner?.userId === user.uid;
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: isWinner
+        ? "radial-gradient(circle at 50% 30%, rgba(255,215,0,0.08) 0%, #050505 60%)"
+        : "linear-gradient(180deg, #050505 0%, #0a0a0a 100%)",
+      color: "#fff", display: "flex", flexDirection: "column", alignItems: "center",
+      padding: "40px 24px"
+    }}>
+      <div style={{ textAlign: "center", marginBottom: "40px" }}>
+        <div style={{ fontSize: "48px", marginBottom: "16px" }}>
+          {isWinner ? "👑" : myRank === 2 ? "🥈" : myRank === 3 ? "🥉" : "💪"}
+        </div>
+        <h1 style={{
+          fontFamily: "'Press Start 2P', cursive", fontSize: "24px",
+          color: isWinner ? "#FFD700" : t.accent,
+          textShadow: isWinner ? "0 0 30px rgba(255,215,0,0.5)" : `0 0 20px ${t.accent}40`,
+          marginBottom: "8px"
+        }}>
+          {isWinner ? "VICTORY!" : "MATCH OVER"}
+        </h1>
+        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>
+          {roomData.showdown?.name} · {formatTime(matchTime)}
+        </p>
+      </div>
+
+      <div style={{ width: "100%", maxWidth: "500px", marginBottom: "32px" }}>
+        {sortedPlayers.map((p, i) => (
+          <div key={p.userId} style={{
+            display: "flex", alignItems: "center", gap: "16px",
+            padding: "16px 20px", marginBottom: "8px", borderRadius: "14px",
+            background: i === 0 ? "rgba(255,215,0,0.08)" : p.userId === user.uid ? `${t.accent}10` : "rgba(255,255,255,0.03)",
+            border: `1px solid ${i === 0 ? "rgba(255,215,0,0.3)" : p.userId === user.uid ? t.accent + "30" : "rgba(255,255,255,0.06)"}`,
+            transform: i === 0 ? "scale(1.02)" : "scale(1)"
+          }}>
+            <div style={{
+              width: "36px", height: "36px", borderRadius: "10px",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: i === 0 ? "#FFD700" : i === 1 ? "#C0C0C0" : i === 2 ? "#CD7F32" : "rgba(255,255,255,0.1)",
+              color: i < 3 ? "#000" : "#fff",
+              fontFamily: "'Press Start 2P', cursive", fontSize: "14px", fontWeight: "bold"
+            }}>{i === 0 ? "👑" : i + 1}</div>
+            {p.avatar ? (
+              <img src={p.avatar} alt="" style={{ width: "40px", height: "40px", borderRadius: "10px" }} />
+            ) : (
+              <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#222" }} />
+            )}
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "11px", color: i === 0 ? "#FFD700" : "#fff" }}>
+                {p.userName}{p.userId === user.uid ? " (You)" : ""}
+              </div>
+              <div style={{ display: "flex", gap: "12px", marginTop: "4px" }}>
+                <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)" }}>{p.totalReps || 0} reps</span>
+                <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)" }}>{p.completedCards || 0} cards</span>
+                <span style={{ fontSize: "10px", color: "#FFD700" }}>🎟️ {p.ticketsEarned || 0}</span>
+              </div>
+            </div>
+            <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "16px", color: i === 0 ? "#FFD700" : t.accent }}>
+              {p.score || 0}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {me && (
+        <div style={{
+          width: "100%", maxWidth: "500px", padding: "20px",
+          background: "rgba(255,255,255,0.03)", borderRadius: "16px",
+          border: "1px solid rgba(255,255,255,0.06)", marginBottom: "32px"
+        }}>
+          <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontFamily: "'Press Start 2P', cursive", marginBottom: "12px" }}>YOUR STATS</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", textAlign: "center" }}>
+            {[
+              { label: "RANK", value: `#${myRank}`, color: myRank === 1 ? "#FFD700" : "#fff" },
+              { label: "SCORE", value: me.score || 0, color: t.accent },
+              { label: "REPS", value: me.totalReps || 0, color: "#0f0" },
+              { label: "TICKETS", value: `🎟️ ${me.ticketsEarned || 0}`, color: "#FFD700" },
+            ].map((stat) => (
+              <div key={stat.label}>
+                <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "16px", color: stat.color, marginBottom: "4px" }}>{stat.value}</div>
+                <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.3)", fontFamily: "'Press Start 2P', cursive" }}>{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
+      )}
+
+      <div style={{ display: "flex", gap: "16px" }}>
+        <button onClick={onPlayAgain} style={{
+          padding: "14px 32px", background: `linear-gradient(135deg, ${t.accent}, ${t.accent}cc)`,
+          color: "#fff", border: "none", borderRadius: "12px",
+          fontFamily: "'Press Start 2P', cursive", fontSize: "11px", cursor: "pointer",
+          boxShadow: `0 8px 25px ${t.accent}40`
+        }}>
+          PLAY AGAIN
+        </button>
+        <button onClick={onQuit} style={{
+          padding: "14px 32px", background: "transparent",
+          color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.2)",
+          borderRadius: "12px", fontFamily: "'Press Start 2P', cursive",
+          fontSize: "11px", cursor: "pointer"
+        }}>
+          BACK TO HUB
+        </button>
       </div>
     </div>
   );
