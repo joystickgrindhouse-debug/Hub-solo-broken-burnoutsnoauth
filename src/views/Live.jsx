@@ -4,6 +4,8 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { LiveService } from "../services/liveService";
 import { UserService } from "../services/userService";
 import { generateLiveDeck, getCardPoints, getCardReps, TRICK_MODES } from "../logic/liveDeck";
+import { processExercise, createStateRefs, resetStateRefs } from "../logic/exerciseEngine";
+import PoseVisualizer from "../components/Burnouts/PoseVisualizer";
 import GlobalChat from "./GlobalChat";
 import { useTheme } from "../context/ThemeContext.jsx";
 
@@ -29,7 +31,14 @@ export default function Live({ user, userProfile }) {
   const [showEffectBanner, setShowEffectBanner] = useState(null);
   const [countdown, setCountdown] = useState(null);
   const [matchTime, setMatchTime] = useState(0);
+  const [currentReps, setCurrentReps] = useState(0);
+  const [poseFeedback, setPoseFeedback] = useState("");
+  const [poseState, setPoseState] = useState("IDLE");
+  const [cameraActive, setCameraActive] = useState(false);
   const timerRef = useRef(null);
+  const stateRefsRef = useRef(createStateRefs());
+  const autoCompleteTriggered = useRef(false);
+  const currentRepsRef = useRef(0);
 
   useEffect(() => {
     if (!user) return;
@@ -72,6 +81,15 @@ export default function Live({ user, userProfile }) {
     return () => unsub();
   }, [currentRoomId]);
 
+  useEffect(() => {
+    setCurrentReps(0);
+    currentRepsRef.current = 0;
+    setPoseFeedback("");
+    setPoseState("IDLE");
+    resetStateRefs(stateRefsRef.current);
+    autoCompleteTriggered.current = false;
+  }, [myCardIndex]);
+
   const startMatchTimer = () => {
     setMatchTime(0);
     timerRef.current = setInterval(() => setMatchTime((t) => t + 1), 1000);
@@ -96,7 +114,7 @@ export default function Live({ user, userProfile }) {
   };
 
   const handleJoinRoom = async (room) => {
-    if (room.players?.length >= (room.maxPlayers || 4)) return;
+    if (room.players?.length >= (room.maxPlayers || 6)) return;
     const res = await LiveService.joinRoom(room.id, user.uid, userProfile?.nickname || "Rival", userProfile?.avatarURL || "");
     if (res.success) {
       setCurrentRoomId(room.id);
@@ -142,7 +160,37 @@ export default function Live({ user, userProfile }) {
     return roomData.players.find((p) => p.userId === turnUserId);
   };
 
-  const handleCompleteCard = async () => {
+  const processPose = useCallback((landmarks) => {
+    if (!roomData?.deck || !isMyTurn() || cardCompleting) return;
+    const cardIndex = roomData.currentCardIndex || 0;
+    const card = roomData.deck[cardIndex];
+    if (!card || !card.exercise || !landmarks) return;
+
+    const me = roomData.players?.find((p) => p.userId === user.uid);
+    const targetReps = getCardReps(card, me?.activeEffects || []);
+
+    stateRefsRef.current.currentReps = currentRepsRef.current;
+    const exerciseId = card.exercise.toLowerCase().replace(/[\s_-]/g, '');
+    const result = processExercise(exerciseId, landmarks, stateRefsRef.current);
+    if (!result) return;
+
+    if (result.feedback) setPoseFeedback(result.feedback);
+    if (result.state) setPoseState(result.state);
+
+    if (result.repIncrement > 0) {
+      setCurrentReps((prev) => {
+        const next = prev + result.repIncrement;
+        currentRepsRef.current = Math.min(next, targetReps);
+        if (next >= targetReps && !autoCompleteTriggered.current) {
+          autoCompleteTriggered.current = true;
+          setTimeout(() => submitCard(next), 500);
+        }
+        return Math.min(next, targetReps);
+      });
+    }
+  }, [roomData, cardCompleting, user]);
+
+  const submitCard = async (repsCompleted) => {
     if (cardCompleting || !roomData?.deck || !isMyTurn()) return;
     setCardCompleting(true);
 
@@ -151,8 +199,8 @@ export default function Live({ user, userProfile }) {
     if (!card) { setCardCompleting(false); return; }
 
     const me = roomData.players?.find((p) => p.userId === user.uid);
-
-    const reps = getCardReps(card, me?.activeEffects || []);
+    const targetReps = getCardReps(card, me?.activeEffects || []);
+    const actualReps = repsCompleted != null ? repsCompleted : targetReps;
     const points = getCardPoints(card, me?.activeEffects || []);
 
     let finalPoints = points;
@@ -165,7 +213,7 @@ export default function Live({ user, userProfile }) {
     } else if (card.type === "trick") {
       if (card.effect === "double_or_nothing") {
         const won = Math.random() > 0.5;
-        finalPoints = won ? points : (reps * 2);
+        finalPoints = won ? points : (actualReps * 2);
         const resultCard = { ...card, description: won ? `DOUBLED! +${finalPoints} pts for ${card.displayName}!` : `BUSTED! Base pts only for ${card.displayName}!` };
         setShowEffectBanner(resultCard);
       } else {
@@ -177,12 +225,16 @@ export default function Live({ user, userProfile }) {
     setIsFlipping(true);
     setTimeout(() => setIsFlipping(false), 600);
 
-    const result = await LiveService.completeCard(currentRoomId, user.uid, reps, finalPoints, jokerEffect);
+    const result = await LiveService.completeCard(currentRoomId, user.uid, actualReps, finalPoints, jokerEffect);
     if (!result.success) {
       console.warn("Card completion failed:", result.error);
     }
 
     setCardCompleting(false);
+  };
+
+  const handleCompleteCard = async () => {
+    await submitCard(currentReps);
   };
 
   const handleQuit = async () => {
@@ -285,7 +337,108 @@ export default function Live({ user, userProfile }) {
         </div>
 
         <div style={{ flex: 1, display: "flex", padding: "16px", gap: "16px", overflow: "hidden" }}>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative" }}>
+            <div style={{
+              position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+              display: (isFinished || !myTurn) ? "none" : "block",
+              pointerEvents: (isFinished || !myTurn) ? "none" : "auto"
+            }}>
+              <div style={{
+                position: "relative", width: "100%", maxWidth: "600px", margin: "0 auto",
+                aspectRatio: "4/3", borderRadius: "16px", overflow: "hidden",
+                border: `2px solid ${t.accent}40`, background: "#000"
+              }}>
+                <PoseVisualizer onPoseResults={processPose} currentExercise={currentCard?.exercise} />
+                {currentCard && (
+                  <>
+                    <div style={{
+                      position: "absolute", top: "10px", left: "10px", right: "10px",
+                      display: "flex", justifyContent: "space-between", alignItems: "flex-start", zIndex: 20
+                    }}>
+                      <div style={{
+                        background: "rgba(0,0,0,0.75)", borderRadius: "10px", padding: "8px 12px",
+                        backdropFilter: "blur(8px)"
+                      }}>
+                        <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "8px", color: "rgba(255,255,255,0.6)", marginBottom: "4px" }}>
+                          {currentCard.displayName}
+                        </div>
+                        <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "22px", color: "#fff" }}>
+                          {currentReps}/{getCardReps(currentCard, me?.activeEffects || [])}
+                        </div>
+                      </div>
+                      {(currentCard.type === "joker" || currentCard.type === "trick") && (
+                        <div style={{
+                          background: `${currentCard.color}dd`, borderRadius: "8px", padding: "6px 10px",
+                          display: "flex", alignItems: "center", gap: "6px"
+                        }}>
+                          <span style={{ fontSize: "14px" }}>{currentCard.icon}</span>
+                          <span style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "7px", color: "#fff" }}>{currentCard.name}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div style={{
+                      position: "absolute", bottom: "10px", left: "10px", right: "10px",
+                      display: "flex", justifyContent: "space-between", alignItems: "flex-end", zIndex: 20
+                    }}>
+                      <div style={{
+                        background: "rgba(0,0,0,0.75)", borderRadius: "8px", padding: "6px 10px",
+                        backdropFilter: "blur(8px)"
+                      }}>
+                        <div style={{
+                          fontFamily: "'Press Start 2P', cursive", fontSize: "8px",
+                          color: poseState === "UP" || poseState === "STAND" || poseState === "OPEN" ? "#00ff88" : poseState === "DOWN" || poseState === "PLANK" || poseState === "CLOSED" ? "#ff4444" : "rgba(255,255,255,0.6)"
+                        }}>
+                          {poseFeedback || "Position yourself"}
+                        </div>
+                      </div>
+                      {currentCard.type === "exercise" && currentCard.suit && (
+                        <div style={{
+                          background: "rgba(0,0,0,0.75)", borderRadius: "8px", padding: "6px 10px",
+                          backdropFilter: "blur(8px)", display: "flex", alignItems: "center", gap: "4px"
+                        }}>
+                          <span style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "12px", color: currentCard.suitColor || "#fff" }}>
+                            {currentCard.face}{currentCard.suit}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div style={{
+                      position: "absolute", bottom: 0, left: 0, right: 0, height: "4px", background: "rgba(0,0,0,0.5)", zIndex: 20
+                    }}>
+                      <div style={{
+                        width: `${Math.min(100, (currentReps / Math.max(1, getCardReps(currentCard, me?.activeEffects || []))) * 100)}%`,
+                        height: "100%",
+                        background: `linear-gradient(90deg, ${t.accent}, #00ff88)`,
+                        transition: "width 0.3s",
+                        boxShadow: `0 0 10px ${t.accent}`
+                      }} />
+                    </div>
+                  </>
+                )}
+              </div>
+              {currentCard && (
+                <div style={{ width: "100%", maxWidth: "600px", margin: "12px auto 0" }}>
+                  <button
+                    onClick={handleCompleteCard}
+                    disabled={cardCompleting}
+                    style={{
+                      width: "100%", padding: "14px",
+                      background: currentReps >= getCardReps(currentCard, me?.activeEffects || [])
+                        ? "linear-gradient(135deg, #00ff88, #00cc6a)"
+                        : `linear-gradient(135deg, ${t.accent}80, ${t.accent}50)`,
+                      color: "#fff", border: "none", borderRadius: "12px",
+                      fontFamily: "'Press Start 2P', cursive", fontSize: "9px",
+                      cursor: cardCompleting ? "wait" : "pointer",
+                      opacity: cardCompleting ? 0.6 : 1,
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    {cardCompleting ? "SUBMITTING..." : currentReps >= getCardReps(currentCard, me?.activeEffects || []) ? "REPS DONE! NEXT CARD ✓" : `SKIP (${currentReps}/${getCardReps(currentCard, me?.activeEffects || [])} reps)`}
+                  </button>
+                </div>
+              )}
+            </div>
+
             {isFinished ? (
               <div style={{ textAlign: "center" }}>
                 <div style={{ fontSize: "48px", marginBottom: "16px" }}>🏁</div>
@@ -293,116 +446,34 @@ export default function Live({ user, userProfile }) {
                 <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>Match is over!</p>
                 <div style={{ marginTop: "16px", fontFamily: "'Press Start 2P', cursive", fontSize: "24px", color: "#FFD700" }}>{me?.score || 0} PTS</div>
               </div>
-            ) : currentCard ? (
-              <div style={{ perspective: "1500px", width: "100%", maxWidth: "320px" }}>
-                <div style={{
-                  width: "100%", aspectRatio: "2.5/3.5",
-                  position: "relative", transformStyle: "preserve-3d",
-                  transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
-                  transform: isFlipping ? "rotateY(180deg)" : "rotateY(0deg)"
-                }}>
-                  <div style={{
-                    position: "absolute", width: "100%", height: "100%", backfaceVisibility: "hidden",
-                    borderRadius: "16px", padding: "20px",
-                    display: "flex", flexDirection: "column",
-                    boxShadow: `0 20px 50px rgba(0,0,0,0.8), 0 0 30px ${(currentCard.type === "joker" || currentCard.type === "trick") ? currentCard.color + "40" : t.accent + "15"}`,
-                    background: currentCard.type === "joker"
-                      ? `linear-gradient(135deg, #1a1a2e, #16213e)`
-                      : currentCard.type === "trick"
-                      ? `linear-gradient(135deg, #1a0a2e, #2d1b4e)`
-                      : "#fff",
-                    border: currentCard.type === "joker" || currentCard.type === "trick"
-                      ? `2px solid ${currentCard.color}60`
-                      : "none",
-                    color: (currentCard.type === "joker" || currentCard.type === "trick") ? "#fff" : "#000"
-                  }}>
-                    {currentCard.type === "exercise" ? (
-                      <>
-                        <div style={{ display: "flex", justifyContent: "space-between" }}>
-                          <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "18px", color: currentCard.suitColor || "#000" }}>
-                            {currentCard.face}
-                            <div style={{ fontSize: "14px" }}>{currentCard.suit}</div>
-                          </div>
-                          <div style={{ fontSize: "10px", color: "#888", fontFamily: "'Press Start 2P', cursive" }}>{currentCard.category}</div>
-                        </div>
-                        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-                          <div style={{ fontSize: "36px", marginBottom: "8px" }}>{currentCard.suit}</div>
-                          <h3 style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "13px", margin: "0 0 12px 0", lineHeight: "1.5" }}>{currentCard.displayName}</h3>
-                          <div style={{ fontSize: "40px", fontWeight: "900", color: "#1a1a1a", fontFamily: "'Press Start 2P', cursive" }}>
-                            {getCardReps(currentCard, me?.activeEffects || [])}
-                          </div>
-                          <div style={{ fontSize: "9px", color: "#888", fontFamily: "'Press Start 2P', cursive", marginTop: "4px" }}>REPS</div>
-                        </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", transform: "rotate(180deg)" }}>
-                          <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "18px", color: currentCard.suitColor || "#000" }}>
-                            {currentCard.face}
-                            <div style={{ fontSize: "14px" }}>{currentCard.suit}</div>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "8px", color: currentCard.color, textTransform: "uppercase" }}>
-                            {currentCard.type}
-                          </span>
-                          <span style={{ fontSize: "20px" }}>{currentCard.icon}</span>
-                        </div>
-                        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-                          <div style={{ fontSize: "28px", marginBottom: "6px" }}>{currentCard.icon}</div>
-                          <h3 style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "10px", color: currentCard.color, margin: "0 0 6px 0", lineHeight: "1.4" }}>
-                            {currentCard.name}
-                          </h3>
-                          <p style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", lineHeight: "1.4", maxWidth: "240px", margin: "0 0 10px 0" }}>
-                            {currentCard.description}
-                          </p>
-                          <div style={{ width: "80%", height: "1px", background: `${currentCard.color}40`, margin: "0 auto 10px" }} />
-                          <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "11px", color: "#fff", marginBottom: "4px" }}>
-                            {currentCard.displayName}
-                          </div>
-                          <div style={{ fontSize: "32px", fontWeight: "900", color: currentCard.color, fontFamily: "'Press Start 2P', cursive" }}>
-                            {getCardReps(currentCard, me?.activeEffects || [])}
-                          </div>
-                          <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.5)", fontFamily: "'Press Start 2P', cursive", marginTop: "2px" }}>REPS</div>
-                        </div>
-                        <div style={{ textAlign: "center" }}>
-                          <div style={{ width: "40px", height: "2px", background: currentCard.color, margin: "0 auto", borderRadius: "2px" }} />
-                        </div>
-                      </>
-                    )}
-                  </div>
+            ) : !myTurn && currentCard ? (
+              <div style={{
+                width: "100%", maxWidth: "600px", padding: "40px 20px",
+                background: "rgba(255,255,255,0.03)", borderRadius: "16px",
+                border: "1px solid rgba(255,255,255,0.06)", textAlign: "center"
+              }}>
+                <div style={{ fontSize: "36px", marginBottom: "12px" }}>
+                  {currentCard.type === "exercise" ? currentCard.suit : currentCard.icon}
                 </div>
-
-                {!myTurn && (
-                  <div style={{
-                    width: "100%", marginTop: "20px", padding: "14px",
-                    background: "rgba(255,255,255,0.05)", borderRadius: "12px",
-                    textAlign: "center", fontFamily: "'Press Start 2P', cursive", fontSize: "9px",
-                    color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)"
-                  }}>
-                    Waiting for {turnPlayer?.userName || "rival"}...
+                <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "12px", color: "#fff", marginBottom: "6px" }}>
+                  {currentCard.displayName}
+                </div>
+                <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "28px", color: t.accent, marginBottom: "6px" }}>
+                  {getCardReps(currentCard, me?.activeEffects || [])} REPS
+                </div>
+                {(currentCard.type === "joker" || currentCard.type === "trick") && (
+                  <div style={{ fontSize: "9px", color: currentCard.color, marginTop: "8px" }}>
+                    {currentCard.icon} {currentCard.name}
                   </div>
                 )}
-                {myTurn && (
-                <button
-                  onClick={handleCompleteCard}
-                  disabled={cardCompleting}
-                  style={{
-                    width: "100%", marginTop: "20px", padding: "16px",
-                    background: currentCard.type === "exercise"
-                      ? `linear-gradient(135deg, ${t.accent}, ${t.accent}cc)`
-                      : `linear-gradient(135deg, ${currentCard.color}, ${currentCard.color}cc)`,
-                    color: "#fff", border: "none", borderRadius: "12px",
-                    fontFamily: "'Press Start 2P', cursive", fontSize: "11px",
-                    cursor: cardCompleting ? "wait" : "pointer",
-                    opacity: cardCompleting ? 0.6 : 1,
-                    boxShadow: `0 8px 25px ${currentCard.type === "exercise" ? t.accent : currentCard.color}40`,
-                    transition: "all 0.2s"
-                  }}
-                >
-                  {cardCompleting ? "..." : "COMPLETE REPS ✓"}
-                </button>
-                )}
+                <div style={{
+                  marginTop: "20px", padding: "14px",
+                  background: "rgba(255,255,255,0.05)", borderRadius: "12px",
+                  fontFamily: "'Press Start 2P', cursive", fontSize: "9px",
+                  color: "#FFD700", border: "1px solid rgba(255,215,0,0.15)"
+                }}>
+                  ⏳ {turnPlayer?.userName || "Rival"} is performing...
+                </div>
               </div>
             ) : null}
           </div>
@@ -531,7 +602,7 @@ export default function Live({ user, userProfile }) {
 
             <div style={{ padding: "20px", background: "rgba(255,255,255,0.03)", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.06)" }}>
               <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontFamily: "'Press Start 2P', cursive", marginBottom: "16px" }}>
-                CONTENDERS ({roomData.players?.length || 0}/{roomData.maxPlayers || 4})
+                CONTENDERS ({roomData.players?.length || 0}/{roomData.maxPlayers || 6})
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "12px" }}>
                 {roomData.players?.map((p) => (
@@ -560,7 +631,7 @@ export default function Live({ user, userProfile }) {
                     )}
                   </div>
                 ))}
-                {Array.from({ length: (roomData.maxPlayers || 4) - (roomData.players?.length || 0) }).map((_, i) => (
+                {Array.from({ length: (roomData.maxPlayers || 6) - (roomData.players?.length || 0) }).map((_, i) => (
                   <div key={`empty-${i}`} style={{
                     display: "flex", alignItems: "center", justifyContent: "center",
                     padding: "14px 16px", borderRadius: "12px",
@@ -734,23 +805,23 @@ export default function Live({ user, userProfile }) {
                     <div>
                       <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "10px", color: "#fff", marginBottom: "4px" }}>{room.roomName}</div>
                       <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)" }}>
-                        {room.hostName} · {mInfo.icon} {mInfo.name} · {room.players?.length || 0}/{room.maxPlayers || 4} players
+                        {room.hostName} · {mInfo.icon} {mInfo.name} · {room.players?.length || 0}/{room.maxPlayers || 6} players
                       </div>
                     </div>
                   </div>
                   <button
                     onClick={() => handleJoinRoom(room)}
-                    disabled={room.players?.length >= (room.maxPlayers || 4)}
+                    disabled={room.players?.length >= (room.maxPlayers || 6)}
                     style={{
                       padding: "10px 20px",
-                      background: room.players?.length >= (room.maxPlayers || 4) ? "rgba(255,255,255,0.05)" : t.accent,
-                      color: room.players?.length >= (room.maxPlayers || 4) ? "rgba(255,255,255,0.3)" : "#fff",
+                      background: room.players?.length >= (room.maxPlayers || 6) ? "rgba(255,255,255,0.05)" : t.accent,
+                      color: room.players?.length >= (room.maxPlayers || 6) ? "rgba(255,255,255,0.3)" : "#fff",
                       border: "none", borderRadius: "8px",
                       fontFamily: "'Press Start 2P', cursive", fontSize: "9px",
-                      cursor: room.players?.length >= (room.maxPlayers || 4) ? "not-allowed" : "pointer"
+                      cursor: room.players?.length >= (room.maxPlayers || 6) ? "not-allowed" : "pointer"
                     }}
                   >
-                    {room.players?.length >= (room.maxPlayers || 4) ? "FULL" : "JOIN"}
+                    {room.players?.length >= (room.maxPlayers || 6) ? "FULL" : "JOIN"}
                   </button>
                 </div>
               );

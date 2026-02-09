@@ -42,7 +42,7 @@ export const LiveService = {
           activeEffects: [],
           ticketsEarned: 0,
         }],
-        maxPlayers: 4,
+        maxPlayers: 6,
         deck: [],
         currentPhase: "lobby",
         round: 0,
@@ -92,7 +92,7 @@ export const LiveService = {
       const players = roomData.players || [];
 
       if (players.find((p) => p.userId === userId)) return { success: true };
-      if (players.length >= (roomData.maxPlayers || 4)) return { success: false, error: "Room is full" };
+      if (players.length >= (roomData.maxPlayers || 6)) return { success: false, error: "Room is full" };
       if (roomData.status !== "waiting") return { success: false, error: "Match already started" };
 
       await updateDoc(roomRef, {
