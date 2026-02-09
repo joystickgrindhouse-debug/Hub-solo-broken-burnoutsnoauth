@@ -294,7 +294,25 @@ ${sampleExercises.map(e => `- **${e.name}** (${e.category}) — ${params.sets} s
 2. **Stay consistent** — ${fitnessLevel === 'Beginner' ? 'focus on form over speed, your scores will climb naturally' : 'push for progressive overload each week to keep leveling up'}.
 3. **Log your runs** — Use Run Mode to track outdoor cardio and stack points on the leaderboard.
 
-🔒 Unlock your full personalized plan with detailed nutrition, recovery protocols, and 12-week milestones — upgrade to Rivalis Pro.`;
+---
+
+**🔒 YOU'RE MISSING OUT ON YOUR ULTIMATE EDGE**
+
+With **Rivalis Pro**, your AI Coach becomes your full-time personal trainer, nutritionist, and wellness guide:
+
+⚔️ **Custom Workout Builder** — A full weekly training split built around YOUR body, YOUR schedule, and YOUR goals. Not a generic template — a real plan that evolves with you.
+
+🍎 **Personalized Nutrition Guide** — Daily macro targets, meal timing strategies, and sample meals tailored to your goals. Whether you're cutting, bulking, or maintaining — your coach has you covered.
+
+🧘 **Wellness & Recovery Protocol** — Smart rest day programming, stretching routines, sleep optimization, and injury prevention guidance to keep you performing at your peak.
+
+📈 **12-Week Milestone Tracker** — 4-week, 8-week, and 12-week checkpoints so you can see exactly how far you've come and what's next.
+
+💬 **Unlimited AI Coaching** — Ask your coach anything, anytime. No daily limits, no short answers. Get the full power of your personal fitness AI.
+
+🚫 **Ad-Free Experience** — Zero distractions. Just you and the grind.
+
+👉 **Upgrade to Rivalis Pro and unlock your ultimate fitness coach.**`;
 
       return res.json({ plan, isPro });
     }

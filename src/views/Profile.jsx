@@ -755,20 +755,46 @@ export default function Profile({ user, userProfile }) {
                           )}
                         </div>
                         {!isPro && (
-                          <div style={{ textAlign: "center", marginTop: "12px" }}>
+                          <div style={{
+                            marginTop: "16px",
+                            background: "linear-gradient(135deg, rgba(255,0,0,0.08), rgba(255,50,50,0.04))",
+                            border: `1px solid ${t.accent}44`,
+                            borderRadius: "12px",
+                            padding: "16px",
+                            textAlign: "center"
+                          }}>
+                            <div style={{ fontSize: "24px", marginBottom: "8px" }}>⚡</div>
+                            <div style={{
+                              color: t.accent,
+                              fontSize: "9px",
+                              fontFamily: "'Press Start 2P', cursive",
+                              marginBottom: "8px",
+                              lineHeight: "1.6"
+                            }}>
+                              THIS IS JUST A PREVIEW
+                            </div>
+                            <p style={{
+                              color: "rgba(255,255,255,0.7)",
+                              fontSize: "12px",
+                              lineHeight: "1.6",
+                              marginBottom: "12px"
+                            }}>
+                              Your ultimate AI fitness coach, personalized nutrition guide, wellness protocol, and 12-week milestone tracker are waiting for you.
+                            </p>
                             <a href="/subscription" style={{
                               display: "inline-block",
-                              padding: "8px 20px",
+                              padding: "10px 24px",
                               background: `linear-gradient(135deg, ${t.accent}, ${t.shadowMd || t.accent})`,
                               border: "none",
                               borderRadius: "8px",
                               color: "#fff",
-                              fontSize: "10px",
+                              fontSize: "9px",
                               fontFamily: "'Press Start 2P', cursive",
                               textDecoration: "none",
-                              cursor: "pointer"
+                              cursor: "pointer",
+                              boxShadow: `0 0 20px ${t.accent}40`
                             }}>
-                              UNLOCK FULL PLAN
+                              UNLOCK MY FULL PLAN
                             </a>
                           </div>
                         )}

@@ -446,9 +446,38 @@ export default function FitnessDashboard({ user, userProfile }) {
         ) : (
           <div style={s.lockedOverlay}>
             <div style={s.lockIcon}>🔒</div>
-            <p style={s.lockText}>
-              Unlock your personalized AI training plan, custom meal plans, goal tracking, and advanced analytics.
+            <p style={{
+              ...s.lockText,
+              fontSize: "11px",
+              fontFamily: "'Press Start 2P', cursive",
+              lineHeight: "1.8",
+              marginBottom: "12px"
+            }}>
+              YOUR ULTIMATE EDGE AWAITS
             </p>
+            <div style={{ textAlign: "left", marginBottom: "16px", padding: "0 8px" }}>
+              {[
+                { icon: "⚔️", label: "Custom Workout Builder", desc: "A full training split built for YOUR body" },
+                { icon: "🍎", label: "Nutrition Guide", desc: "Personalized meal plans & macro targets" },
+                { icon: "🧘", label: "Wellness Protocol", desc: "Recovery, sleep & injury prevention" },
+                { icon: "📈", label: "12-Week Milestones", desc: "Track your transformation journey" },
+                { icon: "💬", label: "Unlimited AI Coach", desc: "No limits, no short answers" },
+              ].map((item, i) => (
+                <div key={i} style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "6px 0",
+                  borderBottom: i < 4 ? "1px solid rgba(255,255,255,0.06)" : "none"
+                }}>
+                  <span style={{ fontSize: "16px" }}>{item.icon}</span>
+                  <div>
+                    <div style={{ color: "rgba(255,255,255,0.9)", fontSize: "11px", fontWeight: "bold" }}>{item.label}</div>
+                    <div style={{ color: "rgba(255,255,255,0.45)", fontSize: "10px" }}>{item.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
             <button onClick={() => navigate("/subscription")} style={s.unlockBtn}>
               UNLOCK WITH PRO
             </button>
