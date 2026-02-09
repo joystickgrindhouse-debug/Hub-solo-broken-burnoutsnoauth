@@ -71,12 +71,12 @@ export default function BackgroundShell({ children }) {
           backgroundPosition,
           backgroundColor: "#000",
           transformOrigin: isMobile ? "center top" : "center center",
-          filter: "brightness(0.7) contrast(1.15) saturate(1.2)",
+          filter: "brightness(0.85) contrast(1.1) saturate(1.25)",
           transition: "transform 0.2s",
         }}
       />
 
-      <div style={{ ...abs, zIndex: 1, background: "rgba(0,0,0,0.3)" }} />
+      <div style={{ ...abs, zIndex: 1, background: "rgba(0,0,0,0.15)" }} />
 
       <div
         style={{
