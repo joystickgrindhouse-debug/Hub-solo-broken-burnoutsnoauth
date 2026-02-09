@@ -58,7 +58,7 @@ export default function Dashboard() {
 
   const gridStyle = {
     display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
+    gridTemplateColumns: "repeat(3, 1fr)",
     gap: `${gap}px`,
     width: "100%",
     padding: "0 4px",
