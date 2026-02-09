@@ -219,7 +219,7 @@ export default function Navbar({ user, userProfile, theme, cycleTheme }) {
                   Admin Console
                 </Link>
               )}
-              <a href="https://squarespace.com" target="_blank" rel="noopener noreferrer" onClick={closeDropdown} style={{
+              <a href="https://rivalis.printful.me" target="_blank" rel="noopener noreferrer" onClick={closeDropdown} style={{
                 color: "#fff",
                 textDecoration: "none",
                 padding: "0.5rem",
