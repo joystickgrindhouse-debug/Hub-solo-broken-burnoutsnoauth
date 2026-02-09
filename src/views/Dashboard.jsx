@@ -1,13 +1,14 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function SafeImg({ src, alt, className }) {
+function SafeImg({ src, alt, className, style }) {
   const [err, setErr] = useState(false);
   return (
     <img
       src={err ? "/assets/images/fallback.png" : src}
       alt={alt}
       className={className}
+      style={style}
       onError={() => setErr(true)}
       loading="lazy"
       draggable={false}
@@ -53,52 +54,99 @@ export default function Dashboard() {
     navigate(mode.link);
   };
 
-  return (
-    <div className="px-3 py-6 pb-[calc(18px+env(safe-area-inset-bottom))] min-h-screen flex flex-col">
-      <div className="max-w-xs mx-auto w-full flex-1 flex flex-col">
-        <div className="mb-4">
-          <div className="flex items-center gap-2">
-            <div className="h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_18px_rgba(255,0,60,0.9)]" />
-            <h1 className="text-xl font-extrabold tracking-wide">Rivalis</h1>
-          </div>
-          <p className="text-white/70 text-xs mt-1">Pick a mode.</p>
-        </div>
+  const tileSize = 75;
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 70px)", gap: "8px", justifyContent: "center" }}>
-          {modes.map((mode) => (
-            <button
-              key={mode.id}
-              type="button"
-              onClick={() => handleClick(mode)}
-              style={{ width: "70px", height: "70px" }}
-              className="relative rounded-lg overflow-hidden border border-red-500/25 bg-zinc-950/70 backdrop-blur-md active:scale-[0.97] transition"
-            >
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 p-1">
-                <div className="w-8 h-8 rounded-md overflow-hidden border border-white/10 bg-black/40 flex-shrink-0">
-                  <SafeImg src={mode.image} alt={mode.name} className="h-full w-full object-cover" />
-                </div>
-                <div className="text-[9px] font-bold text-white/90 leading-none uppercase tracking-tight">
-                  {mode.name}
-                </div>
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-            </button>
-          ))}
+  const gridStyle = {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "10px",
+    justifyContent: "center",
+    maxWidth: `${tileSize * 4 + 30}px`,
+    margin: "0 auto",
+  };
+
+  const tileStyle = {
+    width: `${tileSize}px`,
+    height: `${tileSize}px`,
+    minWidth: `${tileSize}px`,
+    minHeight: `${tileSize}px`,
+    maxWidth: `${tileSize}px`,
+    maxHeight: `${tileSize}px`,
+    position: "relative",
+    borderRadius: "10px",
+    overflow: "hidden",
+    border: "1px solid rgba(255,0,60,0.25)",
+    background: "rgba(10,10,10,0.8)",
+    cursor: "pointer",
+    padding: 0,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+  };
+
+  const imgWrapStyle = {
+    width: "36px",
+    height: "36px",
+    borderRadius: "6px",
+    overflow: "hidden",
+    border: "1px solid rgba(255,255,255,0.1)",
+    background: "rgba(0,0,0,0.4)",
+    flexShrink: 0,
+  };
+
+  const imgStyle = {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    display: "block",
+  };
+
+  const labelStyle = {
+    fontSize: "9px",
+    fontWeight: 700,
+    color: "rgba(255,255,255,0.9)",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+    marginTop: "4px",
+    lineHeight: 1,
+  };
+
+  return (
+    <div style={{ padding: "16px 12px", minHeight: "100vh" }}>
+      <div style={{ marginBottom: "16px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#ff003c", boxShadow: "0 0 18px rgba(255,0,60,0.9)" }} />
+          <h1 style={{ fontSize: "20px", fontWeight: 800, color: "#fff", margin: 0 }}>Rivalis</h1>
         </div>
+        <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px", marginTop: "4px" }}>Pick a mode.</p>
       </div>
 
-      {/* Coming soon modal */}
-      {showComingSoon && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" role="dialog" aria-modal="true">
-          <div className="absolute inset-0 bg-black/70" onClick={() => setShowComingSoon(false)} />
-          <div className="relative w-full max-w-sm rounded-2xl border border-red-500/30 bg-zinc-950/90 backdrop-blur-md p-5">
-            <div className="text-lg font-bold">Coming Soon</div>
-            <div className="text-white/70 text-sm mt-1">
-              New modes + upgrades are on the way.
+      <div style={gridStyle}>
+        {modes.map((mode) => (
+          <button
+            key={mode.id}
+            type="button"
+            onClick={() => handleClick(mode)}
+            style={tileStyle}
+          >
+            <div style={imgWrapStyle}>
+              <SafeImg src={mode.image} alt={mode.name} style={imgStyle} className="" />
             </div>
+            <div style={labelStyle}>{mode.name}</div>
+          </button>
+        ))}
+      </div>
+
+      {showComingSoon && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)" }} onClick={() => setShowComingSoon(false)} />
+          <div style={{ position: "relative", width: "100%", maxWidth: "320px", borderRadius: "16px", border: "1px solid rgba(255,0,60,0.3)", background: "rgba(10,10,10,0.95)", padding: "20px" }}>
+            <div style={{ fontSize: "18px", fontWeight: 700, color: "#fff" }}>Coming Soon</div>
+            <div style={{ color: "rgba(255,255,255,0.7)", fontSize: "14px", marginTop: "4px" }}>New modes + upgrades are on the way.</div>
             <button
               onClick={() => setShowComingSoon(false)}
-              className="mt-4 w-full px-4 py-2 rounded-xl border border-white/10 text-white/80 hover:text-white hover:border-white/20 transition"
+              style={{ marginTop: "16px", width: "100%", padding: "8px 16px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "rgba(255,255,255,0.8)", cursor: "pointer", fontSize: "14px" }}
             >
               Close
             </button>
