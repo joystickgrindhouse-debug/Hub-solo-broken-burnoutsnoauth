@@ -52,10 +52,7 @@ export default function Navbar({ user, userProfile, theme, cycleTheme }) {
             )}
             <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
               <span style={{ color: "#fff", fontWeight: "600", fontSize: "13px" }}>{nickname}</span>
-              <div style={{ display: "flex", gap: "8px", fontSize: "10px", marginTop: "2px" }}>
-                <span style={{ color: "#ff3050" }}>🎟 {userProfile?.tickets ?? 0}</span>
-                <span style={{ color: "#00ffd5" }}>💪 {userProfile?.totalReps ?? 0}</span>
-              </div>
+              <span style={{ color: "#ff3050", fontSize: "10px", marginTop: "2px" }}>🎟 {userProfile?.ticketBalance ?? 0}</span>
             </div>
           </div>
         )}
