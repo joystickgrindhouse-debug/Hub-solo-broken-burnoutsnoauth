@@ -1,20 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { db } from '../../firebase';
 import { 
   collection, 
   addDoc, 
-  query, 
-  where, 
-  orderBy, 
-  onSnapshot,
   Timestamp,
-  doc,
-  updateDoc
 } from 'firebase/firestore';
 import ChatBubble from './ChatBubble.jsx';
-import TourStep from './TourStep.jsx';
+import TourStep, { TOUR_STEPS } from './TourStep.jsx';
 import LogsGraph from './LogsGraph.jsx';
 import NutritionalCoach from './NutritionalCoach.jsx';
+
+const INTAKE_START_STEP = 3;
+
+const TOUR_QUESTIONS = [
+  { field: 'gender', question: "What is your gender? This helps calibrate your training baseline.", options: ['Male', 'Female', 'Non-Binary', 'Prefer not to say'] },
+  { field: 'age', question: "What is your age?", type: 'number' },
+  { field: 'height', question: "What is your height? (e.g. 5'10\" or 178cm)", type: 'text' },
+  { field: 'weight', question: "What is your current weight? (e.g. 175lbs or 80kg)", type: 'text' },
+  { field: 'goals', question: "What is your primary fitness goal?", options: ['Mass Gain', 'Fat Loss', 'Endurance', 'General Health'] },
+  { field: 'interests', question: "What are your other interests?", options: ['Gaming', 'Tech/AI', 'Outdoor Activities', 'Strategy Games'] },
+  { field: 'reason', question: "What brought you to Rivalis?", options: ['The Competition', 'Self Improvement', 'Data-Driven Fitness', 'Tactical Training'] }
+];
+
+const MOTIVATIONAL_QUOTES = [
+  "Biological limits are meant to be shattered, Rival.",
+  "Your neural link is primed. Time for a biometric upgrade.",
+  "The mainframe is watching. Show them what a Rival is made of.",
+  "Efficiency is the only currency in this sector. Earn it.",
+  "Pain is just data leaving the system. Process it."
+];
 
 const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
   const [messages, setMessages] = useState([]);
@@ -22,60 +36,50 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
   const [showTour, setShowTour] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const chatEndRef = useRef(null);
+  const inputRef = useRef(null);
 
   const isPro = userProfile?.subscriptionStatus === 'active';
 
-  const motivationalQuotes = [
-    "Biological limits are meant to be shattered, Rival.",
-    "Your neural link is primed. Time for a bio-metric upgrade.",
-    "The mainframe is watching. Show them what a Rival is made of.",
-    "Efficiency is the only currency in this sector. Earn it.",
-    "Pain is just data leaving the system. Process it."
-  ];
+  const addBotMessage = useCallback((text, delay = 0) => {
+    if (delay > 0) {
+      setIsLoading(true);
+      setTimeout(() => {
+        setMessages(prev => [...prev, { 
+          id: `bot-${Date.now()}-${Math.random()}`, 
+          text, 
+          isBot: true, 
+          timestamp: new Date() 
+        }]);
+        setIsLoading(false);
+      }, delay);
+    } else {
+      setMessages(prev => [...prev, { 
+        id: `bot-${Date.now()}-${Math.random()}`, 
+        text, 
+        isBot: true, 
+        timestamp: new Date() 
+      }]);
+    }
+  }, []);
 
   useEffect(() => {
-    const checkTour = async () => {
-      // Priority 1: Check localStorage for immediate UI response
-      const localTourStatus = window.localStorage.getItem('rivalis_tour_completed');
-      
-      // Priority 2: Check Firestore for persistent status
-      let firestoreTourStatus = false;
-      if (userProfile && userProfile.tourCompleted !== undefined) {
-        firestoreTourStatus = userProfile.tourCompleted;
-      }
+    const localTourDone = window.localStorage.getItem('rivalis_tour_completed');
+    const firestoreTourDone = userProfile?.tourCompleted;
 
-      // Check if user is the specific account requested for reset
-      const isResetAccount = user?.email?.toLowerCase() === 'socalturfexperts@gmail.com';
-
-      if (!localTourStatus && !firestoreTourStatus || isResetAccount) {
-        if (isResetAccount) {
-          window.localStorage.removeItem('rivalis_tour_completed');
-        }
-        setShowTour(true);
-        setMessages([{ 
-          id: 'init', 
-          text: "INITIALIZING NEURAL LINK... Welcome to the sector, Rival. I am your high-intelligence AI Fitness Coach. Initialization tour protocol engaged.", 
-          isBot: true, 
-          timestamp: new Date() 
-        }]);
-      } else {
-        const quote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
-        setMessages([{ 
-          id: 'welcome', 
-          text: `PROTOCOL ACTIVE. ${quote} State your objective, ${userProfile?.nickname || 'Rival'}. I am ready to optimize your performance.`, 
-          isBot: true, 
-          timestamp: new Date() 
-        }]);
-      }
-    };
-    
-    checkTour();
-  }, [userProfile, user]);
+    if (!localTourDone && !firestoreTourDone) {
+      setShowTour(true);
+      addBotMessage("INITIALIZING NEURAL LINK... Welcome to the sector, Rival. I am your AI Fitness Coach. Let me show you around the hub.");
+    } else {
+      const quote = MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
+      addBotMessage(`${quote} Ready when you are, ${userProfile?.nickname || 'Rival'}.`);
+    }
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const [profileData, setProfileData] = useState({
     gender: '',
@@ -87,52 +91,31 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
     reason: ''
   });
 
-  const tourQuestions = [
-    { field: 'gender', question: "COACH: State your biological gender for biometric baseline.", options: ['Male', 'Female', 'Non-Binary', 'Redacted'] },
-    { field: 'age', question: "COACH: Input your current biological age cycle.", type: 'number' },
-    { field: 'height', question: "COACH: Specify your vertical stature (height).", type: 'text' },
-    { field: 'weight', question: "COACH: Record your current mass (weight).", type: 'text' },
-    { field: 'goals', question: "COACH: What is your primary optimization objective?", options: ['Mass Gain', 'Fat Loss', 'Endurance', 'General Health'] },
-    { field: 'interests', question: "COACH: Identify your secondary interests/hobbies.", options: ['Gaming', 'Tech/AI', 'Outdoor Combat', 'Mental Strategy'] },
-    { field: 'reason', question: "COACH: What brought you to the Rivalis Mainframe?", options: ['A) The Rivalry', 'B) To better myself', 'C) Data Optimization', 'D) Tactical training'] }
-  ];
+  const isInIntake = showTour && tourStep >= INTAKE_START_STEP && tourStep < INTAKE_START_STEP + TOUR_QUESTIONS.length;
+  const intakeIndex = tourStep - INTAKE_START_STEP;
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || isLoading) return;
 
-    const userMsg = { id: Date.now(), text: inputText, isBot: false, timestamp: new Date() };
+    const userMsg = { id: `user-${Date.now()}`, text: inputText, isBot: false, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
     const currentInput = inputText;
     setInputText('');
 
-    // Handle profile intake during tour
-    if (showTour && tourStep >= 3 && tourStep < 3 + tourQuestions.length) {
-      const qIdx = tourStep - 3;
-      const currentQ = tourQuestions[qIdx];
-      
+    if (isInIntake) {
+      const currentQ = TOUR_QUESTIONS[intakeIndex];
       const newProfile = { ...profileData, [currentQ.field]: currentInput };
       setProfileData(newProfile);
 
-      if (qIdx < tourQuestions.length - 1) {
-        const nextQ = tourQuestions[qIdx + 1];
-        setMessages(prev => [...prev, { 
-          id: Date.now() + 1, 
-          text: nextQ.question + (nextQ.options ? ` (${nextQ.options.join(' / ')})` : ''), 
-          isBot: true, 
-          timestamp: new Date() 
-        }]);
+      if (intakeIndex < TOUR_QUESTIONS.length - 1) {
+        const nextQ = TOUR_QUESTIONS[intakeIndex + 1];
+        const questionText = nextQ.question + (nextQ.options ? `\n\nOptions: ${nextQ.options.join(' / ')}` : '');
+        addBotMessage(questionText, 500);
         setTourStep(prev => prev + 1);
       } else {
-        // Final intake step
-        setMessages(prev => [...prev, { 
-          id: Date.now() + 1, 
-          text: "BIOMETRICS RECORDED. Synchronizing with bio-sector... Now, Rival, define your personal mission statement. Fill in your BIO to complete initialization.", 
-          isBot: true, 
-          timestamp: new Date() 
-        }]);
+        addBotMessage("Profile data recorded. Syncing your biometrics... You're all set. Define your personal mission in your BIO to complete initialization.", 600);
         
-        // Sync to Firestore
         if (user) {
           try {
             const { UserService } = await import('../../services/userService.js');
@@ -146,14 +129,16 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       return;
     }
 
-    if (inputText.toLowerCase().includes('/tour') || inputText.toLowerCase().includes('/reboot')) {
+    if (currentInput.toLowerCase().includes('/tour') || currentInput.toLowerCase().includes('/reboot')) {
       setTourStep(0);
       setShowTour(true);
+      addBotMessage("Reinitializing tour protocol...", 400);
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      // Create conversation if it doesn't exist
       let convId = window.localStorage.getItem('rivalis_conv_id');
       
       const userContext = isPro ? [
@@ -167,7 +152,7 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
         return await fetch(`/api/conversations/${cid}/messages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: inputText, isPro, userContext })
+          body: JSON.stringify({ content: currentInput, isPro, userContext })
         });
       };
 
@@ -191,7 +176,6 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
       } else {
         response = await sendRequest(convId);
         if (response.status === 404 || response.status === 500) {
-          // If the conversation ID is invalid, clear and retry once
           window.localStorage.removeItem('rivalis_conv_id');
           const convRes = await fetch('/api/conversations', {
             method: 'POST',
@@ -216,10 +200,10 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let assistantMsgId = Date.now() + 1;
+      const assistantMsgId = `ai-${Date.now()}`;
       let fullText = "";
 
-      // Add empty assistant message to be filled
+      setIsLoading(false);
       setMessages(prev => [...prev, { id: assistantMsgId, text: "", isBot: true, timestamp: new Date() }]);
 
       while (true) {
@@ -240,13 +224,12 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
                 ));
               }
             } catch (e) {
-              console.warn("Error parsing SSE chunk:", e);
+              // skip malformed chunks
             }
           }
         }
       }
 
-      // Check for escalation
       if (fullText.includes("TRANSFERRING TO HUMAN AGENT")) {
         try {
           await addDoc(collection(db, 'admin_notifications'), {
@@ -257,21 +240,15 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
             status: 'pending',
             message: `User ${userProfile?.nickname || user.email} requested assistance that the AI could not provide.`
           });
-          console.log("Admin notification sent for escalation");
         } catch (error) {
           console.error("Failed to notify admins:", error);
         }
       }
 
-      // Handle tour progress via AI response analysis if needed
-      if (showTour && (fullText.toLowerCase().includes('next') || fullText.toLowerCase().includes('continue'))) {
-        nextTourStep();
-      }
-
     } catch (error) {
       console.error("AI Error:", error);
+      setIsLoading(false);
       
-      // Notify Admin via push-style notification in Firestore
       try {
         await addDoc(collection(db, 'admin_notifications'), {
           type: 'CHATBOT_ERROR',
@@ -280,57 +257,68 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
           error: error.message,
           timestamp: Timestamp.now(),
           status: 'pending',
-          message: `Internal error in Rivalis Coach for user ${userProfile?.nickname || user.email}. Assistance required.`
+          message: `Internal error in Rivalis Coach for user ${userProfile?.nickname || user.email}.`
         });
       } catch (notifyErr) {
         console.error("Failed to notify admin of error:", notifyErr);
       }
 
-      setMessages(prev => [...prev, { 
-        id: Date.now() + 2, 
-        text: "My neural link is flickering, Rival. An internal error has occurred. A member of our support team will be with you shortly. Please tell us as much information as possible so we can better assist you.", 
-        isBot: true, 
-        timestamp: new Date() 
-      }]);
+      addBotMessage("Connection interrupted. Our support team has been notified. Please try again in a moment, or describe your issue and we'll get back to you.");
     }
   };
 
   const nextTourStep = () => {
     setIsMinimized(true);
-    if (tourStep < 14) {
+    const totalSteps = TOUR_STEPS.length;
+
+    if (tourStep < totalSteps - 1) {
       setTourStep(prev => prev + 1);
       
-      // Trigger question if entering intake
-      if (tourStep + 1 === 4) {
-        setMessages(prev => [...prev, { 
-          id: Date.now() + 5, 
-          text: tourQuestions[0].question + ` (${tourQuestions[0].options.join(' / ')})`, 
-          isBot: true, 
-          timestamp: new Date() 
-        }]);
+      if (tourStep + 1 === INTAKE_START_STEP) {
+        const firstQ = TOUR_QUESTIONS[0];
+        addBotMessage(firstQ.question + `\n\nOptions: ${firstQ.options.join(' / ')}`, 400);
       }
     } else {
-      setShowTour(false);
-      window.localStorage.setItem('rivalis_tour_completed', 'true');
-      
-      // Also update Firestore if user is logged in
-      if (user) {
-        const syncTourStatus = async () => {
-          try {
-            const { UserService } = await import('../../services/userService.js');
-            await UserService.updateUserProfile(user.uid, { tourCompleted: true });
-          } catch (error) {
-            console.error("Failed to sync tour status to Firestore:", error);
-          }
-        };
-        syncTourStatus();
-      }
-      
-      if (onTourComplete) onTourComplete();
-      
-      // Navigate to home screen
-      window.location.href = '/';
+      completeTour();
     }
+  };
+
+  const completeTour = () => {
+    setShowTour(false);
+    window.localStorage.setItem('rivalis_tour_completed', 'true');
+    
+    if (user) {
+      (async () => {
+        try {
+          const { UserService } = await import('../../services/userService.js');
+          await UserService.updateUserProfile(user.uid, { tourCompleted: true });
+        } catch (error) {
+          console.error("Failed to sync tour status:", error);
+        }
+      })();
+    }
+    
+    if (onTourComplete) onTourComplete();
+    window.location.href = '/';
+  };
+
+  const skipTour = () => {
+    setShowTour(false);
+    window.localStorage.setItem('rivalis_tour_completed', 'true');
+    
+    if (user) {
+      (async () => {
+        try {
+          const { UserService } = await import('../../services/userService.js');
+          await UserService.updateUserProfile(user.uid, { tourCompleted: true });
+        } catch (error) {
+          console.error("Failed to sync tour status:", error);
+        }
+      })();
+    }
+
+    if (onTourComplete) onTourComplete();
+    addBotMessage(`Tour skipped. No worries — you can restart it anytime by typing /tour. Ready when you are, ${userProfile?.nickname || 'Rival'}.`, 300);
   };
 
   const exportConversation = async () => {
@@ -340,59 +328,49 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
         window.open(`/api/conversations/${convId}/export`, '_blank');
       } catch (error) {
         console.error("Export failed:", error);
-        // Fallback to text export if API fails
         const text = messages.map(m => `${m.isBot ? 'COACH' : 'RIVAL'}: ${m.text}`).join('\n\n');
         const blob = new Blob([text], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Rivalis_Plan_Fallback_${new Date().toISOString().slice(0,10)}.txt`;
+        a.download = `Rivalis_Plan_${new Date().toISOString().slice(0,10)}.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
       }
-    } else {
-      alert("No active protocol detected. Link not established.");
     }
   };
 
   return (
-    <div style={{
-      ...styles.container,
-      ...(showTour && isMinimized ? styles.containerMinimized : {})
-    }}>
+    <div style={styles.container}>
+      <style>{`
+        @keyframes slideUp {
+          from { transform: translateY(100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 0.6; transform: scale(0.9); }
+          50% { opacity: 1; transform: scale(1.1); }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0) translateX(-50%); }
+          50% { transform: translateY(-8px) translateX(-50%); }
+        }
+        .chatbot-scrollbar::-webkit-scrollbar { width: 4px; }
+        .chatbot-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .chatbot-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,0,0,0.3); border-radius: 4px; }
+      `}</style>
+
       <div style={styles.header}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={styles.statusDot}></div>
+          <div style={styles.statusDot} />
           <span style={styles.headerTitle}>RIVALIS COACH</span>
           {isPro && (
-            <span style={{
-              background: 'linear-gradient(135deg, #ff3050, #ff6080)',
-              color: '#fff',
-              padding: '2px 6px',
-              borderRadius: '4px',
-              fontSize: '8px',
-              fontWeight: 'bold',
-              fontFamily: "'Press Start 2P', cursive",
-              letterSpacing: '1px',
-            }}>PRO</span>
+            <span style={styles.proBadge}>PRO</span>
           )}
         </div>
-        <button 
-          onClick={exportConversation}
-          style={{
-            background: 'transparent',
-            border: '1px solid #FF0000',
-            color: '#FF0000',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '10px',
-            cursor: 'pointer',
-            fontFamily: "'Press Start 2P', cursive",
-            textShadow: '0 0 5px #FF0000'
-          }}
-        >
-          EXPORT PLAN
+        <button onClick={exportConversation} style={styles.exportBtn}>
+          EXPORT
         </button>
       </div>
 
@@ -401,51 +379,40 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
           <TourStep 
             step={tourStep} 
             onNext={nextTourStep} 
-            onSkip={() => setShowTour(false)} 
+            onSkip={skipTour} 
           />
         </div>
       )}
 
       {showTour && isMinimized && (
-        <div 
-          style={styles.resumeTab} 
-          onClick={() => setIsMinimized(false)}
-        >
-          <div style={styles.tourHint}>
-            <div style={styles.tourArrow}>➤</div>
-            <div style={styles.tourHintText}>TOUR HERE</div>
-          </div>
+        <div style={styles.resumeTab} onClick={() => setIsMinimized(false)}>
+          <div style={styles.resumePulse} />
           <span style={styles.resumeText}>RESUME TOUR</span>
-          <div style={styles.resumePulse}></div>
         </div>
       )}
 
-      {!showTour && (!userProfile?.tourCompleted) && (
-        <div style={{...styles.tourHint, top: '-60px', right: '20px'}}>
-          <div style={styles.tourArrow}>➤</div>
-          <div style={styles.tourHintText}>TOUR HERE</div>
-        </div>
-      )}
-
-      {!showTour && (
+      {(!showTour || isMinimized) && (
         <>
-          <div style={styles.chatArea}>
+          <div style={styles.chatArea} className="chatbot-scrollbar">
             {messages.map(msg => (
               <ChatBubble key={msg.id} message={msg.text} isBot={msg.isBot} />
             ))}
             
-            {/* Special widgets based on bot responses */}
             {messages.some(m => m.text.includes('visualized')) && (
               <LogsGraph type="weight" />
             )}
             {messages.some(m => m.text.includes('Nutritional')) && (
               <NutritionalCoach />
             )}
+
+            {isLoading && (
+              <ChatBubble isBot={true} isTyping={true} message="" animate={false} />
+            )}
             
             <div ref={chatEndRef} />
           </div>
 
-          {isPro && (
+          {!showTour && isPro && (
             <div style={styles.proActions}>
               {[
                 { label: '🥗 Meal Plan', prompt: 'Create a personalized meal plan for my goals' },
@@ -454,7 +421,10 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
               ].map((action, i) => (
                 <button
                   key={i}
-                  onClick={() => setInputText(action.prompt)}
+                  onClick={() => {
+                    setInputText(action.prompt);
+                    inputRef.current?.focus();
+                  }}
                   style={styles.proActionBtn}
                 >
                   {action.label}
@@ -462,23 +432,37 @@ const ChatbotTour = ({ user, userProfile, onTourComplete, initialMessage }) => {
               ))}
             </div>
           )}
-          {!isPro && (
+          {!showTour && !isPro && (
             <div style={styles.upgradeBar}>
               <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
-                Unlock meal plans, custom workouts & goal tracking
+                Unlock meal plans, workouts & goals
               </span>
               <a href="/subscription" style={styles.upgradeLink}>GO PRO</a>
             </div>
           )}
           <form onSubmit={handleSendMessage} style={styles.inputArea} data-chatbot-form>
             <input 
+              ref={inputRef}
               type="text" 
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder={isPro ? "Ask your personal trainer..." : "Ask me anything..."}
-              style={styles.input}
+              placeholder={isLoading ? "Coach is thinking..." : (isPro ? "Ask your personal trainer..." : "Ask me anything...")}
+              style={{
+                ...styles.input,
+                ...(isLoading ? { opacity: 0.5, pointerEvents: 'none' } : {})
+              }}
+              disabled={isLoading}
             />
-            <button type="submit" style={styles.sendButton}>➤</button>
+            <button 
+              type="submit" 
+              style={{
+                ...styles.sendButton,
+                ...(isLoading || !inputText.trim() ? { opacity: 0.4, cursor: 'default' } : {})
+              }}
+              disabled={isLoading || !inputText.trim()}
+            >
+              ➤
+            </button>
           </form>
         </>
       )}
@@ -492,21 +476,16 @@ const styles = {
     flexDirection: 'column',
     height: '100%',
     background: '#000',
-    border: '1px solid #333',
+    border: '1px solid rgba(51,51,51,0.6)',
     borderRadius: '12px',
     overflow: 'hidden',
     position: 'relative',
     transition: 'all 0.3s ease',
   },
-  containerMinimized: {
-    height: '45px',
-    background: 'transparent',
-    border: 'none',
-  },
   header: {
     padding: '10px 15px',
-    background: '#111',
-    borderBottom: '1px solid #333',
+    background: 'linear-gradient(180deg, #111 0%, #0a0a0a 100%)',
+    borderBottom: '1px solid rgba(255,0,0,0.15)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -516,107 +495,114 @@ const styles = {
     width: '8px',
     height: '8px',
     borderRadius: '50%',
-    background: '#FF0000',
-    boxShadow: '0 0 10px #FF0000',
+    background: '#00ff44',
+    boxShadow: '0 0 8px #00ff44',
+    animation: 'pulse 2s infinite',
   },
   headerTitle: {
     color: '#FF0000',
-    fontSize: '12px',
+    fontSize: '11px',
     fontWeight: 'bold',
     letterSpacing: '1px',
-    textShadow: '0 0 5px #FF0000',
+    textShadow: '0 0 6px rgba(255,0,0,0.4)',
     fontFamily: "'Press Start 2P', cursive",
+  },
+  proBadge: {
+    background: 'linear-gradient(135deg, #ff3050, #ff6080)',
+    color: '#fff',
+    padding: '2px 6px',
+    borderRadius: '4px',
+    fontSize: '8px',
+    fontWeight: 'bold',
+    fontFamily: "'Press Start 2P', cursive",
+    letterSpacing: '1px',
+  },
+  exportBtn: {
+    background: 'transparent',
+    border: '1px solid rgba(255,0,0,0.3)',
+    color: 'rgba(255,0,0,0.7)',
+    padding: '4px 10px',
+    borderRadius: '6px',
+    fontSize: '9px',
+    cursor: 'pointer',
+    fontFamily: "'Press Start 2P', cursive",
+    transition: 'all 0.2s ease',
   },
   chatArea: {
     flex: 1,
-    padding: '15px 10px',
+    padding: '12px 10px',
     overflowY: 'auto',
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px',
+    gap: '4px',
     WebkitOverflowScrolling: 'touch',
-  },
-  '@keyframes slideUp': {
-    from: { transform: 'translateY(100%)' },
-    to: { transform: 'translateY(0)' },
-  },
-  '@keyframes pulse': {
-    '0%': { transform: 'scale(0.8)', opacity: 0.5 },
-    '50%': { transform: 'scale(1.2)', opacity: 1 },
-    '100%': { transform: 'scale(0.8)', opacity: 0.5 },
-  },
-  '@keyframes bounce': {
-    '0%, 100%': { transform: 'translateY(0)' },
-    '50%': { transform: 'translateY(-10px)' },
   },
   inputArea: {
     padding: '10px',
-    background: '#111',
-    borderTop: '1px solid #333',
+    background: 'linear-gradient(180deg, #0a0a0a 0%, #111 100%)',
+    borderTop: '1px solid rgba(255,0,0,0.1)',
     display: 'flex',
     gap: '8px',
   },
   input: {
     flex: 1,
     background: '#000',
-    border: '1px solid #333',
-    borderRadius: '8px',
+    border: '1px solid rgba(51,51,51,0.6)',
+    borderRadius: '10px',
     padding: '12px 15px',
     color: '#FFF',
     outline: 'none',
-    fontSize: '16px', // Prevents iOS zoom
+    fontSize: '16px',
+    transition: 'border-color 0.2s ease',
   },
   sendButton: {
-    background: '#FF0000',
+    background: 'linear-gradient(135deg, #FF0000, #cc0000)',
     border: 'none',
-    borderRadius: '8px',
-    width: '40px',
+    borderRadius: '10px',
+    width: '44px',
     color: '#FFF',
     cursor: 'pointer',
     fontSize: '18px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 2px 8px rgba(255,0,0,0.2)',
   },
   tourOverlay: {
     position: 'absolute',
-    top: '0',
-    left: '0',
-    right: '0',
-    bottom: '0',
-    background: 'rgba(0,0,0,0.6)',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0,0,0,0.75)',
+    backdropFilter: 'blur(4px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
     padding: '20px',
   },
-  tourMinimized: {
-    background: 'transparent',
-    pointerEvents: 'none',
-    alignItems: 'flex-end',
-    justifyContent: 'flex-end',
-    padding: '20px',
-  },
   resumeTab: {
-    background: '#FF0000',
+    background: 'linear-gradient(135deg, #FF0000, #cc0000)',
     padding: '10px 20px',
     borderRadius: '20px 20px 0 0',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    boxShadow: '0 0 15px #FF0000',
+    boxShadow: '0 -4px 20px rgba(255,0,0,0.3)',
     pointerEvents: 'auto',
     position: 'absolute',
-    bottom: '0',
+    bottom: 0,
     right: '20px',
     animation: 'slideUp 0.3s ease-out',
   },
   resumeText: {
     color: '#FFF',
-    fontSize: '10px',
+    fontSize: '9px',
     fontFamily: "'Press Start 2P', cursive",
+    letterSpacing: '0.5px',
   },
   resumePulse: {
     width: '8px',
@@ -625,43 +611,17 @@ const styles = {
     background: '#FFF',
     animation: 'pulse 1.5s infinite',
   },
-  tourHint: {
-    position: 'absolute',
-    top: '-50px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '5px',
-    animation: 'bounce 2s infinite',
-    zIndex: 100,
-    pointerEvents: 'none',
-  },
-  tourArrow: {
-    color: '#FF0000',
-    fontSize: '24px',
-    transform: 'rotate(90deg)',
-    textShadow: '0 0 10px #FF0000',
-  },
-  tourHintText: {
-    color: '#FF0000',
-    fontSize: '10px',
-    fontFamily: "'Press Start 2P', cursive",
-    textShadow: '0 0 10px #FF0000',
-    whiteSpace: 'nowrap',
-  },
   proActions: {
     display: 'flex',
     gap: '6px',
     padding: '6px 10px',
     background: '#0a0a0a',
-    borderTop: '1px solid #222',
+    borderTop: '1px solid rgba(255,0,0,0.1)',
     overflowX: 'auto',
   },
   proActionBtn: {
-    background: 'rgba(255,48,80,0.1)',
-    border: '1px solid rgba(255,48,80,0.3)',
+    background: 'rgba(255,48,80,0.08)',
+    border: '1px solid rgba(255,48,80,0.25)',
     color: '#fff',
     padding: '6px 10px',
     borderRadius: '8px',
@@ -669,7 +629,7 @@ const styles = {
     cursor: 'pointer',
     whiteSpace: 'nowrap',
     flexShrink: 0,
-    transition: 'all 0.2s',
+    transition: 'all 0.2s ease',
   },
   upgradeBar: {
     display: 'flex',
@@ -677,8 +637,8 @@ const styles = {
     justifyContent: 'space-between',
     gap: '8px',
     padding: '6px 10px',
-    background: 'rgba(255,48,80,0.05)',
-    borderTop: '1px solid rgba(255,48,80,0.15)',
+    background: 'rgba(255,48,80,0.04)',
+    borderTop: '1px solid rgba(255,48,80,0.1)',
   },
   upgradeLink: {
     color: '#ff3050',
