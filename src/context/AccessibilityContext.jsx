@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+=======
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { initializeVoiceControl } from '../logic/voiceControl';
+import TTS from '../services/tts.js';
+>>>>>>> 5669225 (ui: add reference preview overlay; lightweight solo exercise engine; dashboard hero + collapsible AI chatbot)
 
 const AccessibilityContext = createContext();
 
@@ -8,6 +14,7 @@ export function AccessibilityProvider({ children }) {
   const voiceRef = useRef(null);
 
   useEffect(() => {
+<<<<<<< HEAD
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices();
 
@@ -59,9 +66,31 @@ export function AccessibilityProvider({ children }) {
     setVoiceEnabled(true);
 
     speak("Rivalis mode engaged. Let’s get to work.", true);
+=======
+    // initialize global voice control listeners (tap detection & recognition)
+    try { initializeVoiceControl(); } catch (e) { /* ignore */ }
+  }, []);
+
+  const toggleVoice = () => {
+    setVoiceEnabled((prev) => !prev);
+>>>>>>> 5669225 (ui: add reference preview overlay; lightweight solo exercise engine; dashboard hero + collapsible AI chatbot)
+  };
+
+  const value = {
+    // keep backwards-compatible names and provide the shape VoiceNavigator expects
+    voiceEnabled,
+    toggleVoice,
+    isEnabled: voiceEnabled,
+    speak: (text, opts) => {
+      try {
+        if (TTS && typeof TTS.speak === 'function') return TTS.speak(text, opts);
+      } catch (e) { console.debug('TTS speak failed', e); }
+      return Promise.resolve();
+    },
   };
 
   return (
+<<<<<<< HEAD
     <AccessibilityContext.Provider
       value={{
         ttsEnabled,
@@ -70,6 +99,9 @@ export function AccessibilityProvider({ children }) {
         speak
       }}
     >
+=======
+    <AccessibilityContext.Provider value={value}>
+>>>>>>> 5669225 (ui: add reference preview overlay; lightweight solo exercise engine; dashboard hero + collapsible AI chatbot)
       {children}
     </AccessibilityContext.Provider>
   );

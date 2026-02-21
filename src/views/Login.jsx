@@ -86,8 +86,10 @@ export default function Login({ isA11yEnabled }) {
           nickname: tempNickname,
           avatarURL: ""
         });
+        navigate('/dashboard');
       } else {
         await signInWithEmailAndPassword(auth, email, password);
+        navigate('/dashboard');
       }
     } catch (err) {
       setError(err.message);

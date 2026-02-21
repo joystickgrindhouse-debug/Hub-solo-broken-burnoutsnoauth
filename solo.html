@@ -8,6 +8,52 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* Reference preview overlay (drop your reference at attached_assets/generated_images/reference.png) */
+        #ref-toggle {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            z-index: 1200;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            border: 1px solid rgba(255,0,0,0.6);
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        #reference-overlay {
+            position: fixed;
+            inset: 60px 40px 40px 40px;
+            z-index: 1100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        #reference-overlay img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 12px;
+            box-shadow: 0 6px 30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+            opacity: 0.95;
+            pointer-events: auto;
+        }
+        #ref-controls {
+            position: fixed;
+            right: 20px;
+            top: 64px;
+            z-index: 1201;
+            display: none;
+            gap: 8px;
+            align-items: center;
+            background: rgba(0,0,0,0.45);
+            padding: 8px;
+            border-radius: 8px;
+        }
+        #ref-controls input[type=range] { width: 120px; }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -64,6 +110,85 @@
         </div>
     </div>
 
+    <!-- Reference preview UI (toggleable) -->
+    <button id="ref-toggle" title="Toggle reference preview">Ref</button>
+    <div id="ref-controls">
+        <label style="color:#fff;font-size:13px">Opacity</label>
+        <input id="ref-opacity" type="range" min="0" max="100" value="95">
+        <button id="ref-close" style="background:#b00;color:#fff;border:none;padding:6px 8px;border-radius:6px;">Close</button>
+    </div>
+    <div id="reference-overlay">
+        <img id="reference-image" alt="Reference UI" onerror="this.style.display='none'">
+        <div id="ref-message" style="position:absolute;bottom:10px;left:10px;color:#fff;background:rgba(0,0,0,0.5);padding:6px 8px;border-radius:6px;display:none;font-size:13px;">No reference image found.</div>
+    </div>
+
     <script type="module" src="/src/logic/soloApp.js"></script>
+    <script>
+        // Reference preview toggle + opacity control
+        (function(){
+            const toggle = document.getElementById('ref-toggle');
+            const overlay = document.getElementById('reference-overlay');
+            const img = document.getElementById('reference-image');
+            const controls = document.getElementById('ref-controls');
+            const opacity = document.getElementById('ref-opacity');
+            const closeBtn = document.getElementById('ref-close');
+
+            function show() {
+                overlay.style.display = 'flex';
+                controls.style.display = 'flex';
+                toggle.classList.add('active');
+            }
+            function hide() {
+                overlay.style.display = 'none';
+                controls.style.display = 'none';
+                toggle.classList.remove('active');
+            }
+
+            toggle.addEventListener('click', ()=>{
+                if (overlay.style.display === 'flex') hide(); else show();
+            });
+            closeBtn.addEventListener('click', hide);
+            opacity.addEventListener('input', ()=>{
+                img.style.opacity = (opacity.value/100).toString();
+            });
+            // Try common filenames in attached_assets/generated_images/ and load the first that exists
+            const candidates = [
+                'reference.png', 'reference.jpg', 'desired-layout.png', 'rivalis_hub_burnouts_card_ui_mockup.png', 'push-up_form_demonstration.png'
+            ];
+            (function findAndLoad(){
+                const messageEl = document.getElementById('ref-message');
+                let idx = 0;
+                function tryNext() {
+                    if (idx >= candidates.length) {
+                        console.warn('Reference preview: no candidate images found');
+                        if (messageEl) { messageEl.style.display = ''; messageEl.innerText = 'No reference image found in attached_assets/generated_images/'; }
+                        img.style.display = 'none';
+                        return;
+                    }
+                    const name = candidates[idx++];
+                    const url = '/attached_assets/generated_images/' + name;
+                    console.log('Reference preview: attempting', url);
+                    const test = new Image();
+                    let done = false;
+                    test.onload = () => {
+                        if (done) return; done = true;
+                        console.log('Reference preview: loaded', url);
+                        img.src = url; img.style.display = 'block'; if (messageEl) messageEl.style.display = 'none';
+                    };
+                    test.onerror = () => {
+                        if (done) return; done = true;
+                        console.log('Reference preview: missing', url);
+                        tryNext();
+                    };
+                    // start loading
+                    test.src = url;
+                    // fallback timeout in case onerror/onload never fire
+                    setTimeout(() => { if (!done) { done = true; console.log('Reference preview: timeout', url); tryNext(); } }, 2500);
+                }
+                tryNext();
+            })();
+            img.addEventListener('error', ()=>{ img.style.display = 'none'; });
+        })();
+    </script>
 </body>
 </html>

@@ -1,6 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "../context/ThemeContext.jsx";
 
 function SafeImg({ src, alt, className, style }) {
   const [err, setErr] = useState(false);
@@ -19,125 +18,67 @@ function SafeImg({ src, alt, className, style }) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const t = useTheme();
+  const [chatOpen, setChatOpen] = useState(false);
 
-  const MERCH_URL = "https://rivalis.printful.me";
+  const modes = [
+    { id: "solo", name: "Solo", image: "/attached_assets/generated_images/rivalis_hub_burnouts_card_ui_mockup.png", link: "/solo" },
+    { id: "burnouts", name: "Burnouts", image: "/attached_assets/generated_images/retro_neon_boxing_tile_image.png", link: "/burnouts" },
+    { id: "run", name: "Run", image: "/attached_assets/generated_images/neon_red_runners_on_dark_track.png", link: "/run" },
+    { id: "raffle", name: "Raffle Room", image: "/attached_assets/generated_images/rivalis_hub_raffle_drawing_mockup.png", link: "/raffle" },
+    { id: "shop", name: "Merch Shop", image: "/attached_assets/generated_images/rivalis_hub_leaderboard_advertisement_mockup.png", link: "/shop" },
+  ];
 
-  const [showComingSoon, setShowComingSoon] = useState(false);
-
-  const modes = useMemo(
-    () => [
-      { id: "solo", name: "Solo", image: "/assets/images/solo.png.png", link: "/solo", external: false },
-      { id: "burnouts", name: "Burnouts", image: "/assets/images/burnouts.png.png", link: "/burnouts", external: false },
-      { id: "live", name: "Live", image: "/assets/images/live.png.png", link: "/live", external: false },
-      { id: "run", name: "Run", image: "/assets/images/run.png.png", link: "/run", external: false },
-      { id: "raffle", name: "Raffle", image: "/assets/images/raffle.png.png", link: "/raffle", external: false },
-      { id: "shop", name: "Merch", image: "/assets/images/shop.png.png", link: "/shop", external: false },
-    ],
-    []
-  );
-
-  const handleClick = (mode) => {
-    if (mode.external) {
-      if (typeof window.launchGame === 'function') {
-        window.launchGame(mode.link);
-      } else {
-        window.open(mode.link, "_blank", "noopener,noreferrer");
-      }
-      return;
-    }
-    navigate(mode.link);
-  };
-
-  const gap = 10;
-
-  const gridStyle = {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: `${gap}px`,
-    width: "100%",
-    padding: "0 4px",
-  };
-
-  const tileStyle = {
-    position: "relative",
-    aspectRatio: "1 / 1",
-    borderRadius: "12px",
-    overflow: "hidden",
-    border: `1px solid ${t.tileBorder}`,
-    background: "rgba(10,10,10,0.25)",
-    backdropFilter: "blur(2px)",
-    WebkitBackdropFilter: "blur(2px)",
-    cursor: "pointer",
-    padding: 0,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-  };
-
-  const imgWrapStyle = {
-    width: "50%",
-    aspectRatio: "1 / 1",
-    borderRadius: "8px",
-    overflow: "hidden",
-    border: "1px solid rgba(255,255,255,0.1)",
-    background: "rgba(0,0,0,0.4)",
-    flexShrink: 0,
-  };
-
-  const imgStyle = {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    display: "block",
-    filter: t.imgFilter,
-  };
-
-  const labelStyle = {
-    fontSize: "10px",
-    fontWeight: 700,
-    color: "rgba(255,255,255,0.9)",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-    marginTop: "5px",
-    lineHeight: 1,
-  };
+  function handleClick(link) {
+    if (typeof link === 'string') navigate(link);
+  }
 
   return (
-    <div style={{ padding: "16px 12px", minHeight: "100vh" }}>
-      <div style={{ marginBottom: "16px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: t.dot, boxShadow: `0 0 18px ${t.dotShadow}` }} />
-          <h1 style={{ fontSize: "20px", fontWeight: 800, color: "#fff", margin: 0 }}>Rivalis</h1>
+    <div className="hub-homepage">
+      <header className="hub-header">
+        <div className="hub-brand">RIVALIS HUB</div>
+        <div className="hub-right">
+          <div className="hub-avatar">Tester</div>
+          <button className="hub-menu">Menu</button>
         </div>
-        <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px", marginTop: "4px" }}>Pick a mode.</p>
-      </div>
+      </header>
 
-      <div style={gridStyle}>
-        {modes.map((mode, idx) => {
-          const isLast = idx === modes.length - 1 && modes.length % 3 === 1;
-          return (
-            <button
-              key={mode.id}
-              type="button"
-              onClick={() => handleClick(mode)}
-              style={{
-                ...tileStyle,
-                ...(isLast ? { gridColumn: "2 / 3" } : {}),
-              }}
-            >
-              <div style={imgWrapStyle}>
-                <SafeImg src={mode.image} alt={mode.name} style={imgStyle} className="" />
-              </div>
-              <div style={labelStyle}>{mode.name}</div>
-            </button>
-          );
-        })}
-      </div>
+      <section className="hub-hero" style={{ backgroundImage: "url('/attached_assets/Rivalis_Fitness_Reimagined_1767900329545.jpeg')" }}>
+        <div className="hero-inner">
+          <div className="hero-title-small">RIVALIS</div>
+          <div className="hero-title-large">FITNESS</div>
+          <div className="hero-title-large">REIMAGINED</div>
 
-      {/* Removed Coming Soon modal. All modes shown are fully functional. */}
+          <div className="card-grid">
+            {modes.map((m) => (
+              <button key={m.id} className="hub-tile" onClick={() => handleClick(m.link)}>
+                <div className="tile-image-wrap">
+                  <SafeImg src={m.image} alt={m.name} />
+                </div>
+                <div className="tile-label">{m.name}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={`ai-chatbot chat-widget ${chatOpen ? 'open' : 'collapsed'}`} data-type="ai-chat">
+          <div className="chat-header">
+            <span>RIVALIS CHATBOT AI</span>
+            <button className="chat-close" onClick={() => setChatOpen(false)} aria-label="close ai chat">×</button>
+          </div>
+          <div className="chat-messages">
+            <div className="msg bot">Hey Rival! I'm your new AI Fitness Coach. Ready for a quick tour?</div>
+            <div className="msg user">Hello</div>
+            <div className="msg bot">My neural link is flickering, Rival. Try again in a moment.</div>
+          </div>
+          <div className="chat-input"><input placeholder="Ask me anything..." /><button>▶</button></div>
+        </div>
+
+        {!chatOpen && <button className="chat-toggle" onClick={() => setChatOpen(true)} aria-label="open ai chat">AI</button>}
+
+        <div className="bottom-bar" />
+      </section>
     </div>
   );
 }
+
+

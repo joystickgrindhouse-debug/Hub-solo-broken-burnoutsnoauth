@@ -78,6 +78,25 @@
 
   document.getElementById('btnClearLog').addEventListener('click', ()=>{ captured.length=0; updateConsole(); });
 
+  // Apply Firebase JSON (for devices without console)
+  const firebaseTextarea = document.getElementById('firebaseJson');
+  const btnSetFirebase = document.getElementById('btnSetFirebase');
+  if (btnSetFirebase) {
+    btnSetFirebase.addEventListener('click', () => {
+      const raw = firebaseTextarea && firebaseTextarea.value && firebaseTextarea.value.trim();
+      if (!raw) { out.textContent = 'No JSON provided'; return; }
+      try {
+        const parsed = JSON.parse(raw);
+        try { window.__FIREBASE_DEFAULTS__ = { config: parsed }; } catch (e) { console.warn('Cannot set window.__FIREBASE_DEFAULTS__', e); }
+        try { localStorage.setItem('FIREBASE_CONFIG', JSON.stringify(parsed)); } catch (e) { console.warn('Cannot set localStorage', e); }
+        out.textContent = 'Firebase config applied — reloading in 800ms';
+        setTimeout(() => location.reload(), 800);
+      } catch (e) {
+        out.textContent = 'Invalid JSON: ' + (e && e.message ? e.message : String(e));
+      }
+    });
+  }
+
   // initial fill
   updateConsole();
   out.textContent='ready';

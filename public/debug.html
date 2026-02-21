@@ -25,6 +25,14 @@
     <label for="apiKey">API key (optional):</label>
     <input id="apiKey" style="min-width:240px" placeholder="leave empty to use detected" />
   </div>
+  <div style="margin-top:12px">
+    <label for="firebaseJson" style="font-weight:700;display:block;margin-bottom:6px">Paste Firebase config JSON</label>
+    <textarea id="firebaseJson" placeholder='{"apiKey":"...","authDomain":"...",...}' style="width:100%;height:120px;border:1px solid #ccc;border-radius:6px;padding:8px;font-family:monospace"></textarea>
+    <div style="margin-top:8px">
+      <button id="btnSetFirebase">Apply Firebase JSON and Reload</button>
+      <small style="margin-left:8px;color:#666">This will store config in <strong>window.__FIREBASE_DEFAULTS__</strong> and <strong>localStorage.FIREBASE_CONFIG</strong></small>
+    </div>
+  </div>
   <div>
     <h3>Captured console errors/warnings</h3>
     <pre id="consoleLog">(none)</pre>

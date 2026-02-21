@@ -62,6 +62,100 @@ function updateFeedbackUI() {
 }
 
 // ... existing code ...
+// --- Exercise engine (lightweight copy of burnouts engine) ---
+function calculateAngle(a, b, c) {
+    if (!a || !b || !c) return -1;
+    if (a.visibility < CONFIG.visibilityThreshold || b.visibility < CONFIG.visibilityThreshold || c.visibility < CONFIG.visibilityThreshold) return -1;
+    const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+    let angle = Math.abs(radians * 180.0 / Math.PI);
+    if (angle > 180.0) angle = 360 - angle;
+    return angle;
+}
+
+function getJointAngle(landmarks, joint) {
+    const map = {
+        'left_elbow': [11, 13, 15],
+        'right_elbow': [12, 14, 16],
+        'left_hip': [11, 23, 25],
+        'right_hip': [12, 24, 26],
+        'left_knee': [23, 25, 27],
+        'right_knee': [24, 26, 28],
+    };
+    const indices = map[joint];
+    if (!indices) return 0;
+    return calculateAngle(landmarks[indices[0]], landmarks[indices[1]], landmarks[indices[2]]);
+}
+
+class BaseExercise {
+    constructor() { this.state = 'UP'; this.reset(); }
+    reset() { this.state = 'UP'; }
+}
+
+class SmartExercise extends BaseExercise {
+    constructor(key, ref) { super(); this.key = key; this.ref = ref || { rep_order: ['UP','DOWN'], angles: {} }; }
+    update(landmarks) {
+        const ref = this.ref;
+        if (!ref || !ref.angles) return { feedback: 'Wait...' };
+        const currentAngles = {};
+        const firstState = ref.states ? ref.states[0] : Object.keys(ref.angles)[0];
+        Object.keys(ref.angles[firstState] || {}).forEach(joint => { currentAngles[joint] = getJointAngle(landmarks, joint); });
+        const nextStateIndex = (ref.rep_order.indexOf(this.state) + 1) % (ref.rep_order.length || 2);
+        const nextState = ref.rep_order[nextStateIndex] || 'DOWN';
+        const targetRange = (ref.angles[nextState] || {});
+        const reached = Object.entries(targetRange).every(([joint, range]) => {
+            const val = currentAngles[joint] || 0;
+            return val >= range[0] && val <= range[1];
+        });
+        if (reached) {
+            const old = this.state;
+            this.state = nextState;
+            if (this.state === ref.rep_order[0] && old !== this.state) return { repIncrement: 1, state: this.state, feedback: 'Nice!' };
+            return { state: this.state, feedback: 'Hold' };
+        }
+        return { state: this.state, feedback: `Move to ${nextState}` };
+    }
+}
+
+class ExerciseEngine {
+    constructor() { this.exercises = {}; this.refData = {}; }
+    setReferenceData(data) { this.refData = data || {}; Object.keys(this.refData).forEach(k => { this.exercises[k] = new SmartExercise(k, this.refData[k]); }); }
+    process(landmarks) {
+        const exerciseKey = STATE.currentExercise || 'pushup';
+        const ex = this.exercises[exerciseKey];
+        if (!ex) return;
+        const result = ex.update(landmarks);
+        if (result.repIncrement) {
+            STATE.reps += result.repIncrement;
+            updateUI();
+        }
+        STATE.movementState = result.state || STATE.movementState;
+        STATE.lastFeedback = result.feedback || STATE.lastFeedback;
+        updateFeedbackUI();
+    }
+    reset() { Object.values(this.exercises).forEach(e => e.reset()); }
+}
+
+const engine = new ExerciseEngine();
+
+// Attempt to load minimal reference data if available
+async function loadLocalReference() {
+    try {
+        const resp = await fetch('/reference_data/push_up.json');
+        if (resp.ok) {
+            const data = await resp.json();
+            engine.setReferenceData({ 'pushup': data });
+        }
+    } catch (e) {
+        // ignore
+    }
+}
+
+// Instantiate Mediapipe Pose and wire results
+const pose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
+pose.setOptions({ modelComplexity: CONFIG.modelComplexity, smoothLandmarks: true, minDetectionConfidence: CONFIG.minDetectionConfidence, minTrackingConfidence: CONFIG.minTrackingConfidence });
+pose.onResults(onResults);
+
+loadLocalReference().catch(()=>{});
 
 const camera = new Camera(elements.videoElement || document.createElement('video'), {
     onFrame: async () => {
