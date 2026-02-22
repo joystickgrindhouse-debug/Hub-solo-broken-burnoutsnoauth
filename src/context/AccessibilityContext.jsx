@@ -1,37 +1,40 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 
 const AccessibilityContext = createContext();
-
-const hypeResponses = {
-  activate: [
-    "Rivalis mode engaged. Let’s work.",
-    "Voice control activated. Stay sharp.",
-    "Assistant online. What’s the move?",
-    "We’re live. Command me."
-  ],
-  navigation: [
-    "Moving.",
-    "Done.",
-    "On it.",
-    "Let’s go."
-  ],
-  error: [
-    "Didn’t catch that. Stay focused.",
-    "Say that again with intent.",
-    "Command unclear. Try again.",
-    "Not locked in. Repeat that."
-  ]
-};
 
 export function AccessibilityProvider({ children }) {
   const [ttsEnabled, setTtsEnabled] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [history, setHistory] = useState([]);
+  const voiceRef = useRef(null);
 
-  const randomLine = (category) =>
-    hypeResponses[category][
-      Math.floor(Math.random() * hypeResponses[category].length)
-    ];
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+
+      // Try to find Karen (en-AU)
+      const karenVoice = voices.find(
+        (voice) =>
+          voice.name.toLowerCase().includes("karen") &&
+          voice.lang.toLowerCase().includes("en-au")
+      );
+
+      if (karenVoice) {
+        voiceRef.current = karenVoice;
+        console.log("Karen EN-AU voice loaded.");
+      } else {
+        console.log("Karen not found. Using default voice.");
+        voiceRef.current = voices.find((v) =>
+          v.lang.toLowerCase().includes("en")
+        );
+      }
+    };
+
+    loadVoices();
+
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = loadVoices;
+    }
+  }, []);
 
   const speak = (text, force = false) => {
     if (!ttsEnabled && !force) return;
@@ -39,9 +42,14 @@ export function AccessibilityProvider({ children }) {
     window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
+
+    if (voiceRef.current) {
+      utterance.voice = voiceRef.current;
+    }
+
     utterance.rate = 1;
     utterance.pitch = 1;
-    utterance.lang = "en-US";
+    utterance.volume = 1;
 
     window.speechSynthesis.speak(utterance);
   };
@@ -50,14 +58,7 @@ export function AccessibilityProvider({ children }) {
     setTtsEnabled(true);
     setVoiceEnabled(true);
 
-    speak(randomLine("activate"), true);
-  };
-
-  const addHistory = (command, confidence) => {
-    setHistory((prev) => [
-      { command, confidence, timestamp: Date.now() },
-      ...prev.slice(0, 19),
-    ]);
+    speak("Rivalis mode engaged. Let’s get to work.", true);
   };
 
   return (
@@ -65,11 +66,8 @@ export function AccessibilityProvider({ children }) {
       value={{
         ttsEnabled,
         voiceEnabled,
-        history,
         enableAccessibility,
-        speak,
-        addHistory,
-        randomLine
+        speak
       }}
     >
       {children}
