@@ -21,10 +21,10 @@ import { doc, getDoc } from "firebase/firestore";
 const Login = lazy(() => import("./views/Login.jsx"));
 const Dashboard = lazy(() => import("./views/Dashboard.jsx"));
 const Run = lazy(() => import("./views/Run.jsx"));
-const Raffle = lazy(() => import("./views/Raffle.jsx"));
+const Raffle = lazy(() => import("./views/RaffleRoom.jsx"));
 const Profile = lazy(() => import("./views/Profile.jsx"));
 const Live = lazy(() => import("./views/Live.jsx"));
-const Merch = lazy(() => import("./views/Merch.jsx"));
+const Merch = lazy(() => import("./views/MerchShop.jsx"));
 const Achievements = lazy(() => import("./views/Achievements.jsx"));
 
 /* ===========================
