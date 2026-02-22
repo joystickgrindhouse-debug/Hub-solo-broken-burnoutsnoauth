@@ -36,22 +36,11 @@ const { WebhookHandlers } = require("./stripe/webhookHandlers");
 const { getUncachableStripeClient, getStripePublishableKey, getStripeSync } = require("./stripe/stripeClient");
 const { runMigrations } = require('stripe-replit-sync');
 
-<<<<<<< HEAD
 const liveRoomsRouter = require('./liveRooms.routes');
 const stripeCheckoutSessionRouter = require('./stripe/createCheckoutSession.routes');
 
 app.use(liveRoomsRouter);
 app.use('/api/stripe', stripeCheckoutSessionRouter);
-=======
-const app = express();
-app.use(cors());
-const ENABLE_STRIPE = process.env.ENABLE_STRIPE === 'true';
->>>>>>> fix/test-live-mode-script
-
-async function initStripe() {
-  console.log('Stripe backend initialized for Firebase.');
-}
-<<<<<<< HEAD
 initStripe();
 
 app.post(
@@ -67,24 +56,9 @@ app.post(
     } catch (error) {
       console.error('Webhook error:', error.message);
       res.status(400).json({ error: 'Failed to process Stripe webhook' });
-=======
-
-if (ENABLE_STRIPE) {
-  initStripe();
-
-  app.post(
-    '/api/stripe/webhook',
-    express.raw({ type: 'application/json' }),
-    async (req, res) => {
-      const signature = req.headers['stripe-signature'];
-      if (!signature) {
-        return sendStripeError(res, 400, 'Missing Stripe signature');
-      }
-      try {
-        const sig = Array.isArray(signature) ? signature[0] : signature;
-        if (!Buffer.isBuffer(req.body)) {
-          console.error('STRIPE WEBHOOK ERROR: req.body is not a Buffer.');
-          return sendStripeError(res, 500, 'Failed to process Stripe webhook');
+    }
+  }
+);
         }
         await WebhookHandlers.processWebhook(req.body, sig);
         res.status(200).json({ received: true });

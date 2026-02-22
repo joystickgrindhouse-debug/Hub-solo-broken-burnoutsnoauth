@@ -1,13 +1,8 @@
-import React from "react";
 import { Navigate } from "react-router-dom";
 
-export default function ProtectedRoute({ user, userProfile, children }) {
+export default function ProtectedRoute({ user, children }) {
   if (!user) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (!userProfile || !userProfile.hasCompletedSetup) {
-    return <Navigate to="/avatar-creator" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return children;

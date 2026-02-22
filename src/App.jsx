@@ -2,17 +2,18 @@ import React, { useEffect, useState, lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { auth } from "./firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
+import { db } from "./firebase.js";
+import { doc, getDoc } from "firebase/firestore";
+
 import "./index.css";
 
 import Navbar from "./components/Navbar.jsx";
 import DemoToggle from "./components/DemoToggle.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 import { AccessibilityProvider } from "./context/AccessibilityContext";
 import { AccessibilityWrapper } from "./components/accessibility/AccessibilityWrapper";
 import { VoiceNavigator } from "./components/accessibility/VoiceNavigator";
-
-import { db } from "./firebase.js";
-import { doc, getDoc } from "firebase/firestore";
 
 /* ===========================
    LAZY VIEWS
@@ -104,6 +105,7 @@ export default function App() {
     }
 
     loadProfile();
+
     return () => {
       cancelled = true;
     };
@@ -111,14 +113,16 @@ export default function App() {
 
   if (loading) {
     return (
-      <div style={{
-        background: "#000",
-        color: "#fff",
-        height: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center"
-      }}>
+      <div
+        style={{
+          background: "#000",
+          color: "#fff",
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         Loading...
       </div>
     );
@@ -146,30 +150,88 @@ export default function App() {
             {/* ROOT */}
             <Route
               path="/"
-              element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />}
+              element={
+                user
+                  ? <Navigate to="/dashboard" replace />
+                  : <Navigate to="/login" replace />
+              }
             />
 
             {/* LOGIN */}
             <Route path="/login" element={<Login />} />
 
-            {/* DASHBOARD */}
+            {/* PROTECTED ROUTES */}
             <Route
               path="/dashboard"
-              element={user ? <Dashboard /> : <Navigate to="/login" />}
+              element={
+                <ProtectedRoute user={user}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
             />
 
-            {/* CORE ROUTES */}
-            <Route path="/run" element={user ? <Run /> : <Navigate to="/login" />} />
-            <Route path="/raffle" element={user ? <Raffle /> : <Navigate to="/login" />} />
-            <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
-            <Route path="/live" element={user ? <Live /> : <Navigate to="/login" />} />
-            <Route path="/merch" element={user ? <Merch /> : <Navigate to="/login" />} />
-            <Route path="/achievements" element={user ? <Achievements /> : <Navigate to="/login" />} />
+            <Route
+              path="/run"
+              element={
+                <ProtectedRoute user={user}>
+                  <Run />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/raffle"
+              element={
+                <ProtectedRoute user={user}>
+                  <Raffle />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute user={user}>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/live"
+              element={
+                <ProtectedRoute user={user}>
+                  <Live />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/merch"
+              element={
+                <ProtectedRoute user={user}>
+                  <Merch />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/achievements"
+              element={
+                <ProtectedRoute user={user}>
+                  <Achievements />
+                </ProtectedRoute>
+              }
+            />
 
             {/* ADMIN */}
             <Route
               path="/admin/*"
-              element={user ? <AdminDashboard /> : <Navigate to="/login" />}
+              element={
+                <ProtectedRoute user={user}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
             >
               <Route path="metrics" element={<AdminMetrics />} />
               <Route path="flags" element={<AdminFlags />} />
@@ -179,17 +241,14 @@ export default function App() {
               <Route path="analytics" element={<AdminAnalytics />} />
             </Route>
 
-            {/* 404 */}
+            {/* FALLBACK */}
             <Route
               path="*"
               element={
-                <div style={{
-                  padding: "40px",
-                  textAlign: "center",
-                  color: "white"
-                }}>
-                  404 — Route Not Found
-                </div>
+                <Navigate
+                  to={user ? "/dashboard" : "/login"}
+                  replace
+                />
               }
             />
 
