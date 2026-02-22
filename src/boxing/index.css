@@ -37,7 +37,10 @@
 @layer base {
   body {
     @apply bg-background text-foreground antialiased font-body selection:bg-primary/30 selection:text-primary;
-    background: url("/assets/images/background.png");
+    background-image: url("/assets/images/background.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
   }
 
   h1, h2, h3, h4, h5, h6 {
