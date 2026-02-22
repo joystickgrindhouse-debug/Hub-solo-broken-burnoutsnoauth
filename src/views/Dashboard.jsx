@@ -6,7 +6,7 @@ function SafeImg({ src, alt }) {
 
   return (
     <img
-      src={error ? "/assets/loading-bg.jpeg" : src}
+      src={error ? "/assets/images/loading-bg.jpeg" : src}
       alt={alt}
       onError={() => setError(true)}
       loading="lazy"
@@ -26,12 +26,12 @@ export default function Dashboard() {
   const [chatOpen, setChatOpen] = useState(false);
 
   const modes = [
-    { id: "solo", name: "Solo", image: "/assets/solo.png.png", link: "/solo" },
-    { id: "burnouts", name: "Burnouts", image: "/assets/burnouts.png.png", link: "/burnouts" },
-    { id: "run", name: "Run", image: "/assets/run.png.png", link: "/run" },
-    { id: "live", name: "Live Arena", image: "/assets/live.png.png", link: "/live" },
-    { id: "raffle", name: "Raffle Room", image: "/assets/raffle.png.png", link: "/raffle" },
-    { id: "merch", name: "Merch Shop", image: "/assets/shop.png.png", link: "/shop" },
+    { id: "solo", name: "Solo", image: "/assets/images/solo.png.png", link: "/solo" },
+    { id: "burnouts", name: "Burnouts", image: "/assets/images/burnouts.png.png", link: "/burnouts" },
+    { id: "run", name: "Run", image: "/assets/images/run.png.png", link: "/run" },
+    { id: "live", name: "Live Arena", image: "/assets/images/live.png.png", link: "/live" },
+    { id: "raffle", name: "Raffle Room", image: "/assets/images/raffle.png.png", link: "/raffle" },
+    { id: "merch", name: "Merch Shop", image: "/assets/images/shop.png.png", link: "/merch" },
   ];
 
   return (
