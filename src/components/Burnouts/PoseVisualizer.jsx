@@ -41,6 +41,7 @@ export default function PoseVisualizer({ onPoseResults, currentExercise }) {
     const canvasRef = useRef(null);
     const [loading, setLoading] = useState(true);
     const [loadingMsg, setLoadingMsg] = useState('REQUESTING CAMERA...');
+    const [errorMsg, setErrorMsg] = useState(null);
 
     const onPoseResultsRef = useRef(onPoseResults);
     useEffect(() => {
@@ -57,115 +58,138 @@ export default function PoseVisualizer({ onPoseResults, currentExercise }) {
 
         const init = async () => {
             try {
-                const [, cameraStream] = await Promise.all([
-                    loadScripts().then(() => {
-                        if (isMounted) setLoadingMsg('LOADING AI MODEL...');
-                    }),
-                    requestCamera()
-                ]);
-
-                if (!isMounted) {
-                    cameraStream.getTracks().forEach(t => t.stop());
-                    return;
-                }
-
-                if (videoRef.current) {
-                    videoRef.current.srcObject = cameraStream;
-                    await videoRef.current.play();
-                }
-
-                if (!window.Pose) {
-                    console.error("MediaPipe Pose not available");
-                    return;
-                }
-
-                pose = new window.Pose({
-                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+                await loadScripts().then(() => {
+                    if (isMounted) setLoadingMsg('LOADING AI MODEL...');
                 });
-
-                pose.setOptions({
-                    modelComplexity: 1,
-                    smoothLandmarks: true,
-                    minDetectionConfidence: 0.5,
-                    minTrackingConfidence: 0.5
-                });
-
-                pose.onResults((results) => {
-                    if (!isMounted || !results.image || !canvasRef.current) return;
-
-                    const canvas = canvasRef.current;
-                    const ctx = canvas.getContext('2d');
-
-                    canvas.width = videoRef.current.videoWidth || 640;
-                    canvas.height = videoRef.current.videoHeight || 480;
-
-                    ctx.save();
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-
-                    if (results.poseLandmarks) {
-                        const connections = [
-                            [11, 12], [11, 13], [13, 15], [12, 14], [14, 16],
-                            [11, 23], [12, 24], [23, 24],
-                            [23, 25], [25, 27], [24, 26], [26, 28]
-                        ];
-
-                        const skeletonColor = '#00ff88';
-                        ctx.strokeStyle = skeletonColor;
-                        ctx.lineWidth = 3;
-                        ctx.lineCap = 'round';
-                        ctx.lineJoin = 'round';
-
-                        ctx.beginPath();
-                        connections.forEach(([i, j]) => {
-                            const p1 = results.poseLandmarks[i];
-                            const p2 = results.poseLandmarks[j];
-                            if (p1 && p2 && p1.visibility > 0.1 && p2.visibility > 0.1) {
-                                ctx.moveTo(p1.x * canvas.width, p1.y * canvas.height);
-                                ctx.lineTo(p2.x * canvas.width, p2.y * canvas.height);
-                            }
-                        });
-                        ctx.stroke();
-
-                        if (window.drawLandmarks) {
-                            window.drawLandmarks(ctx, results.poseLandmarks, {
-                                color: '#ffffff',
-                                fillColor: skeletonColor,
-                                lineWidth: 1,
-                                radius: 2
-                            });
-                        }
-
-                        if (onPoseResultsRef.current) {
-                            onPoseResultsRef.current(results.poseLandmarks);
-                        }
-                    }
-                    ctx.restore();
-                });
-
-                await pose.initialize();
-
-                if (!isMounted) return;
+            } catch (e) {
+                setErrorMsg('Failed to load AI scripts. Please check your connection.');
                 setLoading(false);
+                return;
+            }
+            let cameraStream;
+            try {
+                cameraStream = await requestCamera();
+            } catch (e) {
+                setErrorMsg('Camera access denied or unavailable. Please allow camera access and reload.');
+                setLoading(false);
+                return;
+            }
 
-                if (window.Camera && videoRef.current) {
-                    camera = new window.Camera(videoRef.current, {
-                        onFrame: async () => {
-                            if (!isMounted) return;
-                            const now = Date.now();
-                            if (now - lastFrameTime < frameInterval) return;
-                            lastFrameTime = now;
-                            if (pose) await pose.send({ image: videoRef.current });
-                        },
-                        width: 640,
-                        height: 480
-                    });
-                    await camera.start();
+            if (!isMounted) {
+                cameraStream && cameraStream.getTracks().forEach(t => t.stop());
+                return;
+            }
+
+            if (videoRef.current) {
+                videoRef.current.srcObject = cameraStream;
+                try {
+                    await videoRef.current.play();
+                } catch (e) {
+                    setErrorMsg('Failed to start video stream.');
+                    setLoading(false);
+                    return;
                 }
-            } catch (error) {
-                console.error("Pose tracker initialization failed:", error);
-                if (isMounted) {
-                    setLoadingMsg('CAMERA ACCESS DENIED');
+            }
+
+            if (!window.Pose) {
+                setErrorMsg('MediaPipe Pose not available.');
+                setLoading(false);
+                return;
+            }
+
+            pose = new window.Pose({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+            });
+
+            pose.setOptions({
+                modelComplexity: 1,
+                smoothLandmarks: true,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+
+            pose.onResults((results) => {
+                if (!isMounted || !results.image || !canvasRef.current) return;
+
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+
+                canvas.width = videoRef.current.videoWidth || 640;
+                canvas.height = videoRef.current.videoHeight || 480;
+
+                ctx.save();
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+                if (results.poseLandmarks) {
+                    const connections = [
+                        [11, 12], [11, 13], [13, 15], [12, 14], [14, 16],
+                        [11, 23], [12, 24], [23, 24],
+                        [23, 25], [25, 27], [24, 26], [26, 28]
+                    ];
+
+                    const skeletonColor = '#00ff88';
+                    ctx.strokeStyle = skeletonColor;
+                    ctx.lineWidth = 3;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+
+                    ctx.beginPath();
+                    connections.forEach(([i, j]) => {
+                        const p1 = results.poseLandmarks[i];
+                        const p2 = results.poseLandmarks[j];
+                        if (p1 && p2 && p1.visibility > 0.1 && p2.visibility > 0.1) {
+                            ctx.moveTo(p1.x * canvas.width, p1.y * canvas.height);
+                            ctx.lineTo(p2.x * canvas.width, p2.y * canvas.height);
+                        }
+                    });
+                    ctx.stroke();
+
+                    if (window.drawLandmarks) {
+                        window.drawLandmarks(ctx, results.poseLandmarks, {
+                            color: '#ffffff',
+                            fillColor: skeletonColor,
+                            lineWidth: 1,
+                            radius: 2
+                        });
+                    }
+
+                    if (onPoseResultsRef.current) {
+                        onPoseResultsRef.current(results.poseLandmarks);
+                    }
+                }
+                ctx.restore();
+            });
+
+            try {
+                await pose.initialize();
+            } catch (e) {
+                setErrorMsg('Failed to initialize pose model.');
+                setLoading(false);
+                return;
+            }
+
+            if (!isMounted) return;
+            setLoading(false);
+
+            if (window.Camera && videoRef.current) {
+                camera = new window.Camera(videoRef.current, {
+                    onFrame: async () => {
+                        if (!isMounted) return;
+                        const now = Date.now();
+                        if (now - lastFrameTime < frameInterval) return;
+                        lastFrameTime = now;
+                        if (pose) await pose.send({ image: videoRef.current });
+                    },
+                    width: 640,
+                    height: 480
+                });
+                try {
+                    await camera.start();
+                } catch (e) {
+                    setErrorMsg('Failed to start camera stream.');
+                    setLoading(false);
+                    return;
                 }
             }
         };
@@ -181,7 +205,25 @@ export default function PoseVisualizer({ onPoseResults, currentExercise }) {
 
     return (
         <div className="pose-visualizer-container" style={{ position: 'relative', width: '100%', height: '100%' }}>
-            {loading && (
+            {errorMsg ? (
+                <div className="pose-error" style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    color: '#ff4444',
+                    zIndex: 10,
+                    fontWeight: '900',
+                    letterSpacing: '2px',
+                    background: 'rgba(0,0,0,0.8)',
+                    padding: '24px 32px',
+                    borderRadius: '12px',
+                    textAlign: 'center',
+                    maxWidth: 320
+                }}>
+                    {errorMsg}
+                </div>
+            ) : loading ? (
                 <div className="pose-loading" style={{
                     position: 'absolute',
                     top: '50%',
@@ -194,7 +236,7 @@ export default function PoseVisualizer({ onPoseResults, currentExercise }) {
                 }}>
                     {loadingMsg}
                 </div>
-            )}
+            ) : null}
             <video ref={videoRef} className="input-video" playsInline style={{ display: 'none' }} />
             <canvas ref={canvasRef} className="output-canvas" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
