@@ -33,7 +33,9 @@ function loadScripts() {
 }
 
 function requestCamera() {
-    return navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
+    // iPad/Safari: Use only facingMode, avoid width/height constraints
+    return navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+}
 }
 
 export default function PoseVisualizer({ onPoseResults, currentExercise }) {
@@ -237,7 +239,8 @@ export default function PoseVisualizer({ onPoseResults, currentExercise }) {
                     {loadingMsg}
                 </div>
             ) : null}
-            <video ref={videoRef} className="input-video" playsInline style={{ display: 'none' }} />
+            {/* Make video visible for iPad/Safari compatibility */}
+            <video ref={videoRef} className="input-video" playsInline autoPlay muted style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#000' }} />
             <canvas ref={canvasRef} className="output-canvas" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
     );
