@@ -36,7 +36,6 @@ function requestCamera() {
     // iPad/Safari: Use only facingMode, avoid width/height constraints
     return navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
 }
-}
 
 export default function PoseVisualizer({ onPoseResults, currentExercise }) {
     const videoRef = useRef(null);
