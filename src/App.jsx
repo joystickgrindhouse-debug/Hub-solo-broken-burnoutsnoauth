@@ -1,17 +1,18 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { auth } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 import LoadingScreen from "./components/LoadingScreen";
+import OnboardingSlides from "./components/OnboardingSlides";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
+import ThemeToggle from "./components/ThemeToggle";
+import AdBanner from "./components/AdBanner";
+import ChatbotTour from "./components/ChatbotTour/ChatbotTour";
 import BackgroundShell from "./components/BackgroundShell";
 
-/* ===============================
-   LAZY LOADED VIEWS
-================================= */
-
+/* Lazy Views */
 const Login = lazy(() => import("./views/Login"));
 const Dashboard = lazy(() => import("./views/Dashboard"));
 const Solo = lazy(() => import("./views/Solo"));
@@ -23,13 +24,10 @@ const Subscription = lazy(() => import("./views/Subscription"));
 const Profile = lazy(() => import("./views/Profile"));
 const AdminDashboard = lazy(() => import("./views/AdminDashboard"));
 
-/* ===============================
-   APP ROOT
-================================= */
-
 export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -40,24 +38,25 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  if (authLoading) {
-    return <LoadingScreen />;
-  }
+  if (authLoading) return <LoadingScreen />;
 
   return (
     <BackgroundShell>
+
+      {/* Global UI Elements */}
       {user && <Navbar />}
+      <ThemeToggle />
+      <AdBanner />
+      <ChatbotTour />
 
       <Suspense fallback={<LoadingScreen />}>
         <Routes>
 
-          {/* Public Route */}
           <Route
             path="/login"
             element={user ? <Navigate to="/" /> : <Login />}
           />
 
-          {/* Protected Routes */}
           <Route
             path="/"
             element={
@@ -139,11 +138,13 @@ export default function App() {
             }
           />
 
-          {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" />} />
 
         </Routes>
       </Suspense>
+
+      {!user && <OnboardingSlides />}
+
     </BackgroundShell>
   );
 }
