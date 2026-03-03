@@ -8,7 +8,7 @@ export default function BackgroundShell({ children }) {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url('/background.jpg')"
+          backgroundImage: "url('/background.png')"
         }}
       />
 
