@@ -13,7 +13,6 @@ import ChatbotTour from "./components/ChatbotTour/ChatbotTour";
 import BackgroundShell from "./components/BackgroundShell";
 
 /* Lazy Views */
-const Login = lazy(() => import("./views/Login"));
 const Dashboard = lazy(() => import("./views/Dashboard"));
 const Solo = lazy(() => import("./views/Solo"));
 const Burnouts = lazy(() => import("./views/Burnouts"));
@@ -25,7 +24,7 @@ const Profile = lazy(() => import("./views/Profile"));
 const AdminDashboard = lazy(() => import("./views/AdminDashboard"));
 
 export default function App() {
-  const [user, setUser] = useState(undefined); // undefined = still checking
+  const [user, setUser] = useState(undefined);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -35,7 +34,6 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Only show loading while auth is undefined
   if (user === undefined) {
     return <LoadingScreen />;
   }
@@ -43,99 +41,101 @@ export default function App() {
   return (
     <BackgroundShell>
 
-      {user && <Navbar />}
-      <ThemeToggle />
-      <AdBanner />
-      <ChatbotTour />
+      {user && (
+        <>
+          <Navbar />
+          <ThemeToggle />
+          <AdBanner />
+          <ChatbotTour />
 
-      <Suspense fallback={<LoadingScreen />}>
-        <Routes>
+          <Suspense fallback={<LoadingScreen />}>
+            <Routes>
 
-          <Route path="/login" element={<Login />} />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute user={user}>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute user={user}>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/solo"
+                element={
+                  <ProtectedRoute user={user}>
+                    <Solo />
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/solo"
-            element={
-              <ProtectedRoute user={user}>
-                <Solo />
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/burnouts"
+                element={
+                  <ProtectedRoute user={user}>
+                    <Burnouts />
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/burnouts"
-            element={
-              <ProtectedRoute user={user}>
-                <Burnouts />
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/live"
+                element={
+                  <ProtectedRoute user={user}>
+                    <Live />
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/live"
-            element={
-              <ProtectedRoute user={user}>
-                <Live />
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/leaderboard"
+                element={
+                  <ProtectedRoute user={user}>
+                    <Leaderboard />
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/leaderboard"
-            element={
-              <ProtectedRoute user={user}>
-                <Leaderboard />
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute user={user}>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute user={user}>
-                <Settings />
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/subscription"
+                element={
+                  <ProtectedRoute user={user}>
+                    <Subscription />
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/subscription"
-            element={
-              <ProtectedRoute user={user}>
-                <Subscription />
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/profile/:uid"
+                element={
+                  <ProtectedRoute user={user}>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/profile/:uid"
-            element={
-              <ProtectedRoute user={user}>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute user={user}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute user={user}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-
-        </Routes>
-      </Suspense>
+            </Routes>
+          </Suspense>
+        </>
+      )}
 
       {!user && <OnboardingSlides />}
 
