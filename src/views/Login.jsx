@@ -23,29 +23,46 @@ export default function Login() {
   };
 
   return (
-    <div className="w-full text-center">
-
-      <h1 className="text-4xl font-bold tracking-widest text-pink-400 mb-4">
+    <div style={{ width: "100%" }}>
+      <h1
+        style={{
+          fontSize: "32px",
+          fontWeight: "bold",
+          color: "#ff2a7a",
+          marginBottom: "16px"
+        }}
+      >
         RIVALIS
       </h1>
 
-      <div className="text-pink-300 text-xs mb-6 leading-5">
+      <div
+        style={{
+          color: "#ff6a9c",
+          fontSize: "12px",
+          marginBottom: "24px"
+        }}
+      >
         GET HOOKED.<br />
         OUT-TRAIN.<br />
         OUT-RIVAL.
       </div>
 
-      <form onSubmit={handleLogin} className="space-y-3">
-
+      <form onSubmit={handleLogin}>
         <input
           type="email"
           required
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full bg-black border border-pink-500/40 
-                     text-pink-200 px-3 py-2 rounded-md text-sm 
-                     outline-none focus:border-pink-400"
+          style={{
+            width: "100%",
+            marginBottom: "12px",
+            padding: "10px",
+            borderRadius: "6px",
+            border: "1px solid rgba(255,0,80,0.4)",
+            background: "black",
+            color: "white"
+          }}
         />
 
         <input
@@ -54,23 +71,35 @@ export default function Login() {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full bg-black border border-pink-500/40 
-                     text-pink-200 px-3 py-2 rounded-md text-sm 
-                     outline-none focus:border-pink-400"
+          style={{
+            width: "100%",
+            marginBottom: "12px",
+            padding: "10px",
+            borderRadius: "6px",
+            border: "1px solid rgba(255,0,80,0.4)",
+            background: "black",
+            color: "white"
+          }}
         />
 
         {error && (
-          <p className="text-red-500 text-xs">{error}</p>
+          <p style={{ color: "red", fontSize: "12px" }}>{error}</p>
         )}
 
         <button
           type="submit"
-          className="w-full bg-pink-600 hover:bg-pink-500 
-                     text-black font-bold py-2 rounded-md transition"
+          style={{
+            width: "100%",
+            background: "#ff2a7a",
+            color: "black",
+            fontWeight: "bold",
+            padding: "10px",
+            borderRadius: "6px",
+            marginTop: "10px"
+          }}
         >
           Login
         </button>
-
       </form>
     </div>
   );
