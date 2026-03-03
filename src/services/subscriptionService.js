@@ -1,47 +1,54 @@
-import { auth } from "../firebase.js";
+// Stripe-free subscription service
+// Production safe
+// Firebase-based entitlement model
 
-async function getAuthHeaders() {
-  const user = auth.currentUser;
-  if (!user) throw new Error("Not authenticated");
-  const token = await user.getIdToken();
-  return {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-  };
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
+
+// Subscription Tiers
+export const SUBSCRIPTION_TIERS = {
+  FREE: "free",
+  PRO: "pro",
+  ADMIN: "admin"
+};
+
+/**
+ * Fetch user subscription tier from Firestore
+ * Expected user document structure:
+ *
+ * users/{uid} {
+ *   subscriptionTier: "free" | "pro" | "admin"
+ * }
+ */
+export async function getUserSubscription(uid) {
+  if (!uid) return SUBSCRIPTION_TIERS.FREE;
+
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+
+    if (!snap.exists()) return SUBSCRIPTION_TIERS.FREE;
+
+    const data = snap.data();
+
+    return data.subscriptionTier || SUBSCRIPTION_TIERS.FREE;
+  } catch (error) {
+    console.error("Subscription fetch failed:", error);
+    return SUBSCRIPTION_TIERS.FREE;
+  }
 }
 
-export const SubscriptionService = {
-  async getPublishableKey() {
-      // Stripe integration removed. All subscription API calls are now disabled.
-      throw new Error("Stripe integration removed.");
-  },
+/**
+ * Check if user has Pro access
+ */
+export async function hasProAccess(uid) {
+  const tier = await getUserSubscription(uid);
+  return tier === SUBSCRIPTION_TIERS.PRO || tier === SUBSCRIPTION_TIERS.ADMIN;
+}
 
-  async getProducts() {
-      // Stripe integration removed. All subscription API calls are now disabled.
-      throw new Error("Stripe integration removed.");
-  },
-
-  async getSubscription() {
-    const headers = await getAuthHeaders();
-      // Stripe integration removed. All subscription API calls are now disabled.
-      throw new Error("Stripe integration removed.");
-  },
-
-  async createCheckout(priceId) {
-    const headers = await getAuthHeaders();
-      // Stripe integration removed. All subscription API calls are now disabled.
-      throw new Error("Stripe integration removed.");
-  },
-
-  async createCustomCheckout(priceId) {
-    const headers = await getAuthHeaders();
-      // Stripe integration removed. All subscription API calls are now disabled.
-      throw new Error("Stripe integration removed.");
-  },
-
-  async openPortal() {
-    const headers = await getAuthHeaders();
-      // Stripe integration removed. All subscription API calls are now disabled.
-      throw new Error("Stripe integration removed.");
-  },
-};
+/**
+ * Check if user is admin
+ */
+export async function isAdmin(uid) {
+  const tier = await getUserSubscription(uid);
+  return tier === SUBSCRIPTION_TIERS.ADMIN;
+}
