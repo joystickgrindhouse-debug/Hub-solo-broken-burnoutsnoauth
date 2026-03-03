@@ -3,14 +3,14 @@ import { Routes, Route } from "react-router-dom";
 import { auth } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
-import LoadingScreen from "./components/LoadingScreen";
+import BackgroundShell from "./components/BackgroundShell";
 import OnboardingSlides from "./components/OnboardingSlides";
+import LoadingScreen from "./components/LoadingScreen";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import ThemeToggle from "./components/ThemeToggle";
 import AdBanner from "./components/AdBanner";
 import ChatbotTour from "./components/ChatbotTour/ChatbotTour";
-import BackgroundShell from "./components/BackgroundShell";
 
 /* Lazy Views */
 const Dashboard = lazy(() => import("./views/Dashboard"));
@@ -24,22 +24,26 @@ const Profile = lazy(() => import("./views/Profile"));
 const AdminDashboard = lazy(() => import("./views/AdminDashboard"));
 
 export default function App() {
-  const [user, setUser] = useState(undefined);
+  const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser || null);
+      setUser(firebaseUser);
+      setAuthChecked(true);
     });
 
     return () => unsubscribe();
   }, []);
 
-  if (user === undefined) {
+  if (!authChecked) {
     return <LoadingScreen />;
   }
 
   return (
     <BackgroundShell>
+
+      {!user && <OnboardingSlides />}
 
       {user && (
         <>
@@ -50,7 +54,6 @@ export default function App() {
 
           <Suspense fallback={<LoadingScreen />}>
             <Routes>
-
               <Route
                 path="/"
                 element={
@@ -131,13 +134,10 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
-
             </Routes>
           </Suspense>
         </>
       )}
-
-      {!user && <OnboardingSlides />}
 
     </BackgroundShell>
   );
