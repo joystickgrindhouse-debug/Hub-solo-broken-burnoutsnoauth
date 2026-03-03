@@ -2,27 +2,38 @@ import React from "react";
 
 export default function BackgroundShell({ children }) {
   return (
-    <div className="relative w-full min-h-screen overflow-hidden">
-
-      {/* Background Image Layer */}
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundImage: "url('/background.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        position: "relative"
+      }}
+    >
+      {/* Red → Black gradient overlay */}
       <div
-        className="absolute inset-0 z-0"
         style={{
-          backgroundImage: "url('/background.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat"
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(135deg, rgba(120,0,0,0.7) 0%, rgba(0,0,0,0.8) 60%, rgba(0,0,0,0.95) 100%)"
         }}
       />
 
-      {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-black/60 z-10" />
-
-      {/* Content Layer */}
-      <div className="relative z-20 min-h-screen flex flex-col">
+      {/* Content layer */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 2,
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column"
+        }}
+      >
         {children}
       </div>
-
     </div>
   );
 }
