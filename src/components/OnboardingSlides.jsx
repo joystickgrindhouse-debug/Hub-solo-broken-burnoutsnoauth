@@ -1,151 +1,75 @@
-import React, { useState, useEffect } from "react";
-import { useTheme } from "../context/ThemeContext.jsx";
+import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Login from "../views/Login";
 
-export default function OnboardingSlides({ onComplete }) {
-  const t = useTheme();
-  const [currentSlide, setCurrentSlide] = useState(0);
-  
+export default function OnboardingSlides() {
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [showLogin, setShowLogin] = useState(false);
+
   const slides = [
     {
-      title: "GAMIFIED WORKOUTS",
-      description: "Track your reps and dominate challenges",
-      icon: "💪"
+      title: "Welcome to Rivalis",
+      description: "Compete. Train. Dominate."
     },
     {
-      title: "GAMIFIED TRAINING",
-      description: "Solo mode, Burnouts, Live challenges & more game modes",
-      icon: "🎮"
+      title: "Real-Time Competitive Fitness",
+      description: "Live multiplayer workout battles."
     },
     {
-      title: "COMPETE & CONNECT",
-      description: "Global leaderboards, achievements, and real-time chat",
-      icon: "🏆"
+      title: "Take On The Rivalis Challenge",
+      description: "Get-Hooked Out-Train Out-Last Out-Rival"
     }
   ];
 
   useEffect(() => {
+    if (showLogin) return;
+
     const timer = setTimeout(() => {
-      if (currentSlide < slides.length - 1) {
-        setCurrentSlide(currentSlide + 1);
+      if (slideIndex < slides.length - 1) {
+        setSlideIndex((prev) => prev + 1);
       } else {
-        onComplete();
+        setShowLogin(true);
       }
-    }, 4000);
+    }, 2500); // 2.5 seconds per slide
 
     return () => clearTimeout(timer);
-  }, [currentSlide, onComplete, slides.length]);
+  }, [slideIndex, showLogin]);
 
   return (
-    <div className="hero-background" style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      minHeight: "100vh",
-      padding: "2rem"
-    }}>
-      <div style={{
-        maxWidth: "600px",
-        width: "90%",
-        background: "rgba(0, 0, 0, 0.85)",
-        border: `2px solid ${t.accent}`,
-        borderRadius: "12px",
-        padding: "3rem 2rem",
-        boxShadow: `0 0 30px ${t.shadowMd}, inset 0 0 20px ${t.shadowXxs}`,
-        animation: "slideIn 0.5s ease-out"
-      }}>
-        <div style={{
-          fontSize: "4rem",
-          textAlign: "center",
-          marginBottom: "1.5rem",
-          animation: "iconPulse 1s ease-in-out infinite"
-        }}>
-          {slides[currentSlide].icon}
-        </div>
-        
-        <h2 style={{ 
-          fontFamily: "'Press Start 2P', cursive",
-          color: t.accent,
-          fontSize: "clamp(1rem, 3vw, 1.5rem)",
-          fontWeight: "normal",
-          textTransform: "uppercase",
-          letterSpacing: "2px",
-          textAlign: "center",
-          lineHeight: "1.8",
-          textShadow: `
-            0 0 10px ${t.shadow},
-            0 0 20px ${t.shadowMd},
-            0 0 30px ${t.shadowSm}
-          `,
-          marginBottom: "1.5rem",
-          animation: "fadeInUp 0.6s ease-out"
-        }}>
-          {slides[currentSlide].title}
-        </h2>
+    <div className="min-h-screen flex items-center justify-center px-6 text-white">
 
-        <p style={{
-          color: "#fff",
-          fontSize: "1rem",
-          textAlign: "center",
-          lineHeight: "1.8",
-          marginBottom: "2rem",
-          opacity: 0.9,
-          animation: "fadeInUp 0.8s ease-out"
-        }}>
-          {slides[currentSlide].description}
-        </p>
+      <AnimatePresence mode="wait">
 
-        <div style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "0.8rem",
-          alignItems: "center"
-        }}>
-          {slides.map((_, index) => (
-            <div
-              key={index}
-              style={{
-                width: index === currentSlide ? "40px" : "12px",
-                height: "12px",
-                borderRadius: "6px",
-                backgroundColor: index === currentSlide ? t.accent : t.shadowSm,
-                boxShadow: index === currentSlide ? `0 0 10px ${t.shadow}` : "none",
-                transition: "all 0.3s ease"
-              }}
-            />
-          ))}
-        </div>
-      </div>
-      
-      <style>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes iconPulse {
-          0%, 100% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.1);
-          }
-        }
-      `}</style>
+        {!showLogin ? (
+          <motion.div
+            key={slideIndex}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-xl text-center space-y-6"
+          >
+            <h1 className="text-4xl font-bold tracking-wide">
+              {slides[slideIndex].title}
+            </h1>
+
+            <p className="text-gray-400 text-lg">
+              {slides[slideIndex].description}
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="login"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
+            className="w-full max-w-md"
+          >
+            <Login />
+          </motion.div>
+        )}
+
+      </AnimatePresence>
     </div>
   );
 }
