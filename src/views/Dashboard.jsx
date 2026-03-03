@@ -32,6 +32,7 @@ export default function Dashboard() {
     { id: "live", name: "Live Arena", image: "/assets/images/live.png.png", link: "/live" },
     { id: "raffle", name: "Raffle Room", image: "/assets/images/raffle.png.png", link: "/raffle" },
     { id: "merch", name: "Merch Shop", image: "/assets/images/shop.png.png", link: "/merch" },
+    { id: "fitness", name: "Fitness Dashboard", image: "/assets/images/fitness.png.png", link: "/fitness-dashboard" },
   ];
 
   return (

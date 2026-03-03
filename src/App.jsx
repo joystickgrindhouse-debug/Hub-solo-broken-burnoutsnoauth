@@ -22,6 +22,12 @@ const Settings = lazy(() => import("./views/Settings"));
 const Subscription = lazy(() => import("./views/Subscription"));
 const Profile = lazy(() => import("./views/Profile"));
 const AdminDashboard = lazy(() => import("./views/AdminDashboard"));
+const RaffleRoom = lazy(() => import("./views/LegacyRaffleRoom"));
+const MerchShop = lazy(() => import("./views/MerchShop"));
+const Chat = lazy(() => import("./views/GlobalChat"));
+const DMs = lazy(() => import("./views/DMChat"));
+const FitnessDashboard = lazy(() => import("./views/FitnessDashboard"));
+const Run = lazy(() => import("./views/Run"));
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -131,6 +137,60 @@ export default function App() {
                 element={
                   <ProtectedRoute user={user}>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/raffle"
+                element={
+                  <ProtectedRoute user={user}>
+                    <RaffleRoom />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/merch"
+                element={
+                  <ProtectedRoute user={user}>
+                    <MerchShop />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/chat"
+                element={
+                  <ProtectedRoute user={user}>
+                    <Chat />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/dms"
+                element={
+                  <ProtectedRoute user={user}>
+                    <DMs />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/fitness-dashboard"
+                element={
+                  <ProtectedRoute user={user}>
+                    <FitnessDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/run"
+                element={
+                  <ProtectedRoute user={user}>
+                    <Run />
                   </ProtectedRoute>
                 }
               />
