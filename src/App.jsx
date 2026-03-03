@@ -1,5 +1,5 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { auth } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -25,25 +25,24 @@ const Profile = lazy(() => import("./views/Profile"));
 const AdminDashboard = lazy(() => import("./views/AdminDashboard"));
 
 export default function App() {
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const location = useLocation();
+  const [user, setUser] = useState(undefined); // undefined = still checking
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setAuthLoading(false);
+      setUser(firebaseUser || null);
     });
 
     return () => unsubscribe();
   }, []);
 
-  if (authLoading) return <LoadingScreen />;
+  // Only show loading while auth is undefined
+  if (user === undefined) {
+    return <LoadingScreen />;
+  }
 
   return (
     <BackgroundShell>
 
-      {/* Global UI Elements */}
       {user && <Navbar />}
       <ThemeToggle />
       <AdBanner />
@@ -52,10 +51,7 @@ export default function App() {
       <Suspense fallback={<LoadingScreen />}>
         <Routes>
 
-          <Route
-            path="/login"
-            element={user ? <Navigate to="/" /> : <Login />}
-          />
+          <Route path="/login" element={<Login />} />
 
           <Route
             path="/"
@@ -137,8 +133,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
-          <Route path="*" element={<Navigate to="/" />} />
 
         </Routes>
       </Suspense>
