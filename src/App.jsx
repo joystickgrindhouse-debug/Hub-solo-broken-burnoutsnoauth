@@ -22,7 +22,7 @@ const Settings = lazy(() => import("./views/Settings"));
 const Subscription = lazy(() => import("./views/Subscription"));
 const Profile = lazy(() => import("./views/Profile"));
 const AdminDashboard = lazy(() => import("./views/AdminDashboard"));
-const RaffleRoom = lazy(() => import("./views/LegacyRaffleRoom"));
+const RaffleRoom = lazy(() => import("./views/RaffleRoom"));
 const MerchShop = lazy(() => import("./views/MerchShop"));
 const Chat = lazy(() => import("./views/GlobalChat"));
 const DMs = lazy(() => import("./views/DMChat"));
