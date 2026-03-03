@@ -3,102 +3,147 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
 
+import LoadingScreen from "./components/LoadingScreen";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
+import BackgroundShell from "./components/BackgroundShell";
+
+/* ===============================
+   LAZY LOADED VIEWS
+================================= */
 
 const Login = lazy(() => import("./views/Login"));
 const Dashboard = lazy(() => import("./views/Dashboard"));
 const Solo = lazy(() => import("./views/Solo"));
 const Burnouts = lazy(() => import("./views/Burnouts"));
-const Run = lazy(() => import("./views/Run"));
 const Live = lazy(() => import("./views/Live"));
-const RaffleRoom = lazy(() => import("./views/RaffleRoom"));
-const MerchShop = lazy(() => import("./views/MerchShop"));
+const Leaderboard = lazy(() => import("./views/Leaderboard"));
+const Settings = lazy(() => import("./views/Settings"));
+const Subscription = lazy(() => import("./views/Subscription"));
+const Profile = lazy(() => import("./views/Profile"));
+const AdminDashboard = lazy(() => import("./views/AdminDashboard"));
+
+/* ===============================
+   APP ROOT
+================================= */
 
 export default function App() {
-  const [user, setUser] = useState(undefined);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setAuthLoading(false);
     });
-    return () => unsub();
+
+    return () => unsubscribe();
   }, []);
 
-  if (user === undefined) {
-    return (
-      <div
-        style={{
-          background: "#000",
-          color: "#fff",
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        Loading...
-      </div>
-    );
+  if (authLoading) {
+    return <LoadingScreen />;
   }
 
   return (
-    <Suspense fallback={<div style={{ color: "white" }}>Loading...</div>}>
-      {user && <Navbar user={user} />}
+    <BackgroundShell>
+      {user && <Navbar />}
 
-      <Routes>
-        <Route
-          path="/"
-          element={
-            user ? (
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
+      <Suspense fallback={<LoadingScreen />}>
+        <Routes>
 
-        <Route
-          path="/login"
-          element={user ? <Navigate to="/dashboard" replace /> : <Login />}
-        />
+          {/* Public Route */}
+          <Route
+            path="/login"
+            element={user ? <Navigate to="/" /> : <Login />}
+          />
 
-        <Route
-          path="/dashboard"
-          element={user ? <Dashboard /> : <Navigate to="/login" replace />}
-        />
+          {/* Protected Routes */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute user={user}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/solo"
-          element={user ? <Solo /> : <Navigate to="/login" replace />}
-        />
+          <Route
+            path="/solo"
+            element={
+              <ProtectedRoute user={user}>
+                <Solo />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/burnouts"
-          element={user ? <Burnouts /> : <Navigate to="/login" replace />}
-        />
+          <Route
+            path="/burnouts"
+            element={
+              <ProtectedRoute user={user}>
+                <Burnouts />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/run"
-          element={user ? <Run /> : <Navigate to="/login" replace />}
-        />
+          <Route
+            path="/live"
+            element={
+              <ProtectedRoute user={user}>
+                <Live />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/live"
-          element={user ? <Live /> : <Navigate to="/login" replace />}
-        />
+          <Route
+            path="/leaderboard"
+            element={
+              <ProtectedRoute user={user}>
+                <Leaderboard />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/raffle"
-          element={user ? <RaffleRoom /> : <Navigate to="/login" replace />}
-        />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute user={user}>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/merch"
-          element={user ? <MerchShop /> : <Navigate to="/login" replace />}
-        />
+          <Route
+            path="/subscription"
+            element={
+              <ProtectedRoute user={user}>
+                <Subscription />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Suspense>
+          <Route
+            path="/profile/:uid"
+            element={
+              <ProtectedRoute user={user}>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute user={user}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/" />} />
+
+        </Routes>
+      </Suspense>
+    </BackgroundShell>
   );
 }
