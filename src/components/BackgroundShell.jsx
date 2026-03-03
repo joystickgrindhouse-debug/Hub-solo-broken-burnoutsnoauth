@@ -2,21 +2,24 @@ import React from "react";
 
 export default function BackgroundShell({ children }) {
   return (
-    <div className="relative min-h-screen w-full">
+    <div className="relative w-full min-h-screen overflow-hidden">
 
-      {/* Background Image */}
+      {/* Background Image Layer */}
       <div
-        className="absolute inset-0 bg-cover bg-center"
+        className="absolute inset-0 z-0"
         style={{
-          backgroundImage: "url('/background.png')"
+          backgroundImage: "url('/background.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
         }}
       />
 
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      {/* Dark Overlay */}
+      <div className="absolute inset-0 bg-black/60 z-10" />
 
-      {/* Content layer */}
-      <div className="relative z-10 min-h-screen flex flex-col">
+      {/* Content Layer */}
+      <div className="relative z-20 min-h-screen flex flex-col">
         {children}
       </div>
 
