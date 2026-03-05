@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "firebase/auth";
 
 import BackgroundShell from "./components/BackgroundShell";
 import OnboardingSlides from "./components/OnboardingSlides";
-import LoadingScreen from "./components/LoadingScreen";
+import LoadingScreen from "./views/LoadingScreen";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import ThemeToggle from "./components/ThemeToggle";
