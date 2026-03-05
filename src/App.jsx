@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "firebase/auth";
 
 import BackgroundShell from "./components/BackgroundShell";
 import OnboardingSlides from "./components/OnboardingSlides";
-import LoadingScreen from "./views/LoadingScreen";
+import LoadingScreen from "./components/LoadingScreen";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import ThemeToggle from "./components/ThemeToggle";
@@ -13,7 +13,7 @@ import AdBanner from "./components/AdBanner";
 import ChatbotTour from "./components/ChatbotTour/ChatbotTour";
 
 // ✅ FIX 1: Import Login so /login route works
-import Login from "./components/Login";
+import Login from "./views/Login";
 
 /* Lazy Views */
 const Dashboard = lazy(() => import("./views/Dashboard"));
