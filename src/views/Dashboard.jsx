@@ -93,7 +93,7 @@ export default function Dashboard() {
       paddingBottom: "40px",
       paddingLeft: "16px",
       paddingRight: "16px"
-    }}
+    }}>
       <div style={{ marginBottom: "24px", textAlign: "center" }}>
         <h2 style={{
           fontSize: "11px",
