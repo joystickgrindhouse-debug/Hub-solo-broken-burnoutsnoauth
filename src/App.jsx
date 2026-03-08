@@ -55,15 +55,11 @@ export default function App() {
 
       {/* NOT LOGGED IN */}
       {!user && (
-        <>
-          <OnboardingSlides />
-
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </>
-      )}
+  <Routes>
+    <Route path="/login" element={<Login />} />
+    <Route path="*" element={<Navigate to="/login" replace />} />
+  </Routes>
+)}
 
       {/* LOGGED IN */}
       {user && (
