@@ -50,11 +50,11 @@ export default function App() {
 
       unsubProfile = onSnapshot(ref, snap => {
 
-        const data = snap.data() || {};
+        const profileData = snap.data() || {};
 
         setUser({
           ...firebaseUser,
-          ...data
+          ...profileData
         });
 
         setAuthReady(true);
@@ -87,12 +87,17 @@ export default function App() {
           <Navbar user={user} />
           <ThemeToggle />
 
-          <div style={{ paddingTop: "110px", minHeight: "100vh" }}>
+          <div
+            style={{
+              paddingTop: "110px",
+              minHeight: "100vh"
+            }}
+          >
             <Suspense fallback={<LoadingScreen />}>
 
               <Routes>
 
-                <Route path="/" element={<Dashboard user={user} />} />
+                <Route index element={<Dashboard user={user} />} />
 
                 <Route path="/modes/solo" element={<Solo user={user} />} />
                 <Route path="/modes/burnouts" element={<Burnouts user={user} />} />
@@ -120,6 +125,7 @@ export default function App() {
           </div>
 
           <AdBanner />
+
         </>
       )}
 
