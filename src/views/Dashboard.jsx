@@ -84,15 +84,16 @@ export default function Dashboard() {
   ];
 
   return (
-    <div style={{
+  <div
+    style={{
       minHeight: "100vh",
       background: "linear-gradient(180deg, #050505 0%, #0a0a0a 100%)",
       color: "#fff",
-      paddingTop: "16px",
+      paddingTop: "110px", // FIXED (navbar offset)
       paddingBottom: "40px",
       paddingLeft: "16px",
-      paddingRight: "16px",
-    }}>
+      paddingRight: "16px"
+    }}
       <div style={{ marginBottom: "24px", textAlign: "center" }}>
         <h2 style={{
           fontSize: "11px",
