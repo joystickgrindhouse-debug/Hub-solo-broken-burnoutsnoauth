@@ -78,7 +78,7 @@ export default function App() {
             <Suspense fallback={<LoadingScreen />}>
               <Routes>
 
-                <Route path="/" element={<Dashboard />} />
+                <Route path="/" element={<div style={{color:"#fff"}}>Dashboard Loaded</div>} />
 
                 <Route path="/modes/solo" element={<Solo />} />
                 <Route path="/modes/burnouts" element={<Burnouts />} />
