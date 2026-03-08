@@ -5,24 +5,20 @@ import { onAuthStateChanged } from "firebase/auth";
 
 import BackgroundShell from "./components/BackgroundShell";
 import LoadingScreen from "./components/LoadingScreen";
-import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import ThemeToggle from "./components/ThemeToggle";
 import AdBanner from "./components/AdBanner";
 
-import FloatingLayer from "./components/floating/FloatingLayer";
-
 import Login from "./views/Login";
 
-/* Lazy Pages */
 const Dashboard = lazy(() => import("./views/Dashboard"));
 const Solo = lazy(() => import("./views/Solo"));
 const Burnouts = lazy(() => import("./views/Burnouts"));
 const Live = lazy(() => import("./views/Live"));
 const Run = lazy(() => import("./views/Run"));
 const Leaderboard = lazy(() => import("./views/Leaderboard"));
-const Profile = lazy(() => import("./views/Profile"));
 const Settings = lazy(() => import("./views/Settings"));
+const Profile = lazy(() => import("./views/Profile"));
 const Chat = lazy(() => import("./views/GlobalChat"));
 const DMs = lazy(() => import("./views/DMChat"));
 const MerchShop = lazy(() => import("./views/MerchShop"));
@@ -37,14 +33,12 @@ export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       setAuthChecked(true);
     });
 
     return () => unsubscribe();
-
   }, []);
 
   if (!authChecked) return <LoadingScreen />;
@@ -52,33 +46,29 @@ export default function App() {
   return (
     <BackgroundShell>
 
-      {/* NOT LOGGED IN */}
       {!user && (
-  <Routes>
-    <Route path="/login" element={<Login />} />
-    <Route path="*" element={<Navigate to="/login" replace />} />
-  </Routes>
-)}
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      )}
 
-      {/* LOGGED IN */}
       {user && (
         <>
           <Navbar />
           <ThemeToggle />
 
-          {/* Main Content */}
           <div
             style={{
               paddingTop: "110px",
-              minHeight: "100vh",
-              position: "relative",
-              zIndex: 10
+              minHeight: "100vh"
             }}
           >
             <Suspense fallback={<LoadingScreen />}>
+
               <Routes>
 
-                <Route path="/" element={<div style={{color:"#fff"}}>Dashboard Loaded</div>} />
+                <Route path="/" element={<Dashboard />} />
 
                 <Route path="/modes/solo" element={<Solo />} />
                 <Route path="/modes/burnouts" element={<Burnouts />} />
@@ -101,13 +91,10 @@ export default function App() {
                 <Route path="/admin" element={<AdminDashboard />} />
 
               </Routes>
+
             </Suspense>
           </div>
 
-          {/* Floating UI */}
-          <FloatingLayer />
-
-          {/* Ads */}
           <AdBanner />
 
         </>
