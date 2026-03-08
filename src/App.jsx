@@ -1,15 +1,17 @@
-import React, { useEffect, useState, lazy } from "react";
+import React, { useEffect, useState, lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { auth } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
 import BackgroundShell from "./components/BackgroundShell";
-import LoadingScreen from "./components/LoadingScreen";
 import OnboardingSlides from "./components/OnboardingSlides";
-import { VoiceProvider } from "./context/VoiceContext";
-import UIRoot from "./context/UIRoot";
+import LoadingScreen from "./components/LoadingScreen";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Navbar from "./components/Navbar";
+import ThemeToggle from "./components/ThemeToggle";
+import AdBanner from "./components/AdBanner";
 
-import AppLayout from "./layouts/AppLayout";
+import FloatingLayer from "./components/floating/FloatingLayer";
 
 import Login from "./views/Login";
 
@@ -49,64 +51,73 @@ export default function App() {
   if (!authChecked) return <LoadingScreen />;
 
   return (
-    <VoiceProvider>
-      <UIRoot>
-        <BackgroundShell>
+    <BackgroundShell>
 
-          {!user && (
-            <>
-              <OnboardingSlides />
+      {/* NOT LOGGED IN */}
+      {!user && (
+        <>
+          <OnboardingSlides />
 
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </>
+      )}
+
+      {/* LOGGED IN */}
+      {user && (
+        <>
+          <Navbar />
+          <ThemeToggle />
+
+          {/* Main Content */}
+          <div
+            style={{
+              paddingTop: "110px",
+              minHeight: "100vh",
+              position: "relative",
+              zIndex: 10
+            }}
+          >
+            <Suspense fallback={<LoadingScreen />}>
               <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="*" element={<Navigate to="/login" replace />} />
-              </Routes>
-            </>
-          )}
 
-          {user && (
-            <Routes>
-
-              <Route element={<AppLayout />}>
-
-                {/* Dashboard */}
                 <Route path="/" element={<Dashboard />} />
 
-                {/* Modes */}
                 <Route path="/modes/solo" element={<Solo />} />
                 <Route path="/modes/burnouts" element={<Burnouts />} />
                 <Route path="/modes/live" element={<Live />} />
                 <Route path="/modes/run" element={<Run />} />
 
-                {/* Social */}
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/profile/:uid" element={<Profile />} />
+
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/dms" element={<DMs />} />
 
-                {/* Profile */}
-                <Route path="/profile/:uid" element={<Profile />} />
-                <Route path="/settings" element={<Settings />} />
-
-                {/* Stats */}
-                <Route path="/leaderboard" element={<Leaderboard />} />
-                <Route path="/fitness-dashboard" element={<FitnessDashboard />} />
-
-                {/* Shop */}
                 <Route path="/merch" element={<MerchShop />} />
                 <Route path="/raffle" element={<RaffleRoom />} />
 
-                {/* Subscription */}
                 <Route path="/subscription" element={<Subscription />} />
+                <Route path="/fitness-dashboard" element={<FitnessDashboard />} />
 
-                {/* Admin */}
                 <Route path="/admin" element={<AdminDashboard />} />
 
-              </Route>
+              </Routes>
+            </Suspense>
+          </div>
 
-            </Routes>
-          )}
+          {/* Floating UI */}
+          <FloatingLayer />
 
-        </BackgroundShell>
-      </UIRoot>
-    </VoiceProvider>
+          {/* Ads */}
+          <AdBanner />
+
+        </>
+      )}
+
+    </BackgroundShell>
   );
 }
