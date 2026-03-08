@@ -12,7 +12,7 @@ import AdBanner from "./components/AdBanner";
 
 import Login from "./views/Login";
 
-/* Lazy Pages */
+/* Lazy views */
 const Dashboard = lazy(() => import("./views/Dashboard"));
 const Solo = lazy(() => import("./views/Solo"));
 const Burnouts = lazy(() => import("./views/Burnouts"));
@@ -32,52 +32,49 @@ const AdminDashboard = lazy(() => import("./views/AdminDashboard"));
 export default function App() {
 
   const [user, setUser] = useState(null);
-  const [authChecked, setAuthChecked] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
 
-    let unsubscribeProfile;
+    let unsubProfile;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubAuth = onAuthStateChanged(auth, (firebaseUser) => {
 
       if (!firebaseUser) {
         setUser(null);
-        setAuthChecked(true);
+        setAuthReady(true);
         return;
       }
 
-      const userRef = doc(db, "users", firebaseUser.uid);
+      const ref = doc(db, "users", firebaseUser.uid);
 
-      unsubscribeProfile = onSnapshot(userRef, (snapshot) => {
+      unsubProfile = onSnapshot(ref, snap => {
 
-        const profileData = snapshot.data() || {};
+        const data = snap.data() || {};
 
         setUser({
           ...firebaseUser,
-          ...profileData
+          ...data
         });
 
-        setAuthChecked(true);
+        setAuthReady(true);
 
       });
 
     });
 
     return () => {
-      unsubscribeAuth();
-      if (unsubscribeProfile) unsubscribeProfile();
+      unsubAuth();
+      if (unsubProfile) unsubProfile();
     };
 
   }, []);
 
-  if (!authChecked) {
-    return <LoadingScreen />;
-  }
+  if (!authReady) return <LoadingScreen />;
 
   return (
     <BackgroundShell>
 
-      {/* NOT LOGGED IN */}
       {!user && (
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -85,19 +82,12 @@ export default function App() {
         </Routes>
       )}
 
-      {/* LOGGED IN */}
       {user && (
         <>
           <Navbar user={user} />
           <ThemeToggle />
 
-          <div
-            style={{
-              paddingTop: "110px",
-              minHeight: "100vh"
-            }}
-          >
-
+          <div style={{ paddingTop: "110px", minHeight: "100vh" }}>
             <Suspense fallback={<LoadingScreen />}>
 
               <Routes>
@@ -127,11 +117,9 @@ export default function App() {
               </Routes>
 
             </Suspense>
-
           </div>
 
           <AdBanner />
-
         </>
       )}
 
