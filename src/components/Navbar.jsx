@@ -54,12 +54,6 @@ export default function Navbar() {
         <span style={{ color: "#dc2626" }}>RIVALIS</span> HUB
       </Link>
 
-      <div style={{ display: "flex", gap: "24px", color: "#aaa" }}>
-        <Link to="/solo">Solo</Link>
-        <Link to="/burnouts">Burnouts</Link>
-        <Link to="/live">Live</Link>
-      </div>
-
       {user && (
         <div style={{ position: "relative" }}>
           <button
