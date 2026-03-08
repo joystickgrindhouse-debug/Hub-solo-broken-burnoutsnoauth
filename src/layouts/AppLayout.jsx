@@ -7,28 +7,30 @@ import FloatingLayer from "../components/floating/FloatingLayer";
 import AdBanner from "../components/AdBanner";
 
 export default function AppLayout() {
-
   return (
     <>
       <Navbar />
       <ThemeToggle />
 
-      {/* Page Content */}
-      <div
+      {/* Page Container */}
+      <main
         style={{
-          paddingTop: "110px",
           minHeight: "100vh",
+          paddingTop: "110px",
+          paddingLeft: "20px",
+          paddingRight: "20px",
           position: "relative",
-          zIndex: 10
+          zIndex: 10,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center"
         }}
       >
         <Outlet />
-      </div>
+      </main>
 
-      {/* Floating UI */}
       <FloatingLayer />
 
-      {/* Ads always last */}
       <AdBanner />
     </>
   );
