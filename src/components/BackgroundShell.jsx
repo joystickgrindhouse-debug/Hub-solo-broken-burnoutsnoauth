@@ -1,39 +1,38 @@
 import React from "react";
 
 export default function BackgroundShell({ children }) {
+
   return (
     <div
       style={{
         minHeight: "100vh",
-        backgroundImage: "url('/background.png')",
+        position: "relative",
+        backgroundImage: "url('/assets/images/rivalis-bg.jpg')",
         backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        position: "relative"
+        backgroundPosition: "center"
       }}
     >
-      {/* Red → Black gradient overlay */}
+
+      {/* overlay */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background:
-            "linear-gradient(135deg, rgba(120,0,0,0.7) 0%, rgba(0,0,0,0.8) 60%, rgba(0,0,0,0.95) 100%)"
+          background: "rgba(0,0,0,0.6)",
+          zIndex: 1
         }}
       />
 
-      {/* Content layer */}
+      {/* content */}
       <div
         style={{
           position: "relative",
-          zIndex: 2,
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column"
+          zIndex: 2
         }}
       >
         {children}
       </div>
+
     </div>
   );
 }
