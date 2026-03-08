@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useTheme } from "../context/ThemeContext.jsx";
 
 const InternalAd = ({ title, subtitle, discount, link, color, visible }) => (
-  <a 
-    href={link} 
-    target="_blank" 
+  <a
+    href={link}
+    target="_blank"
     rel="noopener noreferrer"
     style={{
       minWidth: "300px",
@@ -27,17 +27,14 @@ const InternalAd = ({ title, subtitle, discount, link, color, visible }) => (
       opacity: visible ? 1 : 0,
       transform: visible ? "scale(1)" : "scale(0.95)"
     }}
-    onMouseOver={(e) => {
-      e.currentTarget.style.transform = "scale(1.02)";
-      e.currentTarget.style.boxShadow = `0 0 20px ${color}88`;
-    }}
-    onMouseOut={(e) => {
-      e.currentTarget.style.transform = "scale(1)";
-      e.currentTarget.style.boxShadow = `0 0 10px ${color}44`;
-    }}
   >
-    <div style={{ fontWeight: "bold", marginBottom: "4px", color: color }}>{title}</div>
-    <div style={{ fontSize: "6px" }}>{subtitle} {discount && <span style={{ color: "#00ff00" }}>{discount}</span>}</div>
+    <div style={{ fontWeight: "bold", marginBottom: "4px", color: color }}>
+      {title}
+    </div>
+    <div style={{ fontSize: "6px" }}>
+      {subtitle}{" "}
+      {discount && <span style={{ color: "#00ff00" }}>{discount}</span>}
+    </div>
   </a>
 );
 
@@ -46,81 +43,54 @@ const AdBanner = () => {
   const [currentAd, setCurrentAd] = useState(0);
 
   useEffect(() => {
-    const container1 = document.getElementById("ad-container-69c3ae6b085d581d286b14b236fb4787");
-    if (container1) {
-      container1.innerHTML = '';
-      const script1 = document.createElement("script");
-      script1.type = "text/javascript";
-      script1.innerHTML = `
-        atOptions = {
-          'key' : '69c3ae6b085d581d286b14b236fb4787',
-          'format' : 'iframe',
-          'height' : 60,
-          'width' : 468,
-          'params' : {}
-        };
-      `;
-      container1.appendChild(script1);
-
-      const invoke1 = document.createElement("script");
-      invoke1.type = "text/javascript";
-      invoke1.src = "https://enoughprosperabsorbed.com/69c3ae6b085d581d286b14b236fb4787/invoke.js";
-      container1.appendChild(invoke1);
-    }
-
     const interval = setInterval(() => {
-      setCurrentAd(prev => (prev === 0 ? 1 : 0));
+      setCurrentAd((prev) => (prev === 0 ? 1 : 0));
     }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div style={{ 
-      width: "100%", 
-      display: "flex", 
-      flexDirection: "row",
-      flexWrap: "wrap",
-      justifyContent: "center", 
-      alignItems: "center",
-      gap: "10px",
-      margin: "10px 0",
-      minHeight: "60px",
-      position: "relative",
-      zIndex: 10000,
-      padding: "0 10px"
-    }}>
-      <div id="ad-container-69c3ae6b085d581d286b14b236fb4787" style={{ 
-        minWidth: "300px", 
-        maxWidth: "468px", 
+    <div
+      style={{
         width: "100%",
-        minHeight: "60px", 
-        background: "#222", 
-        flexShrink: 0,
         display: "flex",
-        justifyContent: "center"
-      }}></div>
-      <div style={{ 
-        display: 'flex', 
-        minWidth: '300px', 
-        width: "100%",
-        maxWidth: "468px",
-        height: '60px', 
-        overflow: 'hidden',
-        justifyContent: "center"
-      }}>
-        <InternalAd 
-          title="RIVALIS SUBSCRIPTION" 
-          subtitle="FOR AN AD FREE EXPERIENCE" 
-          discount="50% OFF NOW" 
-          link="/subscription" 
+        flexDirection: "row",
+        flexWrap: "wrap",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: "10px",
+        margin: "10px 0",
+        minHeight: "60px",
+        position: "relative",
+        zIndex: 5, // FIXED (was 10000)
+        padding: "0 10px"
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          minWidth: "300px",
+          width: "100%",
+          maxWidth: "468px",
+          height: "60px",
+          overflow: "hidden",
+          justifyContent: "center"
+        }}
+      >
+        <InternalAd
+          title="RIVALIS SUBSCRIPTION"
+          subtitle="FOR AN AD FREE EXPERIENCE"
+          discount="50% OFF NOW"
+          link="/subscription"
           color={t.accent}
           visible={currentAd === 0}
         />
-        <InternalAd 
-          title="RIVALIS MERCH SHOP" 
-          subtitle="GEAR UP LIKE A PRO" 
-          link="/merch" 
+
+        <InternalAd
+          title="RIVALIS MERCH SHOP"
+          subtitle="GEAR UP LIKE A PRO"
+          link="/merch"
           color="#00f2ff"
           visible={currentAd === 1}
         />
