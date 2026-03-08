@@ -12,7 +12,6 @@ import ThemeToggle from "./components/ThemeToggle";
 import AdBanner from "./components/AdBanner";
 import ChatbotTour from "./components/ChatbotTour/ChatbotTour";
 
-// ✅ FIX 1: Import Login so /login route works
 import Login from "./views/Login";
 
 /* Lazy Views */
@@ -52,27 +51,29 @@ export default function App() {
   return (
     <BackgroundShell>
 
-      {/* ✅ FIX 1: Unauthenticated users get Login route + onboarding */}
+      {/* NOT LOGGED IN */}
       {!user && (
         <>
           <OnboardingSlides />
+
           <Routes>
             <Route path="/login" element={<Login />} />
-            {/* Redirect any other path to /login when logged out */}
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </>
       )}
 
+      {/* LOGGED IN */}
       {user && (
         <>
+          {/* Navigation */}
           <Navbar />
           <ThemeToggle />
-          <AdBanner />
-          <ChatbotTour />
 
+          {/* Main Pages */}
           <Suspense fallback={<LoadingScreen />}>
             <Routes>
+
               <Route
                 path="/"
                 element={
@@ -207,8 +208,16 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+
             </Routes>
           </Suspense>
+
+          {/* Floating Systems */}
+          <ChatbotTour />
+
+          {/* Ads should always render LAST so they stay behind UI */}
+          <AdBanner />
+
         </>
       )}
 
