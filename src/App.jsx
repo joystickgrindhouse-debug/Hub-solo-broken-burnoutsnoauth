@@ -10,10 +10,14 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import ThemeToggle from "./components/ThemeToggle";
 import AdBanner from "./components/AdBanner";
-import ChatbotTour from "./components/ChatbotTour/ChatbotTour";
+
+import FloatingLayer from "./components/floating/FloatingLayer";
+import { VoiceProvider } from "./context/VoiceContext";
+import UIRoot from "./context/UIRoot";
 
 import Login from "./views/Login";
 
+/* Lazy Views */
 const Dashboard = lazy(() => import("./views/Dashboard"));
 const Solo = lazy(() => import("./views/Solo"));
 const Burnouts = lazy(() => import("./views/Burnouts"));
@@ -36,64 +40,152 @@ export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       setAuthChecked(true);
     });
 
     return () => unsubscribe();
+
   }, []);
 
-  if (!authChecked) return <LoadingScreen />;
+  if (!authChecked) {
+    return <LoadingScreen />;
+  }
 
   return (
-    <BackgroundShell>
+    <VoiceProvider>
+      <UIRoot>
+        <BackgroundShell>
 
-      {!user && (
-        <>
-          <OnboardingSlides />
+          {/* NOT LOGGED IN */}
+          {!user && (
+            <>
+              <OnboardingSlides />
 
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </>
-      )}
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="*" element={<Navigate to="/login" replace />} />
+              </Routes>
+            </>
+          )}
 
-      {user && (
-        <>
-          <Navbar />
-          <ThemeToggle />
+          {/* LOGGED IN */}
+          {user && (
+            <>
+              {/* Top Navigation */}
+              <Navbar />
+              <ThemeToggle />
 
-          <Suspense fallback={<LoadingScreen />}>
-            <Routes>
+              {/* Main Pages */}
+              <Suspense fallback={<LoadingScreen />}>
+                <Routes>
 
-              <Route path="/" element={<ProtectedRoute user={user}><Dashboard /></ProtectedRoute>} />
-              <Route path="/solo" element={<ProtectedRoute user={user}><Solo /></ProtectedRoute>} />
-              <Route path="/burnouts" element={<ProtectedRoute user={user}><Burnouts /></ProtectedRoute>} />
-              <Route path="/live" element={<ProtectedRoute user={user}><Live /></ProtectedRoute>} />
-              <Route path="/leaderboard" element={<ProtectedRoute user={user}><Leaderboard /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute user={user}><Settings /></ProtectedRoute>} />
-              <Route path="/subscription" element={<ProtectedRoute user={user}><Subscription /></ProtectedRoute>} />
-              <Route path="/profile/:uid" element={<ProtectedRoute user={user}><Profile /></ProtectedRoute>} />
-              <Route path="/admin" element={<ProtectedRoute user={user}><AdminDashboard /></ProtectedRoute>} />
-              <Route path="/raffle" element={<ProtectedRoute user={user}><RaffleRoom /></ProtectedRoute>} />
-              <Route path="/merch" element={<ProtectedRoute user={user}><MerchShop /></ProtectedRoute>} />
-              <Route path="/chat" element={<ProtectedRoute user={user}><Chat /></ProtectedRoute>} />
-              <Route path="/dms" element={<ProtectedRoute user={user}><DMs /></ProtectedRoute>} />
-              <Route path="/fitness-dashboard" element={<ProtectedRoute user={user}><FitnessDashboard /></ProtectedRoute>} />
-              <Route path="/run" element={<ProtectedRoute user={user}><Run /></ProtectedRoute>} />
+                  <Route path="/" element={
+                    <ProtectedRoute user={user}>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } />
 
-            </Routes>
-          </Suspense>
+                  <Route path="/solo" element={
+                    <ProtectedRoute user={user}>
+                      <Solo />
+                    </ProtectedRoute>
+                  } />
 
-          <ChatbotTour />
+                  <Route path="/burnouts" element={
+                    <ProtectedRoute user={user}>
+                      <Burnouts />
+                    </ProtectedRoute>
+                  } />
 
-          <AdBanner />
+                  <Route path="/live" element={
+                    <ProtectedRoute user={user}>
+                      <Live />
+                    </ProtectedRoute>
+                  } />
 
-        </>
-      )}
+                  <Route path="/leaderboard" element={
+                    <ProtectedRoute user={user}>
+                      <Leaderboard />
+                    </ProtectedRoute>
+                  } />
 
-    </BackgroundShell>
+                  <Route path="/settings" element={
+                    <ProtectedRoute user={user}>
+                      <Settings />
+                    </ProtectedRoute>
+                  } />
+
+                  <Route path="/subscription" element={
+                    <ProtectedRoute user={user}>
+                      <Subscription />
+                    </ProtectedRoute>
+                  } />
+
+                  <Route path="/profile/:uid" element={
+                    <ProtectedRoute user={user}>
+                      <Profile />
+                    </ProtectedRoute>
+                  } />
+
+                  <Route path="/admin" element={
+                    <ProtectedRoute user={user}>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  } />
+
+                  <Route path="/raffle" element={
+                    <ProtectedRoute user={user}>
+                      <RaffleRoom />
+                    </ProtectedRoute>
+                  } />
+
+                  <Route path="/merch" element={
+                    <ProtectedRoute user={user}>
+                      <MerchShop />
+                    </ProtectedRoute>
+                  } />
+
+                  <Route path="/chat" element={
+                    <ProtectedRoute user={user}>
+                      <Chat />
+                    </ProtectedRoute>
+                  } />
+
+                  <Route path="/dms" element={
+                    <ProtectedRoute user={user}>
+                      <DMs />
+                    </ProtectedRoute>
+                  } />
+
+                  <Route path="/fitness-dashboard" element={
+                    <ProtectedRoute user={user}>
+                      <FitnessDashboard />
+                    </ProtectedRoute>
+                  } />
+
+                  <Route path="/run" element={
+                    <ProtectedRoute user={user}>
+                      <Run />
+                    </ProtectedRoute>
+                  } />
+
+                </Routes>
+              </Suspense>
+
+              {/* Floating Systems */}
+              <FloatingLayer />
+
+              {/* Ads Render Last (Behind UI) */}
+              <AdBanner />
+
+            </>
+          )}
+
+        </BackgroundShell>
+      </UIRoot>
+    </VoiceProvider>
   );
 }
